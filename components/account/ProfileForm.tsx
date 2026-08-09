@@ -1,50 +1,207 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+
+import { createClient } from "@/lib/supabase/client";
 
 
 export default function ProfileForm() {
 
 
-  const [profile, setProfile] =
-    useState({
+  const supabase = createClient();
 
-      name: "",
-      email: "",
-      phone: "",
 
-    });
+  const [profile, setProfile] = useState({
+
+    name: "",
+    email: "",
+    phone: "",
+
+  });
+
+
+  const [loading, setLoading] = useState(true);
+
+  const [success, setSuccess] = useState("");
+
+
+
+  useEffect(() => {
+
+
+    async function loadProfile() {
+
+
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
+
+
+
+      if (!user) {
+
+        setLoading(false);
+        return;
+
+      }
+
+
+
+      const {
+        data
+      } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq(
+          "id",
+          user.id
+        )
+        .single();
+
+
+
+      setProfile({
+
+        name:
+          data?.full_name || "",
+
+        email:
+          user.email || "",
+
+        phone:
+          data?.phone || "",
+
+      });
+
+
+
+      setLoading(false);
+
+
+    }
+
+
+    loadProfile();
+
+
+  }, [supabase]);
+
+
 
 
 
   function updateField(
     field: keyof typeof profile,
-    value:string
-  ){
+    value: string
+  ) {
 
-    setProfile((prev)=>({
+
+    setProfile((prev) => ({
 
       ...prev,
 
-      [field]:value,
+      [field]: value,
 
     }));
 
+
   }
 
 
 
-  function handleSave(){
 
-    console.log(
-      "Profile saved",
-      profile
+
+  async function handleSave() {
+
+
+    const {
+      data: {
+        user
+      }
+    } = await supabase.auth.getUser();
+
+
+
+    if (!user) return;
+
+
+
+    const {
+      error
+    } = await supabase
+      .from("profiles")
+      .update({
+
+        full_name:
+          profile.name,
+
+        phone:
+          profile.phone,
+
+      })
+      .eq(
+        "id",
+        user.id
+      );
+
+
+
+    if (error) {
+
+      setSuccess(
+        "Failed to update profile"
+      );
+
+      return;
+
+    }
+
+
+
+    setSuccess(
+      "Profile updated successfully"
     );
 
+
+
+    setTimeout(() => {
+
+      setSuccess("");
+
+    }, 3000);
+
+
   }
+
+
+
+
+
+  if (loading) {
+
+
+    return (
+
+      <p
+        className="
+          text-sm
+          text-neutral-500
+        "
+      >
+        Loading...
+      </p>
+
+    );
+
+
+  }
+
+
 
 
 
@@ -88,6 +245,7 @@ export default function ProfileForm() {
 
 
 
+
       <section
         className="
           rounded-2xl
@@ -102,9 +260,8 @@ export default function ProfileForm() {
 
         <Input
           label="Full Name"
-          placeholder="Your name"
           value={profile.name}
-          onChange={(e)=>
+          onChange={(e) =>
             updateField(
               "name",
               e.target.value
@@ -117,14 +274,8 @@ export default function ProfileForm() {
         <Input
           label="Email Address"
           type="email"
-          placeholder="email@example.com"
           value={profile.email}
-          onChange={(e)=>
-            updateField(
-              "email",
-              e.target.value
-            )
-          }
+          disabled
         />
 
 
@@ -133,13 +284,32 @@ export default function ProfileForm() {
           label="Phone Number"
           placeholder="+62"
           value={profile.phone}
-          onChange={(e)=>
+          onChange={(e) =>
             updateField(
               "phone",
               e.target.value
             )
           }
         />
+
+
+
+        {success && (
+
+          <div
+            className="
+              rounded-lg
+              bg-neutral-100
+              px-4
+              py-3
+              text-sm
+              text-neutral-700
+            "
+          >
+            {success}
+          </div>
+
+        )}
 
 
 

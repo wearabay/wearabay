@@ -1,16 +1,13 @@
 "use client";
 
-
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-
 
 import { createClient } from "@/lib/supabase/client";
 
-
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-
 
 
 export default function LoginForm() {
@@ -19,14 +16,23 @@ export default function LoginForm() {
   const router = useRouter();
 
 
-  const [email, setEmail] = useState("");
+  const [email,setEmail] =
+    useState("");
 
-  const [password, setPassword] = useState("");
+  const [password,setPassword] =
+    useState("");
 
 
-  const [message, setMessage] = useState("");
+  const [showPassword,setShowPassword] =
+    useState(false);
 
-  const [loading, setLoading] = useState(false);
+
+  const [message,setMessage] =
+    useState("");
+
+  const [loading,setLoading] =
+    useState(false);
+
 
 
 
@@ -40,16 +46,13 @@ export default function LoginForm() {
 
 
 
-    if (!email || !password) {
-
+    if(!email || !password){
 
       setMessage(
         "Please enter email and password."
       );
 
-
       return;
-
 
     }
 
@@ -64,15 +67,15 @@ export default function LoginForm() {
     try {
 
 
-      const supabase = createClient();
+      const supabase =
+        createClient();
 
 
 
       const {
-
         error
-
-      } = await supabase.auth.signInWithPassword({
+      } =
+      await supabase.auth.signInWithPassword({
 
         email,
 
@@ -84,18 +87,16 @@ export default function LoginForm() {
 
 
 
-      if (error) {
-
+      if(error){
 
         setMessage(
           error.message
         );
 
-
         return;
 
-
       }
+
 
 
 
@@ -105,30 +106,26 @@ export default function LoginForm() {
 
 
 
-      setTimeout(() => {
-
+      setTimeout(()=>{
 
         router.push("/account");
 
-
-      }, 800);
-
+      },800);
 
 
 
-    } catch {
 
+    }
+    catch{
 
       setMessage(
-        "Something went wrong."
+        "Something went wrong. Please try again."
       );
 
-
-    } finally {
-
+    }
+    finally{
 
       setLoading(false);
-
 
     }
 
@@ -141,72 +138,109 @@ export default function LoginForm() {
 
   return (
 
-
     <form
-
       onSubmit={handleLogin}
-
       className="space-y-5"
-
     >
 
 
 
       <Input
-
-        label="Email"
-
+        label="Email Address"
         type="email"
-
         value={email}
-
         onChange={(e)=>
-
           setEmail(e.target.value)
-
         }
-
       />
 
 
 
 
-      <Input
 
-        label="Password"
+      <div className="relative">
 
-        type="password"
 
-        value={password}
+        <Input
+          label="Password"
+          type={
+            showPassword
+            ? "text"
+            : "password"
+          }
+          value={password}
+          onChange={(e)=>
+            setPassword(e.target.value)
+          }
+        />
 
-        onChange={(e)=>
 
-          setPassword(e.target.value)
 
-        }
+        <button
+          type="button"
+          onClick={() =>
+            setShowPassword(
+              !showPassword
+            )
+          }
+          className="
+            absolute
+            right-4
+            top-10
+            text-xs
+            uppercase
+            tracking-wider
+            text-neutral-500
+          "
+        >
 
-      />
+          {showPassword
+            ? "Hide"
+            : "Show"
+          }
+
+
+        </button>
+
+
+      </div>
+
+
+
+
+
+      <div className="flex justify-end">
+
+
+        <Link
+          href="/forgot-password"
+          className="
+            text-xs
+            text-neutral-500
+            hover:text-black
+          "
+        >
+
+          Forgot password?
+
+        </Link>
+
+
+      </div>
 
 
 
 
 
       <Button
-
         type="submit"
-
         className="w-full"
-
         disabled={loading}
-
       >
 
         {loading
-
           ? "Signing In..."
-
           : "Login"
-
         }
 
 
@@ -215,25 +249,60 @@ export default function LoginForm() {
 
 
 
+
       {message && (
 
-
-        <p className="text-sm text-neutral-600">
+        <p
+          className="
+            text-sm
+            text-neutral-600
+          "
+        >
 
           {message}
 
         </p>
-
 
       )}
 
 
 
 
+
+      <p
+        className="
+          text-center
+          text-sm
+          text-neutral-500
+        "
+      >
+
+        Don't have an account?
+
+
+        {" "}
+
+
+        <Link
+          href="/register"
+          className="
+            text-black
+            underline
+          "
+        >
+
+          Create account
+
+        </Link>
+
+
+      </p>
+
+
+
+
     </form>
 
-
   );
-
 
 }

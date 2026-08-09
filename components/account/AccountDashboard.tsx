@@ -3,6 +3,16 @@
 import Link from "next/link";
 
 
+type Props = {
+
+  name: string;
+
+  email: string;
+
+};
+
+
+
 const menu = [
   {
     title: "My Orders",
@@ -34,14 +44,20 @@ const menu = [
 ];
 
 
-export default function AccountDashboard() {
+
+export default function AccountDashboard({
+  name,
+  email,
+}: Props) {
 
 
   return (
 
     <div>
 
+
       <div className="mb-12">
+
 
         <p
           className="
@@ -55,6 +71,7 @@ export default function AccountDashboard() {
         </p>
 
 
+
         <h1
           className="
             mt-3
@@ -62,11 +79,23 @@ export default function AccountDashboard() {
             font-light
           "
         >
-          Welcome Back
+
+          Welcome Back, {name}
+
         </h1>
 
 
+
+        <p className="mt-3 text-sm text-neutral-500">
+
+          {email}
+
+        </p>
+
+
+
       </div>
+
 
 
 
