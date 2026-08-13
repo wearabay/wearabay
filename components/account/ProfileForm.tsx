@@ -131,8 +131,11 @@ export default function ProfileForm() {
 
 
 
+
+    // update table profiles
+
     const {
-      error
+      error: profileError
     } = await supabase
       .from("profiles")
       .update({
@@ -151,7 +154,7 @@ export default function ProfileForm() {
 
 
 
-    if (error) {
+    if (profileError) {
 
       setSuccess(
         "Failed to update profile"
@@ -160,6 +163,52 @@ export default function ProfileForm() {
       return;
 
     }
+
+
+
+
+
+    // update auth metadata
+
+    const {
+      error: authError
+    } =
+    await supabase.auth.updateUser({
+
+      data: {
+
+        full_name:
+          profile.name,
+
+        phone:
+          profile.phone,
+
+      },
+
+    });
+
+
+
+
+    if (authError) {
+
+      setSuccess(
+        "Profile updated but session refresh failed"
+      );
+
+      return;
+
+    }
+
+
+
+
+
+    // refresh session agar navbar ikut berubah
+
+    await supabase.auth.refreshSession();
+
+
 
 
 

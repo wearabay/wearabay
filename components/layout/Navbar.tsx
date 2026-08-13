@@ -7,6 +7,7 @@ import Logo from "./Logo";
 import NavbarMenu from "./NavbarMenu";
 import NavbarIcons from "./NavbarIcons";
 import MobileMenu from "./MobileMenu";
+import AuthNav from "@/components/auth/AuthNav";
 
 import CartDrawer from "@/components/cart/CartDrawer";
 import SearchDrawer from "@/components/search/SearchDrawer";
@@ -23,21 +24,23 @@ export default function Navbar({
   transparent = false,
 }: NavbarProps) {
 
+
   const pathname = usePathname();
 
 
-  const [searchOpen, setSearchOpen] =
+  const [searchOpen,setSearchOpen] =
     useState(false);
 
 
-  const [scrolled, setScrolled] =
+  const [scrolled,setScrolled] =
     useState(false);
 
 
 
-  useEffect(() => {
+  useEffect(()=>{
 
-    const handleScroll = () => {
+
+    const handleScroll = ()=>{
 
       setScrolled(
         window.scrollY > 80
@@ -55,30 +58,39 @@ export default function Navbar({
     );
 
 
-    return () =>
+    return ()=>{
+
       window.removeEventListener(
         "scroll",
         handleScroll
       );
 
+    };
 
-  }, []);
+
+  },[]);
+
 
 
 
 
   const isTransparentPage =
-  pathname === "/" ||
-  pathname === "/shop";
+    pathname === "/" ||
+    pathname === "/shop";
 
-const darkNavbar = isTransparentPage
-  ? scrolled
-  : true;
+
+
+  const darkNavbar =
+    isTransparentPage
+      ? scrolled
+      : true;
+
 
 
   return (
 
     <>
+
 
       <header
 
@@ -94,36 +106,45 @@ const darkNavbar = isTransparentPage
 
           ${
             darkNavbar
-              ? `
-                bg-white/90
-                backdrop-blur-md
-                shadow-sm
-                border-b
-                border-neutral-200
-                text-neutral-900
-              `
-              : `
-                bg-transparent
-                text-white
-              `
+
+            ? `
+              bg-white/90
+              backdrop-blur-md
+              shadow-sm
+              border-b
+              border-neutral-200
+              text-neutral-900
+            `
+
+            :
+
+            `
+              bg-transparent
+              text-white
+            `
           }
+
         `}
 
       >
 
 
+
         <div
-  className="
-    mx-auto
-    flex
-    h-20
-    max-w-7xl
-    items-center
-    justify-between
-    px-4
-    sm:px-6
-  "
->
+
+          className="
+            mx-auto
+            flex
+            h-20
+            max-w-7xl
+            items-center
+            justify-between
+            px-4
+            sm:px-6
+          "
+
+        >
+
 
 
           <Logo
@@ -132,38 +153,69 @@ const darkNavbar = isTransparentPage
 
 
 
-          <div className="hidden md:block">
-  <NavbarMenu
-    dark={darkNavbar}
-  />
-</div>
+
+          <div
+            className="
+              hidden
+              md:block
+            "
+          >
+
+            <NavbarMenu
+              dark={darkNavbar}
+            />
+
+          </div>
 
 
-<div className="flex items-center gap-5">
-
-  <NavbarIcons
-
-    dark={darkNavbar}
-
-    onSearchClick={() =>
-      setSearchOpen(true)
-    }
-
-    onCartClick={() =>
-      openCart()
-    }
-
-  />
 
 
-  <MobileMenu
-    dark={darkNavbar}
-  />
 
-</div>
+          <div
+
+            className="
+              flex
+              items-center
+              gap-5
+            "
+
+          >
+
+
+
+            <NavbarIcons
+
+              dark={darkNavbar}
+
+              onSearchClick={()=> 
+                setSearchOpen(true)
+              }
+
+
+              onCartClick={()=>
+                openCart()
+              }
+
+            />
+
+
+
+            <AuthNav />
+
+
+
+            <MobileMenu
+              dark={darkNavbar}
+            />
+
+
+
+          </div>
+
 
 
         </div>
+
 
 
       </header>
@@ -171,18 +223,23 @@ const darkNavbar = isTransparentPage
 
 
 
+
       <CartDrawer />
+
+
+
 
 
       <SearchDrawer
 
         open={searchOpen}
 
-        onClose={() =>
+        onClose={()=>
           setSearchOpen(false)
         }
 
       />
+
 
 
     </>

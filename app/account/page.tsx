@@ -1,5 +1,6 @@
 import Container from "@/components/ui/Container";
 import AccountDashboard from "@/components/account/AccountDashboard";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,11 +11,13 @@ export default async function AccountPage() {
   const supabase = await createClient();
 
 
-  const {
-    data: {
-      user,
-    },
-  } = await supabase.auth.getUser();
+await supabase.auth.refreshSession();
+
+const {
+ data:{
+   user,
+ },
+} = await supabase.auth.getUser();
 
 
 
@@ -43,8 +46,11 @@ export default async function AccountPage() {
           email={email}
 
         />
-
+        <div className="mt-10">
+  <LogoutButton />
+</div>
       </Container>
+      
 
     </main>
 

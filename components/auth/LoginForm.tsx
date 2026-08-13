@@ -22,10 +22,8 @@ export default function LoginForm() {
   const [password,setPassword] =
     useState("");
 
-
   const [showPassword,setShowPassword] =
     useState(false);
-
 
   const [message,setMessage] =
     useState("");
@@ -72,6 +70,7 @@ export default function LoginForm() {
 
 
 
+
       const {
         error
       } =
@@ -89,13 +88,18 @@ export default function LoginForm() {
 
       if(error){
 
+
         setMessage(
           error.message
         );
 
+
         return;
 
+
       }
+
+
 
 
 
@@ -106,31 +110,65 @@ export default function LoginForm() {
 
 
 
-      setTimeout(()=>{
 
-        router.push("/account");
 
-      },800);
+
+      // Pastikan session sudah tersimpan
+
+      const {
+        data:{
+          session
+        }
+      } =
+      await supabase.auth.getSession();
+
+
+
+
+
+      if(session){
+
+
+        setTimeout(()=>{
+
+
+          router.replace(
+            "/account"
+          );
+
+
+        },300);
+
+
+      }
+
 
 
 
 
     }
+
     catch{
+
 
       setMessage(
         "Something went wrong. Please try again."
       );
 
+
     }
+
     finally{
 
+
       setLoading(false);
+
 
     }
 
 
   }
+
 
 
 
@@ -194,7 +232,8 @@ export default function LoginForm() {
           "
         >
 
-          {showPassword
+          {
+            showPassword
             ? "Hide"
             : "Show"
           }
@@ -238,7 +277,8 @@ export default function LoginForm() {
         disabled={loading}
       >
 
-        {loading
+        {
+          loading
           ? "Signing In..."
           : "Login"
         }
@@ -250,20 +290,22 @@ export default function LoginForm() {
 
 
 
-      {message && (
+      {
+        message && (
 
-        <p
-          className="
-            text-sm
-            text-neutral-600
-          "
-        >
+          <p
+            className="
+              text-sm
+              text-neutral-600
+            "
+          >
 
-          {message}
+            {message}
 
-        </p>
+          </p>
 
-      )}
+        )
+      }
 
 
 

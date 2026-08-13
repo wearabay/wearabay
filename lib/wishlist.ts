@@ -1,69 +1,246 @@
-const STORAGE_KEY = "wearing-abaya-wishlist";
+function getWishlistKey(
+  userId?: string
+) {
 
-export function getWishlist(): number[] {
-  if (typeof window === "undefined") return [];
+  if(userId){
+
+    return `wearing-abaya-user-${userId}-wishlist`;
+
+  }
+
+
+  return "wearing-abaya-guest-wishlist";
+
+}
+
+
+
+
+
+export function getWishlist(
+  userId?: string
+): number[] {
+
+
+  if(
+    typeof window === "undefined"
+  ){
+
+    return [];
+
+  }
+
+
 
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+
+
+    const data =
+      localStorage.getItem(
+        getWishlistKey(userId)
+      );
+
+
+
+    return data
+      ? JSON.parse(data)
+      : [];
+
+
+
   } catch {
+
+
     return [];
+
   }
+
+
 }
 
-export function saveWishlist(ids: number[]) {
+
+
+
+
+export function saveWishlist(
+  ids:number[],
+  userId?:string
+) {
+
+
+  if(
+    typeof window === "undefined"
+  ){
+
+    return;
+
+  }
+
+
+
   localStorage.setItem(
-    STORAGE_KEY,
+
+    getWishlistKey(userId),
+
     JSON.stringify(ids)
+
   );
-}
 
-export function isWishlisted(id: number) {
-  return getWishlist().includes(id);
-}
 
-export function toggleWishlist(id: number) {
-  const list = getWishlist();
-
-  let updated: number[];
-
-  if (list.includes(id)) {
-    updated = list.filter((item) => item !== id);
-  } else {
-    updated = [...list, id];
-  }
-
-  saveWishlist(updated);
 
   window.dispatchEvent(
+
     new Event("wishlist-updated")
+
   );
+
+
+}
+
+
+
+
+
+export function isWishlisted(
+  id:number,
+  userId?:string
+) {
+
+
+  return getWishlist(userId)
+    .includes(id);
+
+
+}
+
+
+
+
+
+export function toggleWishlist(
+  id:number,
+  userId?:string
+) {
+
+
+  const list =
+    getWishlist(userId);
+
+
+
+  let updated:number[];
+
+
+
+  if(
+    list.includes(id)
+  ){
+
+
+    updated =
+      list.filter(
+        item => item !== id
+      );
+
+
+  } else {
+
+
+    updated = [
+      ...list,
+      id
+    ];
+
+
+  }
+
+
+
+  saveWishlist(
+    updated,
+    userId
+  );
+
+
 
   return updated;
+
+
 }
 
-export function getWishlistCount() {
-  return getWishlist().length;
+
+
+
+
+export function getWishlistCount(
+  userId?:string
+) {
+
+
+  return getWishlist(userId)
+    .length;
+
+
 }
 
-export function removeWishlist(id: number) {
-  const updated = getWishlist().filter(
-    (item) => item !== id
+
+
+
+
+export function removeWishlist(
+  id:number,
+  userId?:string
+) {
+
+
+  const updated =
+    getWishlist(userId)
+      .filter(
+        item => item !== id
+      );
+
+
+
+  saveWishlist(
+    updated,
+    userId
   );
 
-  saveWishlist(updated);
+
+}
+
+
+
+
+
+export function clearWishlist(
+  userId?:string
+) {
+
+
+  if(
+    typeof window === "undefined"
+  ){
+
+    return;
+
+  }
+
+
+
+  localStorage.removeItem(
+
+    getWishlistKey(userId)
+
+  );
+
+
 
   window.dispatchEvent(
+
     new Event("wishlist-updated")
+
   );
-}
 
-export function clearWishlist() {
-  if (typeof window === "undefined") return;
 
-  localStorage.removeItem(STORAGE_KEY);
-
-  window.dispatchEvent(
-    new Event("wishlist-updated")
-  );
 }
