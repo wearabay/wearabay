@@ -13,21 +13,18 @@ import {
   useState,
 } from "react";
 
-
 import {
-  getWishlistCount
+  getWishlistCount,
+  loadWishlist,
 } from "@/lib/wishlist";
 
-
 import {
-  getCartCount
+  getCartCount,
 } from "@/lib/cart";
 
-
 import {
-  useAuthUser
+  useAuthUser,
 } from "@/hooks/useAuthUser";
-
 
 
 type NavbarIconsProps = {
@@ -41,9 +38,6 @@ type NavbarIconsProps = {
 };
 
 
-
-
-
 export default function NavbarIcons({
 
   dark = false,
@@ -55,78 +49,190 @@ export default function NavbarIcons({
 }: NavbarIconsProps) {
 
 
-
   const {
-    user
+    user,
+    loading: authLoading,
   } = useAuthUser();
 
 
-
-  const [wishlistCount,setWishlistCount] =
-    useState(0);
-
-
-
-  const [cartCount,setCartCount] =
-    useState(0);
+  const [
+    wishlistCount,
+    setWishlistCount,
+  ] = useState(0);
 
 
+  const [
+    cartCount,
+    setCartCount,
+  ] = useState(0);
 
 
+  /*
+   * Load wishlist and cart
+   * whenever authentication changes.
+   */
 
-  useEffect(()=>{
+  useEffect(() => {
+
+    if (
+      authLoading
+    ) {
+
+      return;
+
+    }
+
+
+    let cancelled = false;
+
+
+    async function loadData() {
+
+      const userId =
+        user?.id;
+
+
+      /*
+       * GUEST
+       */
+
+      if (!userId) {
+
+        if (
+          cancelled
+        ) {
+
+          return;
+
+        }
+
+
+        setWishlistCount(
+          getWishlistCount()
+        );
+
+
+        setCartCount(
+          getCartCount()
+        );
+
+
+        return;
+
+      }
+
+
+      /*
+       * USER
+       *
+       * Load wishlist from Supabase
+       * first so a new device/browser
+       * receives the user's saved wishlist.
+       */
+
+      try {
+
+        await loadWishlist(
+          userId
+        );
+
+      } catch (
+        error
+      ) {
+
+        console.error(
+          "Failed to load wishlist for navbar:",
+          error
+        );
+
+      }
+
+
+      /*
+       * Prevent an old auth request
+       * from updating the current user.
+       */
+
+      if (
+        cancelled
+      ) {
+
+        return;
+
+      }
+
+
+      setWishlistCount(
+        getWishlistCount(
+          userId
+        )
+      );
+
+
+      setCartCount(
+        getCartCount(
+          userId
+        )
+      );
+
+    }
+
+
+    loadData();
+
+
+    return () => {
+
+      cancelled = true;
+
+    };
+
+  }, [
+    user?.id,
+    authLoading,
+  ]);
+
+
+  /*
+   * Listen for wishlist/cart changes.
+   */
+
+  useEffect(() => {
+
+    if (
+      authLoading
+    ) {
+
+      return;
+
+    }
 
 
     const userId =
       user?.id;
 
 
-
     const updateWishlist = () => {
 
-
       setWishlistCount(
-
         getWishlistCount(
           userId
         )
-
       );
 
-
     };
-
-
-
 
 
     const updateCart = () => {
 
-
       setCartCount(
-
         getCartCount(
           userId
         )
-
       );
-
 
     };
 
-
-
-
-
-    // refresh pertama kali
-    updateWishlist();
-    updateCart();
-
-
-
-
-
-    // refresh ketika data berubah
 
     window.addEventListener(
       "wishlist-updated",
@@ -140,11 +246,7 @@ export default function NavbarIcons({
     );
 
 
-
-
-
-    return ()=>{
-
+    return () => {
 
       window.removeEventListener(
         "wishlist-updated",
@@ -157,59 +259,32 @@ export default function NavbarIcons({
         updateCart
       );
 
-
     };
 
-
-  },[
-    user?.id
+  }, [
+    user?.id,
+    authLoading,
   ]);
 
 
-
-
-
-  // refresh badge setelah login/logout
-
-  useEffect(()=>{
-
-
-    window.dispatchEvent(
-      new Event("wishlist-updated")
-    );
-
-
-    window.dispatchEvent(
-      new Event("cart-updated")
-    );
-
-
-  },[
-    user?.id
-  ]);
-
-
-
-
-
+  /*
+   * Icon color.
+   */
 
   const iconClass = `
 
     transition-all
     duration-300
+
     hover:opacity-60
 
     ${
       dark
-      ? "text-neutral-900"
-      : "text-white"
+        ? "text-neutral-900"
+        : "text-white"
     }
 
   `;
-
-
-
-
 
 
   return (
@@ -223,18 +298,21 @@ export default function NavbarIcons({
     >
 
 
-
       {/* SEARCH */}
 
       <button
 
         type="button"
 
-        onClick={onSearchClick}
+        onClick={
+          onSearchClick
+        }
 
         aria-label="Search"
 
-        className={iconClass}
+        className={
+          iconClass
+        }
 
       >
 
@@ -244,9 +322,6 @@ export default function NavbarIcons({
         />
 
       </button>
-
-
-
 
 
       {/* WISHLIST */}
@@ -265,47 +340,43 @@ export default function NavbarIcons({
       >
 
         <Heart
+
           size={22}
+
           strokeWidth={1.8}
+
         />
 
 
+        {wishlistCount > 0 && (
 
-        {
-          wishlistCount > 0 && (
+          <span
 
-            <span
+            className="
+              absolute
+              -right-3
+              -top-3
+              flex
+              h-5
+              w-5
+              items-center
+              justify-center
+              rounded-full
+              bg-[#B99143]
+              text-[10px]
+              font-semibold
+              text-white
+            "
 
-              className="
-                absolute
-                -right-3
-                -top-3
-                flex
-                h-5
-                w-5
-                items-center
-                justify-center
-                rounded-full
-                bg-[#B99143]
-                text-[10px]
-                font-semibold
-                text-white
-              "
+          >
 
-            >
+            {wishlistCount}
 
-              {wishlistCount}
+          </span>
 
-            </span>
-
-          )
-        }
-
+        )}
 
       </Link>
-
-
-
 
 
       {/* BAG */}
@@ -314,7 +385,9 @@ export default function NavbarIcons({
 
         type="button"
 
-        onClick={onCartClick}
+        onClick={
+          onCartClick
+        }
 
         className={`
           relative
@@ -326,45 +399,43 @@ export default function NavbarIcons({
       >
 
         <ShoppingBag
+
           size={22}
+
           strokeWidth={1.8}
+
         />
 
 
+        {cartCount > 0 && (
 
-        {
-          cartCount > 0 && (
+          <span
 
-            <span
+            className="
+              absolute
+              -right-3
+              -top-3
+              flex
+              h-5
+              w-5
+              items-center
+              justify-center
+              rounded-full
+              bg-[#B99143]
+              text-[10px]
+              font-semibold
+              text-white
+            "
 
-              className="
-                absolute
-                -right-3
-                -top-3
-                flex
-                h-5
-                w-5
-                items-center
-                justify-center
-                rounded-full
-                bg-[#B99143]
-                text-[10px]
-                font-semibold
-                text-white
-              "
+          >
 
-            >
+            {cartCount}
 
-              {cartCount}
+          </span>
 
-            </span>
-
-          )
-        }
-
+        )}
 
       </button>
-
 
 
     </div>

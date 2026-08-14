@@ -12,385 +12,419 @@ import {
 import {
   getCart,
   saveCart,
+  loadCart,
+  addToCart,
+  removeCartItem,
+  updateCartQuantity,
+  clearCart as clearCartStorage,
   type CartItem,
 } from "@/lib/cart";
 
-import {
-  useAuthUser
-} from "@/hooks/useAuthUser";
+import { useAuthUser } from "@/hooks/useAuthUser";
 
 
 type CartContextType = {
+
   items: CartItem[];
+
   count: number;
+
   subtotal: number;
 
   refreshCart: () => void;
 
   addItem: (
     item: CartItem
-  ) => void;
+  ) => Promise<void>;
 
   removeItem: (
-    id:number,
-    color?:string,
-    size?:string
-  ) => void;
+    id: number,
+    color?: string,
+    size?: string
+  ) => Promise<void>;
 
   updateQuantity: (
-    id:number,
-    color:string | undefined,
-    size:string | undefined,
-    quantity:number
-  ) => void;
+    id: number,
+    color: string | undefined,
+    size: string | undefined,
+    quantity: number
+  ) => Promise<void>;
 
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
+
 };
 
 
-
 const CartContext =
-  createContext<CartContextType | null>(null);
-
-
+  createContext<CartContextType | null>(
+    null
+  );
 
 
 export function CartProvider({
   children,
-}:{
-  children:React.ReactNode;
+}: {
+  children: React.ReactNode;
 }) {
 
-
   const {
-    user
+    user,
+    loading: authLoading,
   } = useAuthUser();
-
-
-
-  const userId =
-    user?.id;
-
 
 
   const [
     items,
-    setItems
-  ] =
-  useState<CartItem[]>([]);
+    setItems,
+  ] = useState<CartItem[]>([]);
 
 
-
+  /*
+   * Refresh local cache
+   */
 
   const refreshCart =
-    useCallback(()=>{
-
+    useCallback(() => {
 
       setItems(
         getCart(
-          userId
+          user?.id
         )
       );
 
-
-    },[
-      userId
+    }, [
+      user?.id,
     ]);
 
 
+  /*
+   * Load cart when auth state
+   * changes.
+   */
+
+  useEffect(() => {
+
+    if (
+      authLoading
+    ) {
+      return;
+    }
 
 
+    let cancelled = false;
 
-  useEffect(()=>{
 
-    refreshCart();
+    async function load() {
 
-  },[
-    refreshCart
+      /*
+       * Guest
+       */
+
+      if (!user) {
+
+        const guestCart =
+          getCart();
+
+
+        if (
+          !cancelled
+        ) {
+
+          setItems(
+            guestCart
+          );
+
+        }
+
+        return;
+
+      }
+
+
+      /*
+       * Logged-in user
+       *
+       * Load from Supabase.
+       */
+
+try {
+
+  const remoteCart =
+    await loadCart(
+      user.id
+    );
+
+
+  if (!cancelled) {
+
+    setItems(
+      remoteCart
+    );
+
+  }
+
+} catch(error){
+
+  console.error(
+    "Failed loading cart:",
+    error
+  );
+
+
+  if (!cancelled) {
+
+    setItems(
+      getCart(
+        user.id
+      )
+    );
+
+  }
+
+}try {
+
+  const remoteCart =
+    await loadCart(
+      user.id
+    );
+
+
+  if (!cancelled) {
+
+    setItems(
+      remoteCart
+    );
+
+  }
+
+} catch(error){
+
+  console.error(
+    "Failed loading cart:",
+    error
+  );
+
+
+  if (!cancelled) {
+
+    setItems(
+      getCart(
+        user.id
+      )
+    );
+
+  }
+
+}
+
+    }
+
+
+    load();
+
+
+    return () => {
+
+      cancelled = true;
+
+    };
+
+  }, [
+    user?.id,
+    authLoading,
   ]);
 
 
+  /*
+   * Listen for external
+   * cart changes.
+   */
+
+  useEffect(() => {
+
+    const update = () => {
+
+      refreshCart();
+
+    };
 
 
+    window.addEventListener(
+      "cart-updated",
+      update
+    );
 
 
-  const persist =
-    (
-      cart:CartItem[]
-    )=>{
+    return () => {
+
+      window.removeEventListener(
+        "cart-updated",
+        update
+      );
+
+    };
+
+  }, [
+    refreshCart,
+  ]);
 
 
-      saveCart(
-        cart,
-        userId
+  /*
+   * Add item
+   */
+
+  const addItem =
+    async (
+      item: CartItem
+    ) => {
+
+      const updated =
+        await addToCart(
+          item,
+          user?.id
+        );
+
+
+      setItems(
+        updated
+      );
+
+    };
+
+
+  /*
+   * Remove item
+   */
+
+  const removeItem =
+    async (
+      id: number,
+      color?: string,
+      size?: string
+    ) => {
+
+      await removeCartItem(
+        id,
+        color,
+        size,
+        user?.id
       );
 
 
       setItems(
-        cart
-      );
-
-
-    };
-
-
-
-
-
-
-  const addItem =
-    (
-      item:CartItem
-    )=>{
-
-
-      const cart =
         getCart(
-          userId
-        );
-
-
-
-      const index =
-        cart.findIndex(
-          (p)=>
-
-            p.id === item.id &&
-            p.color === item.color &&
-            p.size === item.size
-
-        );
-
-
-
-      if(index >= 0){
-
-
-        cart[index].quantity +=
-          item.quantity;
-
-
-      }
-      else {
-
-
-        cart.push(
-          item
-        );
-
-
-      }
-
-
-
-      persist(
-        cart
+          user?.id
+        )
       );
-
 
     };
 
 
-
-
-
-
-
-
-  const removeItem =
-  (
-    id:number,
-    color?:string,
-    size?:string
-  )=>{
-
-
-    const updated =
-      getCart(
-        userId
-      )
-      .filter(
-        (item)=>
-          !(
-            item.id === id &&
-            item.color === color &&
-            item.size === size
-          )
-      );
-
-
-
-    persist(
-      updated
-    );
-
-
-  };
-
-
-
-
-
-
-
+  /*
+   * Update quantity
+   */
 
   const updateQuantity =
-  (
-    id:number,
-    color:string | undefined,
-    size:string | undefined,
-    quantity:number
-  )=>{
+    async (
+      id: number,
+      color:
+        | string
+        | undefined,
+      size:
+        | string
+        | undefined,
+      quantity: number
+    ) => {
 
-
-    const updated =
-      getCart(
-        userId
-      )
-      .map(
-        (item)=>{
-
-
-          if(
-            item.id === id &&
-            item.color === color &&
-            item.size === size
-          ){
-
-            return {
-
-              ...item,
-
-              quantity:
-                Math.max(
-                  1,
-                  quantity
-                ),
-
-            };
-
-          }
-
-
-          return item;
-
-
-        }
+      await updateCartQuantity(
+        id,
+        color,
+        size,
+        quantity,
+        user?.id
       );
 
 
+      setItems(
+        getCart(
+          user?.id
+        )
+      );
 
-    persist(
-      updated
-    );
-
-
-  };
-
-
+    };
 
 
-
-
-
+  /*
+   * Clear cart
+   */
 
   const clearCart =
-  ()=>{
+    async () => {
+
+      await clearCartStorage(
+        user?.id
+      );
 
 
-    persist(
-      []
-    );
+      setItems([]);
+
+    };
 
 
-  };
-
-
-
-
-
-
+  /*
+   * Count
+   */
 
   const count =
     useMemo(
-      ()=>
-
-
+      () =>
         items.reduce(
           (
             sum,
             item
-          )=>
-            sum + item.quantity,
+          ) =>
+            sum +
+            item.quantity,
           0
         ),
-
-
-      [
-        items
-      ]
+      [items]
     );
 
 
-
-
+  /*
+   * Subtotal
+   */
 
   const subtotal =
     useMemo(
-      ()=>
-
-
+      () =>
         items.reduce(
           (
             sum,
             item
-          )=>
-
+          ) =>
             sum +
             item.price *
-            item.quantity,
-
-
+              item.quantity,
           0
-
         ),
-
-
-      [
-        items
-      ]
+      [items]
     );
-
-
-
-
-
 
 
   return (
 
     <CartContext.Provider
-
       value={{
-
         items,
-
         count,
-
         subtotal,
-
         refreshCart,
-
         addItem,
-
         removeItem,
-
         updateQuantity,
-
         clearCart,
-
       }}
-
     >
 
       {children}
@@ -399,16 +433,10 @@ export function CartProvider({
 
   );
 
-
 }
 
 
-
-
-
-
-
-export function useCart(){
+export function useCart() {
 
   const context =
     useContext(
@@ -416,7 +444,7 @@ export function useCart(){
     );
 
 
-  if(!context){
+  if (!context) {
 
     throw new Error(
       "useCart must be used inside CartProvider"
@@ -426,6 +454,5 @@ export function useCart(){
 
 
   return context;
-
 
 }

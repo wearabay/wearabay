@@ -17,10 +17,9 @@ import Divider from "@/components/ui/Divider";
 
 import ProductVariant from "./variants/ProductVariant";
 
-import {
-  useCart
-} from "@/context/CartContext";
+import { addToCart } from "@/lib/cart";
 
+import { useAuthUser } from "@/hooks/useAuthUser";
 
 
 type ProductInfoProps = {
@@ -28,76 +27,84 @@ type ProductInfoProps = {
 };
 
 
-
 export default function ProductInfo({
   product,
 }: ProductInfoProps) {
 
-
   const {
-    addItem
-  } = useCart();
+    user,
+    loading: authLoading,
+  } = useAuthUser();
 
 
+  const [
+    selectedColor,
+    setSelectedColor,
+  ] = useState(
+    product.colors?.[0] ?? ""
+  );
 
 
-  const [selectedColor, setSelectedColor] =
-    useState(
-      product.colors?.[0] ?? ""
-    );
+  const [
+    selectedSize,
+    setSelectedSize,
+  ] = useState(
+    product.sizes?.[0] ?? ""
+  );
 
+
+  const [
+    quantity,
+    setQuantity,
+  ] = useState(1);
 
 
   const addToBagRef =
     useRef<HTMLButtonElement>(null);
 
 
-
-  const [showSticky, setShowSticky] =
-    useState(false);
-
-
-
-
-  const [selectedSize, setSelectedSize] =
-    useState(
-      product.sizes?.[0] ?? ""
-    );
+  const [
+    showSticky,
+    setShowSticky,
+  ] = useState(false);
 
 
+  const [
+    adding,
+    setAdding,
+  ] = useState(false);
 
-  const [quantity, setQuantity] =
-    useState(1);
 
-
-
-
+  /*
+   * Quantity
+   */
 
   const increaseQuantity = () => {
 
-    if(
+    if (
       quantity <
       (product.stock ?? 99)
-    ){
+    ) {
 
       setQuantity(
-        prev => prev + 1
+        (prev) =>
+          prev + 1
       );
 
     }
 
   };
-
-
-
 
 
   const decreaseQuantity = () => {
 
-    if(quantity > 1){
+    if (
+      quantity > 1
+    ) {
 
       setQuantity(
-        prev => prev - 1
+        (prev) =>
+          prev - 1
       );
 
     }
@@ -105,70 +112,94 @@ export default function ProductInfo({
   };
 
 
+  /*
+   * Add To Bag
+   */
+
+  const handleAddToCart =
+    async () => {
+
+      if (
+        adding ||
+        authLoading
+      ) {
+
+        return;
+
+      }
 
 
-
-  const handleAddToCart = () => {
-
-
-    addItem({
-
-      id: product.id,
-
-      name: product.name,
-
-      price: product.price,
-
-      image: product.image,
-
-      quantity,
-
-      color: selectedColor,
-
-      size: selectedSize,
-
-    });
+      setAdding(true);
 
 
+      try {
 
-    window.dispatchEvent(
-      new Event("cart-open")
-    );
+        await addToCart(
+          {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            quantity,
+            color: selectedColor,
+            size: selectedSize,
+          },
+          user?.id
+        );
 
 
-  };
+        window.dispatchEvent(
+          new Event(
+            "cart-open"
+          )
+        );
+
+      } catch (
+        error
+      ) {
+
+        console.error(
+          "Failed to add product to cart:",
+          error
+        );
+
+      } finally {
+
+        setAdding(false);
+
+      }
+
+    };
 
 
+  /*
+   * Sticky Add To Bag
+   */
 
+  useEffect(() => {
 
+    if (
+      !addToBagRef.current
+    ) {
 
-
-
-  useEffect(()=>{
-
-
-    if(!addToBagRef.current)
       return;
 
+    }
 
 
     const observer =
       new IntersectionObserver(
-
-        ([entry])=>{
+        ([entry]) => {
 
           setShowSticky(
             !entry.isIntersecting
           );
 
         },
-
         {
-          threshold:0.1,
+          threshold: 0.1,
         }
-
       );
-
 
 
     observer.observe(
@@ -176,54 +207,43 @@ export default function ProductInfo({
     );
 
 
-
-    return ()=>{
+    return () => {
 
       observer.disconnect();
 
     };
 
-
-  },[]);
-
-
-
-
-
+  }, []);
 
 
   return (
 
     <div>
 
-
       {/* Category */}
 
-      <p className="
-        text-sm
-        uppercase
-        tracking-[0.3em]
-        text-gray-500
-      ">
-
+      <p
+        className="
+          text-sm
+          uppercase
+          tracking-[0.3em]
+          text-gray-500
+        "
+      >
         {product.category}
-
       </p>
-
-
-
 
 
       {/* Badge */}
 
       {product.badge && (
 
-        <div className="mt-4">
+        <div
+          className="mt-4"
+        >
 
           <Badge>
-
             {product.badge}
-
           </Badge>
 
         </div>
@@ -231,157 +251,144 @@ export default function ProductInfo({
       )}
 
 
-
-
-
-
-
       {/* Title */}
 
-      <h1 className="
-        mt-4
-        text-5xl
-        font-light
-      ">
-
+      <h1
+        className="
+          mt-4
+          text-5xl
+          font-light
+        "
+      >
         {product.name}
-
       </h1>
-
-
-
-
-
 
 
       {/* Price */}
 
-      <p className="
-        mt-6
-        text-2xl
-      ">
-
-        {formatPrice(product.price)}
-
+      <p
+        className="
+          mt-6
+          text-2xl
+        "
+      >
+        {formatPrice(
+          product.price
+        )}
       </p>
 
 
-
-
-
-
-      <Divider className="my-10" />
-
-
-
-
-
+      <Divider
+        className="my-10"
+      />
 
 
       {/* Description */}
 
-      <p className="
-        leading-8
-        text-gray-600
-      ">
-
+      <p
+        className="
+          leading-8
+          text-gray-600
+        "
+      >
         {product.description}
-
       </p>
-
-
-
-
-
 
 
       {/* Features */}
 
-      <div className="
-        mt-10
-        space-y-3
-        text-sm
-        text-neutral-600
-      ">
+      <div
+        className="
+          mt-10
+          space-y-3
+          text-sm
+          text-neutral-600
+        "
+      >
 
         {product.features.map(
-          (feature)=>(
-            <p key={feature}>
+          (feature) => (
+
+            <p
+              key={feature}
+            >
               ✓ {feature}
             </p>
+
           )
         )}
 
       </div>
 
 
-
-
-
-
-
       {/* Variant */}
 
       <ProductVariant
 
+        addToBagRef={
+          addToBagRef
+        }
 
-        addToBagRef={addToBagRef}
+        product={
+          product
+        }
 
+        selectedColor={
+          selectedColor
+        }
 
-        product={product}
+        onColorChange={
+          setSelectedColor
+        }
 
+        selectedSize={
+          selectedSize
+        }
 
-        selectedColor={selectedColor}
+        onSizeChange={
+          setSelectedSize
+        }
 
+        quantity={
+          quantity
+        }
 
-        onColorChange={setSelectedColor}
+        onIncrease={
+          increaseQuantity
+        }
 
+        onDecrease={
+          decreaseQuantity
+        }
 
-        selectedSize={selectedSize}
-
-
-        onSizeChange={setSelectedSize}
-
-
-        quantity={quantity}
-
-
-        onIncrease={increaseQuantity}
-
-
-        onDecrease={decreaseQuantity}
-
-
-        onAddToCart={handleAddToCart}
-
+        onAddToCart={
+          handleAddToCart
+        }
 
       />
-
-
-
-
-
 
 
       {/* Sticky Add To Bag */}
 
       <StickyAddToBag
 
-        visible={showSticky}
+        visible={
+          showSticky
+        }
 
+        name={
+          product.name
+        }
 
-        name={product.name}
+        price={
+          product.price
+        }
 
-
-        price={product.price}
-
-
-        onAddToCart={handleAddToCart}
-
+        onAddToCart={
+          handleAddToCart
+        }
 
       />
-
-
 
     </div>
 

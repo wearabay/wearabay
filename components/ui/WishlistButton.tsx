@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   isWishlisted,
@@ -25,101 +28,149 @@ export default function WishlistButton({
 
 
   const {
-    user
+    user,
+    loading: authLoading,
   } = useAuthUser();
 
 
-
-  const [liked,setLiked] =
+  const [liked, setLiked] =
     useState(false);
 
 
+  const [loading, setLoading] =
+    useState(false);
 
 
-  useEffect(()=>{
+  /*
+   * Read current wishlist from
+   * the correct local cache.
+   *
+   * The WishlistPage / wishlist
+   * loader is responsible for loading
+   * authenticated data from Supabase.
+   */
+
+  useEffect(() => {
+
+    if (
+      authLoading
+    ) {
+
+      return;
+
+    }
 
 
-    const userId =
-      user?.id;
+    setLiked(
+      isWishlisted(
+        productId,
+        user?.id
+      )
+    );
+
+  }, [
+    productId,
+    user?.id,
+    authLoading,
+  ]);
 
 
+  /*
+   * Listen for wishlist changes.
+   */
 
-    const update = ()=>{
+  useEffect(() => {
 
+    const updateWishlist = () => {
 
       setLiked(
-
         isWishlisted(
           productId,
-          userId
+          user?.id
         )
-
       );
 
-
     };
-
-
-
-    update();
-
 
 
     window.addEventListener(
       "wishlist-updated",
-      update
+      updateWishlist
     );
 
 
-
-    return ()=>{
+    return () => {
 
       window.removeEventListener(
         "wishlist-updated",
-        update
+        updateWishlist
       );
 
     };
 
-
-  },[
+  }, [
     productId,
-    user?.id
+    user?.id,
   ]);
 
 
+  /*
+   * Toggle wishlist.
+   */
 
-
-
-
-  function handleClick(
+  async function handleClick(
     e: React.MouseEvent<HTMLButtonElement>
-  ){
+  ) {
 
     e.preventDefault();
 
     e.stopPropagation();
 
 
+    if (
+      loading ||
+      authLoading
+    ) {
 
-    const updated =
+      return;
 
-      toggleWishlist(
-        productId,
-        user?.id
+    }
+
+
+    setLoading(true);
+
+
+    try {
+
+      const updated =
+        await toggleWishlist(
+          productId,
+          user?.id
+        );
+
+
+      setLiked(
+        updated.includes(
+          productId
+        )
       );
 
+    } catch (
+      error
+    ) {
 
+      console.error(
+        "Failed to update wishlist:",
+        error
+      );
 
-    setLiked(
-      updated.includes(productId)
-    );
+    } finally {
 
+      setLoading(false);
+
+    }
 
   }
-
-
-
 
 
   return (
@@ -129,6 +180,11 @@ export default function WishlistButton({
       type="button"
 
       onClick={handleClick}
+
+      disabled={
+        loading ||
+        authLoading
+      }
 
       className="
         flex
@@ -142,25 +198,41 @@ export default function WishlistButton({
         transition-all
         duration-300
         hover:scale-110
+        disabled:cursor-wait
       "
 
-      aria-label="Wishlist"
+      aria-label={
+        liked
+          ? "Remove from wishlist"
+          : "Add to wishlist"
+      }
+
+      aria-pressed={
+        liked
+      }
 
     >
 
       <span
 
         style={{
-          fontSize:size
+          fontSize: size,
         }}
 
         className={`
           transition-all
           duration-300
+
           ${
             liked
-            ? "scale-110 text-red-500"
-            : "text-neutral-700"
+              ? "scale-110 text-red-500"
+              : "text-neutral-700"
+          }
+
+          ${
+            loading
+              ? "opacity-50"
+              : ""
           }
         `}
 
@@ -168,12 +240,11 @@ export default function WishlistButton({
 
         {
           liked
-          ? "♥"
-          : "♡"
+            ? "♥"
+            : "♡"
         }
 
       </span>
-
 
     </button>
 

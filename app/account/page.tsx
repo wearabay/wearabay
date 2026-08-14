@@ -8,23 +8,25 @@ import { createClient } from "@/lib/supabase/server";
 export default async function AccountPage() {
 
 
-  const supabase = await createClient();
+  const supabase =
+    await createClient();
 
 
-await supabase.auth.refreshSession();
+  await supabase.auth.refreshSession();
 
-const {
- data:{
-   user,
- },
-} = await supabase.auth.getUser();
+
+  const {
+    data:{
+      user,
+    },
+  } =
+    await supabase.auth.getUser();
 
 
 
   const name =
     user?.user_metadata?.full_name ??
     "Customer";
-
 
 
   const email =
@@ -37,7 +39,14 @@ const {
 
     <main>
 
-      <Container className="mx-auto max-w-7xl px-6 py-24">
+      <Container
+        className="
+          mx-auto
+          max-w-7xl
+          px-6
+          py-24
+        "
+      >
 
         <AccountDashboard
 
@@ -46,11 +55,20 @@ const {
           email={email}
 
         />
-        <div className="mt-10">
-  <LogoutButton />
-</div>
+
+
+        <div
+          className="
+            mt-10
+          "
+        >
+
+          <LogoutButton />
+
+        </div>
+
+
       </Container>
-      
 
     </main>
 
