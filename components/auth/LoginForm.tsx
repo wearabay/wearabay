@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,9 +10,6 @@ import Input from "@/components/ui/Input";
 
 
 export default function LoginForm() {
-
-
-  const router = useRouter();
 
 
   const [email,setEmail] =
@@ -36,18 +32,46 @@ export default function LoginForm() {
 
 
   async function handleLogin(
-    e: React.FormEvent<HTMLFormElement>
-  ) {
+  e: React.FormEvent<HTMLFormElement>
+) {
+
+  e.preventDefault();
+
+  if (!email || !password) {
+
+    setMessage(
+      "Please enter email and password."
+    );
+
+    return;
+
+  }
+
+  setLoading(true);
+  setMessage("");
+
+  try {
+
+    const supabase =
+      createClient();
 
 
-    e.preventDefault();
+    const {
+      data,
+      error,
+    } =
+      await supabase.auth.signInWithPassword({
+
+        email,
+        password,
+
+      });
 
 
-
-    if(!email || !password){
+    if (error) {
 
       setMessage(
-        "Please enter email and password."
+        error.message
       );
 
       return;
@@ -55,123 +79,53 @@ export default function LoginForm() {
     }
 
 
+    /*
+     * Login berhasil tetapi
+     * pastikan session benar-benar tersedia.
+     */
 
-    setLoading(true);
-
-    setMessage("");
-
-
-
-    try {
-
-
-      const supabase =
-        createClient();
-
-
-
-
-      const {
-        error
-      } =
-      await supabase.auth.signInWithPassword({
-
-        email,
-
-        password,
-
-      });
-
-
-
-
-
-      if(error){
-
-
-        setMessage(
-          error.message
-        );
-
-
-        return;
-
-
-      }
-
-
-
-
-
+    if (!data.session) {
 
       setMessage(
-        "Login successful..."
+        "Login failed. Please try again."
       );
 
-
-
-
-
-
-      // Pastikan session sudah tersimpan
-
-      const {
-        data:{
-          session
-        }
-      } =
-      await supabase.auth.getSession();
-
-
-
-
-
-      if(session){
-
-
-        setTimeout(()=>{
-
-
-          router.replace(
-            "/account"
-          );
-
-
-        },300);
-
-
-      }
-
-
-
-
+      return;
 
     }
 
-    catch{
+
+    /*
+     * Full navigation.
+     *
+     * Ini sengaja menggunakan window.location
+     * agar request /account dibuat ulang
+     * setelah session Supabase tersimpan.
+     */
+
+    window.location.assign(
+      "/account"
+    );
 
 
-      setMessage(
-        "Something went wrong. Please try again."
-      );
+  } catch (error) {
 
+    console.error(
+      "Login failed:",
+      error
+    );
 
-    }
+    setMessage(
+      "Something went wrong. Please try again."
+    );
 
-    finally{
+  } finally {
 
-
-      setLoading(false);
-
-
-    }
-
+    setLoading(false);
 
   }
 
-
-
-
+}
 
 
   return (

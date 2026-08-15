@@ -154,16 +154,29 @@ export async function loadCart(
 
   if (error) {
 
-    console.error(
-      "Failed to load cart:",
-      error
-    );
+  console.error(
+    "Failed to load cart:",
+    {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    }
+  );
 
-    return getLocalCart(
-      userId
-    );
 
-  }
+  /*
+   * JWT may temporarily be invalid
+   * because the current auth session
+   * needs to be refreshed.
+   *
+   * Keep the local cart instead of
+   * destroying the user's cart UI.
+   */
+
+  return getLocalCart(userId);
+
+}
 
 
   const cart: CartItem[] =
