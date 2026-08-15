@@ -40,12 +40,14 @@ export default function ShippingAddress() {
 
 
   useEffect(() => {
+  async function loadAddresses() {
+    const addresses = await getAddresses();
 
-    setSavedAddresses(
-      getAddresses()
-    );
+    setSavedAddresses(addresses);
+  }
 
-  }, []);
+  loadAddresses();
+}, []);
 
 
 
