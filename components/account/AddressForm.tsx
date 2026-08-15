@@ -16,7 +16,9 @@ type AddressFormProps = {
   open: boolean;
   initialData?: Address;
   onClose: () => void;
-  onSave: (address: Address) => void;
+  onSave: (
+  address: Address
+) => void | Promise<void>;
 };
 
 const createEmptyAddress = (): Address => ({
@@ -232,11 +234,11 @@ export default function AddressForm({
 
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
 
   if (!validate()) return;
 
-  onSave({
+  await onSave({
     ...form,
     id: form.id || crypto.randomUUID(),
   });
