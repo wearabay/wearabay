@@ -37,12 +37,11 @@ type Address = {
 */
 
 const emailRegex =
-  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|co\.id|net|org)$/i;
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const blockedEmailPatterns = [
-  "gmail.con",
-  "gmail.c",
-  "yahoo.con",
-  "hotmail.con",
+  "@gmail.con",
+  "@yahoo.con",
+  "@hotmail.con",
 ];
 
 
@@ -91,8 +90,9 @@ export function validateCheckout(
 
   // Email
 
-  const email =
+const email =
   contact.email
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .trim()
     .toLowerCase();
 

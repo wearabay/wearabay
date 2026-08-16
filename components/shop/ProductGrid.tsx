@@ -3,12 +3,28 @@
 import ProductCard from "../product/ProductCard";
 import Container from "../ui/Container";
 
-import { products } from "@/data/products";
+import type { Product } from "@/types/product";
 
 import { useShop } from "./context/ShopContext";
 
-export default function ProductGrid() {
-  const { search, sort, category, colors, sizes } = useShop();
+
+type ProductGridProps = {
+  products: Product[];
+};
+
+
+export default function ProductGrid({
+  products,
+}: ProductGridProps) {
+
+  const {
+    search,
+    sort,
+    category,
+    colors,
+    sizes,
+  } = useShop();
+
 
   let filteredProducts = [...products];
 

@@ -17,13 +17,31 @@ export default function OrdersClient() {
     useState<Order[]>([]);
 
 
-  useEffect(() => {
+useEffect(() => {
+  let mounted = true;
 
-    setOrders(
-      getOrders()
-    );
+  async function loadOrders() {
+    try {
+      const data = await getOrders();
 
-  }, []);
+      if (mounted) {
+        setOrders(data);
+      }
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+
+      if (mounted) {
+        setOrders([]);
+      }
+    }
+  }
+
+  loadOrders();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
 
 
 
@@ -119,9 +137,9 @@ export default function OrdersClient() {
                 </p>
 
 
-                <p className="mt-2 font-medium">
-                  {order.id}
-                </p>
+<p className="mt-2 font-medium">
+  {order.orderNumber}
+</p>
 
 
               </div>

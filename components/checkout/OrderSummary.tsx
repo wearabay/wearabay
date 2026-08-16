@@ -27,6 +27,7 @@ export default function OrderSummary() {
                 src={item.image}
                 alt={item.name}
                 fill
+                sizes="64px"
                 className="object-cover"
               />
             </div>
@@ -48,7 +49,7 @@ export default function OrderSummary() {
                 </p>
               </div>
 
-              <p className="text-sm font-medium whitespace-nowrap">
+              <p className="whitespace-nowrap text-sm font-medium">
                 {formatPrice(
                   item.price * item.quantity
                 )}

@@ -181,40 +181,6 @@ try {
 
   }
 
-}try {
-
-  const remoteCart =
-    await loadCart(
-      user.id
-    );
-
-
-  if (!cancelled) {
-
-    setItems(
-      remoteCart
-    );
-
-  }
-
-} catch(error){
-
-  console.error(
-    "Failed loading cart:",
-    error
-  );
-
-
-  if (!cancelled) {
-
-    setItems(
-      getCart(
-        user.id
-      )
-    );
-
-  }
-
 }
 
     }

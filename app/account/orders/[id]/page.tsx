@@ -1,37 +1,37 @@
-import Link from "next/link";
-
-
 import Container from "@/components/ui/Container";
 
-import { getOrderById } from "@/lib/order";
-import { formatPrice } from "@/lib/currency";
+import {
+  getOrderByIdServer,
+} from "@/lib/order-server";
 
+import { formatPrice } from "@/lib/currency";
+import {
+  formatPaymentMethod,
+} from "@/lib/payment";
 
 type Props = {
   params: Promise<{
-    id:string;
+    id: string;
   }>;
 };
 
 
 export default async function OrderDetailPage({
   params,
-}:Props){
+}: Props) {
 
-  const {id}=await params;
+  const { id } = await params;
 
 
   const order =
-    getOrderById(id);
+    await getOrderByIdServer(id);
 
 
-  if(!order){
+  if (!order) {
 
     return (
-      <>
-      
 
-      <Container className="py-26">
+      <Container className="py-24">
 
         <h1 className="text-3xl font-light">
           Order Not Found
@@ -39,139 +39,339 @@ export default async function OrderDetailPage({
 
       </Container>
 
-      
-      </>
     );
+
   }
 
-  return(
-    <>
-    
+const payment =
+  formatPaymentMethod(
+    order.payment
+  );
+
+  return (
+
     <main>
-    <Container className="py-24">
-      <div className="space-y-10">
-        <div>
-          <p className="
-            text-xs
-            uppercase
-            tracking-[0.3em]
-            text-neutral-500
-          ">
-            Order Status
-          </p>
 
-          <h1 className="
-            mt-3
-            text-4xl
-            font-light
-          ">
-            {order.status}
-          </h1>
+      <Container className="py-24">
 
-          <p className="mt-2 text-sm text-neutral-500">
-            {order.id}
-          </p>
-
-        </div>
+        <div className="space-y-10">
 
 
+          {/* Header */}
 
-        <section className="
-          rounded-2xl
-          border
-          border-stone-200
-          p-6
-        ">
+          <div>
 
-          <h2 className="mb-6 text-lg">
-            Items
-          </h2>
-
-
-          <div className="space-y-5">
-
-          {order.items.map(item=>(
-
-            <div
-              key={`${item.id}-${item.size}`}
+            <p
               className="
-                flex
-                justify-between
-                text-sm
+                text-xs
+                uppercase
+                tracking-[0.3em]
+                text-neutral-500
               "
             >
-
-              <span>
-                {item.name}
-                {" "}
-                x {item.quantity}
-              </span>
+              Order Status
+            </p>
 
 
-              <span>
-                {
-                formatPrice(
-                  item.price *
-                  item.quantity
-                )
-                }
-              </span>
+            <h1
+              className="
+                mt-3
+                text-4xl
+                font-light
+                uppercase
+              "
+            >
+              {order.status}
+            </h1>
 
 
-            </div>
+            <p className="mt-2 text-sm text-neutral-500">
+              {order.orderNumber}
+            </p>
 
-          ))}
 
           </div>
 
 
-        </section>
 
 
 
-        <section className="
-          rounded-2xl
-          border
-          border-stone-200
-          p-6
-        ">
+          {/* Items */}
 
-          <h2 className="mb-4">
-            Shipping Address
-          </h2>
+          <section
+            className="
+              rounded-2xl
+              border
+              border-stone-200
+              p-6
+            "
+          >
 
-
-          <p>
-            {order.address.firstName}
-            {" "}
-            {order.address.lastName}
-          </p>
-
-          <p>
-            {order.address.street}
-          </p>
-
-          <p>
-            {order.address.city},
-            {" "}
-            {order.address.province}
-          </p>
+            <h2 className="mb-6 text-lg">
+              Items
+            </h2>
 
 
-        </section>
+            <div className="space-y-5">
 
 
-      </div>
+              {order.items.map(
+                (item) => (
+
+                  <div
+                    key={`${item.id}-${item.color}-${item.size}`}
+                    className="
+                      flex
+                      justify-between
+                      text-sm
+                    "
+                  >
+
+                    <div>
+
+                      <p>
+                        {item.name}
+                      </p>
 
 
-    </Container>
+                      <p className="text-neutral-500">
+
+                        {item.color}
+
+                        {item.color && item.size
+                          ? " • "
+                          : ""}
+
+                        {item.size}
+
+                        {" x "}
+
+                        {item.quantity}
+
+                      </p>
+
+
+                    </div>
+
+
+                    <span>
+
+                      {formatPrice(
+                        item.price *
+                        item.quantity
+                      )}
+
+                    </span>
+
+
+                  </div>
+
+                )
+              )}
+
+
+            </div>
+
+
+          </section>
+
+
+
+
+
+          {/* Shipping */}
+
+          <section
+            className="
+              rounded-2xl
+              border
+              border-stone-200
+              p-6
+            "
+          >
+
+            <h2 className="mb-4">
+              Shipping Address
+            </h2>
+
+
+            <div
+              className="
+                text-sm
+                leading-7
+                text-neutral-600
+              "
+            >
+
+              <p className="font-medium text-black">
+
+                {order.address.firstName}
+
+                {" "}
+
+                {order.address.lastName}
+
+              </p>
+
+
+              <p>
+                {order.address.street}
+              </p>
+
+
+              <p>
+                {order.address.city}
+                {", "}
+                {order.address.province}
+              </p>
+
+
+              <p>
+                {order.address.postalCode}
+              </p>
+
+
+              <p>
+                {order.address.country}
+              </p>
+
+
+            </div>
+
+
+          </section>
+
+
+
+
+
+          {/* Summary */}
+
+<section
+  className="
+    rounded-2xl
+    border
+    border-stone-200
+    p-6
+  "
+>
+
+  <div
+    className="
+      flex
+      justify-between
+    "
+  >
+
+    <span>
+      Payment
+    </span>
+
+
+    <div className="text-right">
+
+  <p>
+    {payment.title}
+  </p>
+
+  <p className="text-sm text-neutral-500">
+    {payment.detail}
+  </p>
+
+</div>
+
+
+  </div>
+
+
+
+  <div
+    className="
+      mt-4
+      flex
+      justify-between
+      text-sm
+    "
+  >
+
+    <span>
+      Payment Status
+    </span>
+
+
+    <span
+      className="
+        uppercase
+        font-medium
+      "
+    >
+      {order.paymentStatus}
+    </span>
+
+
+  </div>
+
+
+
+  <div
+    className="
+      mt-4
+      flex
+      justify-between
+      text-sm
+    "
+  >
+
+    <span>
+      Shipping
+    </span>
+
+
+    <span>
+      {formatPrice(order.shippingFee)}
+    </span>
+
+
+  </div>
+
+
+
+  <div
+    className="
+      mt-5
+      flex
+      justify-between
+      border-t
+      pt-5
+      text-lg
+      font-medium
+    "
+  >
+
+    <span>
+      Total
+    </span>
+
+
+    <span>
+      {formatPrice(order.total)}
+    </span>
+
+
+  </div>
+
+
+</section>
+
+
+        </div>
+
+
+      </Container>
+
 
     </main>
 
-
-    
-
-    </>
   );
 
 }

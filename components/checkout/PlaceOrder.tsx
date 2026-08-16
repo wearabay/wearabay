@@ -29,42 +29,54 @@ export default function PlaceOrder() {
     payment,
   } = useCheckout();
 
-  function handlePlaceOrder() {
-    if (!items.length) {
-  router.push("/cart");
-  return;
-}
-    const orderId =
-      `WA-${Date.now()}`;
+  async function handlePlaceOrder() {
+  if (!items.length) {
+    router.push("/cart");
+    return;
+  }
 
-    createOrder({
-      id: orderId,
+  try {
+    const order = await createOrder({
       items,
-      customer:{
+
+      customer: {
         email: contact.email,
         phone: contact.phone,
       },
+
       address,
+
       delivery,
+
       payment,
+
       subtotal,
-      status:"pending",
-      createdAt:
-        new Date().toISOString(),
+
+      shippingFee: 0,
+
+      total: subtotal,
+
+      status: "pending",
+
+      paymentStatus: "pending",
     });
 
-    /*
-      Untuk sekarang:
-      arahkan ke payment page
-
-      Nanti setelah payment berhasil:
-      clearCart()
-    */
     router.push(
-      `/checkout/payment?order=${orderId}`
+      `/checkout/payment?order=${order.id}`
     );
 
+  } catch (error) {
+    console.error(
+      "Failed to create order:",
+      error
+    );
+
+    alert(
+      "Unable to place your order. Please try again."
+    );
   }
+}
+
   return (
 
     <section

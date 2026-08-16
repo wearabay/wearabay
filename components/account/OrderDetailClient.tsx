@@ -39,12 +39,33 @@ const [loading, setLoading] =
 
 
   useEffect(() => {
-  const data =
-    getOrderById(orderId);
-  setOrder(
-    data ?? null
-  );
-  setLoading(false);
+  let mounted = true;
+
+  async function loadOrder() {
+    try {
+      const data =
+        await getOrderById(orderId);
+
+      if (mounted) {
+        setOrder(data ?? null);
+      }
+    } catch (error) {
+      console.error(
+        "Failed to load order:",
+        error
+      );
+
+      if (mounted) {
+        setOrder(null);
+      }
+    }
+  }
+
+  loadOrder();
+
+  return () => {
+    mounted = false;
+  };
 }, [orderId]);
 
 
@@ -94,13 +115,13 @@ if (!order) {
         </p>
 
 
-        <h1 className="
-          mt-3
-          text-4xl
-          font-light
-        ">
-          {order.id}
-        </h1>
+<h1 className="
+  mt-3
+  text-4xl
+  font-light
+">
+  {order.orderNumber}
+</h1>
 
 
       </div>
@@ -399,7 +420,7 @@ if (!order) {
 
 
           <span>
-            {formatPrice(order.subtotal)}
+            {formatPrice(order.total)}
           </span>
 
 

@@ -13,15 +13,18 @@ import CartDrawer from "@/components/cart/CartDrawer";
 import SearchDrawer from "@/components/search/SearchDrawer";
 
 import { openCart } from "@/lib/cart-drawer";
+import type { Product } from "@/types/product";
 
 
 type NavbarProps = {
   transparent?: boolean;
+  products: Product[];
 };
 
 
 export default function Navbar({
   transparent = false,
+  products,
 }: NavbarProps) {
 
 
@@ -232,13 +235,15 @@ export default function Navbar({
 
       <SearchDrawer
 
-        open={searchOpen}
+  open={searchOpen}
 
-        onClose={()=>
-          setSearchOpen(false)
-        }
+  products={products}
 
-      />
+  onClose={()=>
+    setSearchOpen(false)
+  }
+
+/>
 
 
 

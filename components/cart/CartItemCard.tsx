@@ -27,6 +27,7 @@ export default function CartItemCard({
           src={item.image}
           alt={item.name}
           fill
+          sizes="80px"
           className="object-cover"
         />
       </div>
@@ -81,25 +82,25 @@ export default function CartItemCard({
           </p>
 
           <button
-  aria-label="Remove item"
-  onClick={() =>
-    removeItem(
-      item.id,
-      item.color,
-      item.size
-    )
-  }
-  className="
-    rounded-full
-    p-2
-    text-neutral-500
-    transition
-    hover:bg-red-50
-    hover:text-red-500
-  "
->
-  <Trash2 size={18} />
-</button>
+            aria-label="Remove item"
+            onClick={() =>
+              removeItem(
+                item.id,
+                item.color,
+                item.size
+              )
+            }
+            className="
+              rounded-full
+              p-2
+              text-neutral-500
+              transition
+              hover:bg-red-50
+              hover:text-red-500
+            "
+          >
+            <Trash2 size={18} />
+          </button>
         </div>
       </div>
     </div>

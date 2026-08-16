@@ -9,10 +9,11 @@ import { formatPrice } from "@/lib/currency";
 import {
   getOrderById,
   updateOrderStatus,
+  updateOrderPaymentStatus,
   type Order,
 } from "@/lib/order";
 
-import { clearCart } from "@/lib/cart";
+import { useCart } from "@/context/CartContext";
 
 
 type Props = {
@@ -24,62 +25,111 @@ export default function PaymentClient({
   orderId,
 }: Props) {
 
+  const {
+    clearCart,
+  } = useCart();
 
   const [order, setOrder] =
     useState<Order | null>(null);
-
 
   const [loading, setLoading] =
     useState(false);
 
 
+  /* =======================================================
+     LOAD ORDER
+  ======================================================= */
 
   useEffect(() => {
+  if (!orderId) {
+    setOrder(null);
+    return;
+  }
 
-    if (!orderId) return;
+  let mounted = true;
+
+  async function loadOrder(id: string) {
+    try {
+      const data = await getOrderById(id);
+
+      if (mounted) {
+        setOrder(data ?? null);
+      }
+    } catch (error) {
+      console.error(
+        "Failed to load order:",
+        error
+      );
+
+      if (mounted) {
+        setOrder(null);
+      }
+    }
+  }
+
+  loadOrder(orderId);
+
+  return () => {
+    mounted = false;
+  };
+}, [orderId]);
 
 
-    const data =
-      getOrderById(orderId);
+  /* =======================================================
+     PAYMENT SUCCESS
+  ======================================================= */
 
+  async function handlePaymentSuccess() {
+  if (!order) return;
 
-    setOrder(
-      data ?? null
-    );
+  setLoading(true);
 
-
-  }, [orderId]);
-
-
-
-
-  function handlePaymentSuccess() {
-
-    if (!order) return;
-
-
-    setLoading(true);
-
-
-    // Update status order
-
-    updateOrderStatus(
+  try {
+    await updateOrderStatus(
       order.id,
       "paid"
     );
 
+    await updateOrderPaymentStatus(
+      order.id,
+      "paid"
+    );
 
     // kosongkan cart
 
-    clearCart();
+await clearCart();
 
+window.dispatchEvent(
+  new Event("cart-updated")
+);// kosongkan cart
 
-    // menuju success
+await clearCart();
+
+window.dispatchEvent(
+  new Event("cart-updated")
+);
 
     window.location.href =
       `/checkout/success?order=${order.id}`;
 
+  } catch (error) {
+    console.error(
+      "Failed to confirm payment:",
+      error
+    );
+
+    setLoading(false);
+
+    alert(
+      "Unable to confirm payment. Please try again."
+    );
   }
+}
+
+
+  /* =======================================================
+     ORDER NOT FOUND
+  ======================================================= */
 
   if (!order) {
 
@@ -103,25 +153,40 @@ export default function PaymentClient({
           Order Not Found
         </h1>
 
-        <p className="
-          mt-3
-          text-sm
-          text-neutral-500
-        ">
+        <p
+          className="
+            mt-3
+            text-sm
+            text-neutral-500
+          "
+        >
           This order may no longer exist.
         </p>
+
       </div>
+
     );
+
   }
 
+
+  /* =======================================================
+     PAYMENT LABEL
+  ======================================================= */
+
   const paymentLabel =
-  order.payment === "bank"
-    ? "Bank Transfer"
-    : order.payment === "ewallet"
-    ? "E-Wallet"
-    : order.payment === "qris"
-    ? "QRIS"
-    : "Cash on Delivery";
+    order.payment === "bank"
+      ? "Bank Transfer"
+      : order.payment === "ewallet"
+        ? "E-Wallet"
+        : order.payment === "qris"
+          ? "QRIS"
+          : "Cash on Delivery";
+
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
 
@@ -132,7 +197,10 @@ export default function PaymentClient({
         space-y-8
       "
     >
-      {/* Header */}
+
+      {/* ===================================================
+          HEADER
+      =================================================== */}
 
       <section
         className="
@@ -168,21 +236,20 @@ export default function PaymentClient({
 
         <div className="mt-6 space-y-2">
 
-          <p className="
-            text-sm
-            text-neutral-500
-          ">
+          <p
+            className="
+              text-sm
+              text-neutral-500
+            "
+          >
             Order Number
           </p>
 
 
-          <p
-            className="
-              font-medium
-            "
-          >
+          <p className="font-medium">
             {order.id}
           </p>
+
 
           <p
             className="
@@ -192,10 +259,16 @@ export default function PaymentClient({
           >
             Status: {order.status}
           </p>
+
         </div>
+
       </section>
 
-      {/* Items */}
+
+      {/* ===================================================
+          ITEMS
+      =================================================== */}
+
       <section
         className="
           rounded-2xl
@@ -215,11 +288,8 @@ export default function PaymentClient({
           Order Summary
         </h2>
 
-        <div
-          className="
-            space-y-5
-          "
-        >
+
+        <div className="space-y-5">
 
           {order.items.map(
             (item) => (
@@ -232,36 +302,53 @@ export default function PaymentClient({
                   text-sm
                 "
               >
+
                 <div>
 
                   <p>
                     {item.name}
                   </p>
 
-                  <p className="
-                    text-neutral-500
-                  ">
+
+                  <p
+                    className="
+                      text-neutral-500
+                    "
+                  >
+
                     {item.color}
-                    {item.color && item.size
+
+                    {item.color &&
+                    item.size
                       ? " • "
                       : ""}
+
                     {item.size}
+
                     {" "}
                     x {item.quantity}
+
                   </p>
+
                 </div>
+
+
                 <p>
-                  {
-                    formatPrice(
-                      item.price *
-                      item.quantity
-                    )
-                  }
+
+                  {formatPrice(
+                    item.price *
+                    item.quantity
+                  )}
+
                 </p>
+
               </div>
+
             )
           )}
+
         </div>
+
 
         <div
           className="
@@ -281,16 +368,21 @@ export default function PaymentClient({
 
 
           <span>
-            {
-              formatPrice(
-                order.subtotal
-              )
-            }
+
+            {formatPrice(
+              order.subtotal
+            )}
+
           </span>
+
         </div>
+
       </section>
 
-      {/* Payment Method */}
+
+      {/* ===================================================
+          PAYMENT METHOD
+      =================================================== */}
 
       <section
         className="
@@ -313,11 +405,15 @@ export default function PaymentClient({
 
 
         <p className="text-sm font-medium">
- {paymentLabel}
-</p>
+          {paymentLabel}
+        </p>
+
       </section>
 
-      {/* Button */}
+
+      {/* ===================================================
+          CONFIRM PAYMENT
+      =================================================== */}
 
       <Button
         fullWidth
@@ -325,14 +421,11 @@ export default function PaymentClient({
         onClick={handlePaymentSuccess}
       >
 
-        {
-          loading
-            ? "Processing..."
-            : "Confirm Payment"
-        }
+        {loading
+          ? "Processing..."
+          : "Confirm Payment"}
 
       </Button>
-
 
     </div>
 

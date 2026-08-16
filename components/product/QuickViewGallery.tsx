@@ -11,7 +11,6 @@ type Props = {
 export default function QuickViewGallery({
   product,
 }: Props) {
-
   const images =
     product.images?.length
       ? product.images
@@ -20,10 +19,9 @@ export default function QuickViewGallery({
   const [active, setActive] = useState(0);
 
   return (
+    <div className="flex flex-col gap-4 lg:flex-row">
 
-    <div className="flex flex-col lg:flex-row gap-4">
-
-      {/* thumbnails */}
+      {/* Thumbnails */}
 
       <div className="order-2 flex gap-3 overflow-x-auto lg:order-1 lg:flex-col">
 
@@ -32,7 +30,7 @@ export default function QuickViewGallery({
           <button
             key={index}
             onClick={() => setActive(index)}
-            className={`relative h-20 w-16 overflow-hidden rounded-lg border transition ${
+            className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-lg border transition ${
               active === index
                 ? "border-black"
                 : "border-stone-200"
@@ -43,6 +41,7 @@ export default function QuickViewGallery({
               src={image}
               alt={product.name}
               fill
+              sizes="64px"
               className="object-cover"
             />
 
@@ -52,7 +51,7 @@ export default function QuickViewGallery({
 
       </div>
 
-      {/* main image */}
+      {/* Main Image */}
 
       <div className="relative order-1 aspect-[3/4] flex-1 overflow-hidden rounded-2xl bg-stone-100 lg:order-2">
 
@@ -60,13 +59,12 @@ export default function QuickViewGallery({
           src={images[active]}
           alt={product.name}
           fill
+          sizes="(max-width:1024px) 100vw, calc(100vw - 160px)"
           className="object-cover transition duration-500 hover:scale-105"
         />
 
       </div>
 
     </div>
-
   );
-
 }

@@ -31,7 +31,7 @@ export default async function SuccessPage({
 
       <main>
 
-        <Container className="py-20">
+        <Container className="py-32">
 
           <SuccessClient
             orderId={order}

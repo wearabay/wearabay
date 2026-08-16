@@ -1,5 +1,5 @@
-import { products } from "@/data/products";
+import { getProductBySlug } from "@/lib/products";
 
-export function getProduct(slug: string) {
-  return products.find((product) => product.slug === slug);
+export async function getProduct(slug: string) {
+  return getProductBySlug(slug);
 }

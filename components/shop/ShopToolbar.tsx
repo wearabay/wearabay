@@ -6,7 +6,6 @@ import Container from "../ui/Container";
 import Input from "../ui/Input";
 import SortDropdown from "./SortDropdown";
 
-import { products } from "@/data/products";
 import { useShop } from "./context/ShopContext";
 import { useState } from "react";
 import FilterDrawer from "./filter/FilterDrawer";

@@ -9,6 +9,7 @@ import ProductDetails from "@/components/product/ProductDetails";
 import RelatedProducts from "@/components/product/RelatedProducts";
 import ProductTracker from "@/components/product/ProductTracker";
 import RecentlyViewed from "@/components/cart/RecentlyViewed";
+import { getProducts } from "@/lib/products";
 
 type Props = {
   params: Promise<{
@@ -19,25 +20,26 @@ type Props = {
 export default async function ProductDetail({ params }: Props) {
   const { slug } = await params;
 
-  const product = getProduct(slug);
+  const products = await getProducts();
+
+  const product = products.find(
+    (item) => item.slug === slug
+  );
 
   if (!product) {
     return (
       <>
-        
-
         <main className="py-40 text-center">
-          <h1 className="text-4xl">Product Not Found</h1>
+          <h1 className="text-4xl">
+            Product Not Found
+          </h1>
         </main>
-
-        
       </>
     );
   }
 
   return (
     <>
-      
       <ProductTracker slug={product.slug} />
 
       <main className="py-24">
@@ -60,34 +62,33 @@ export default async function ProductDetail({ params }: Props) {
 
           {/* Product Details */}
 
-<div className="mt-2 grid gap-16 lg:grid-cols-2">
+          <div className="mt-2 grid gap-16 lg:grid-cols-2">
 
-  <div />
+            <div />
 
-  <div>
-    <ProductDetails product={product} />
+            <div>
+              <ProductDetails product={product} />
 
-    <ReviewList productId={product.id} />
-  </div>
+              <ReviewList productId={product.id} />
+            </div>
 
-</div>
+          </div>
 
-{/* Recently Viewed */}
+          {/* Recently Viewed */}
 
-<RecentlyViewed
+          <RecentlyViewed
+  products={products}
   currentSlug={product.slug}
 />
 
-{/* Related Products */}
+          {/* Related Products */}
 
-<RelatedProducts
-  currentSlug={product.slug}
-/>
+          <RelatedProducts
+            currentSlug={product.slug}
+          />
 
         </Container>
       </main>
-
-      
     </>
   );
 }

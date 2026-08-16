@@ -1,26 +1,28 @@
-
-
 import { ShopProvider } from "@/components/shop/context/ShopContext";
 import ShopHeader from "@/components/shop/ShopHeader";
 import ShopToolbar from "@/components/shop/ShopToolbar";
 import ProductGrid from "@/components/shop/ProductGrid";
 
-export default function ShopPage() {
+import { getProducts } from "@/lib/products";
+
+export default async function ShopPage() {
+
+  const products = await getProducts();
+
   return (
-    <>
-      
+    <ShopProvider>
 
-      <ShopProvider>
+      <main>
+        <ShopHeader />
 
-        <main>
-          <ShopHeader />
-          <ShopToolbar />
-          <ProductGrid />
-        </main>
+        <ShopToolbar />
 
-      </ShopProvider>
+        <ProductGrid
+          products={products}
+        />
 
-      
-    </>
+      </main>
+
+    </ShopProvider>
   );
 }
