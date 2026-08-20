@@ -5,9 +5,14 @@ import {
 } from "@/lib/order-server";
 
 import { formatPrice } from "@/lib/currency";
+
 import {
   formatPaymentMethod,
 } from "@/lib/payment";
+
+import PaymentProofUpload from "./PaymentProofUpload";
+import { createClient } from "@/lib/supabase/server";
+
 
 type Props = {
   params: Promise<{
@@ -20,7 +25,8 @@ export default async function OrderDetailPage({
   params,
 }: Props) {
 
-  const { id } = await params;
+  const { id } =
+    await params;
 
 
   const order =
@@ -43,10 +49,13 @@ export default async function OrderDetailPage({
 
   }
 
-const payment =
-  formatPaymentMethod(
-    order.payment
-  );
+
+  const payment =
+    formatPaymentMethod(
+      order.payment
+    );
+
+
 
   return (
 
@@ -57,7 +66,9 @@ const payment =
         <div className="space-y-10">
 
 
-          {/* Header */}
+          {/* =================================================
+              HEADER
+          ================================================= */}
 
           <div>
 
@@ -85,7 +96,13 @@ const payment =
             </h1>
 
 
-            <p className="mt-2 text-sm text-neutral-500">
+            <p
+              className="
+                mt-2
+                text-sm
+                text-neutral-500
+              "
+            >
               {order.orderNumber}
             </p>
 
@@ -93,10 +110,9 @@ const payment =
           </div>
 
 
-
-
-
-          {/* Items */}
+          {/* =================================================
+              ITEMS
+          ================================================= */}
 
           <section
             className="
@@ -114,12 +130,15 @@ const payment =
 
             <div className="space-y-5">
 
-
               {order.items.map(
                 (item) => (
 
                   <div
-                    key={`${item.id}-${item.color}-${item.size}`}
+                    key={`
+                      ${item.id}-
+                      ${item.color ?? ""}-
+                      ${item.size ?? ""}
+                    `}
                     className="
                       flex
                       justify-between
@@ -134,11 +153,16 @@ const payment =
                       </p>
 
 
-                      <p className="text-neutral-500">
+                      <p
+                        className="
+                          text-neutral-500
+                        "
+                      >
 
                         {item.color}
 
-                        {item.color && item.size
+                        {item.color &&
+                        item.size
                           ? " • "
                           : ""}
 
@@ -149,7 +173,6 @@ const payment =
                         {item.quantity}
 
                       </p>
-
 
                     </div>
 
@@ -163,23 +186,19 @@ const payment =
 
                     </span>
 
-
                   </div>
 
                 )
               )}
 
-
             </div>
-
 
           </section>
 
 
-
-
-
-          {/* Shipping */}
+          {/* =================================================
+              SHIPPING
+          ================================================= */}
 
           <section
             className="
@@ -203,7 +222,12 @@ const payment =
               "
             >
 
-              <p className="font-medium text-black">
+              <p
+                className="
+                  font-medium
+                  text-black
+                "
+              >
 
                 {order.address.firstName}
 
@@ -235,140 +259,156 @@ const payment =
                 {order.address.country}
               </p>
 
-
             </div>
-
 
           </section>
 
 
+          {/* =================================================
+              PAYMENT SUMMARY
+          ================================================= */}
+
+          <section
+            className="
+              rounded-2xl
+              border
+              border-stone-200
+              p-6
+            "
+          >
+
+            <div
+              className="
+                flex
+                justify-between
+                gap-6
+              "
+            >
+
+              <span>
+                Payment
+              </span>
 
 
+              <div className="text-right">
 
-          {/* Summary */}
-
-<section
-  className="
-    rounded-2xl
-    border
-    border-stone-200
-    p-6
-  "
->
-
-  <div
-    className="
-      flex
-      justify-between
-    "
-  >
-
-    <span>
-      Payment
-    </span>
+                <p>
+                  {payment.title}
+                </p>
 
 
-    <div className="text-right">
+                <p
+                  className="
+                    text-sm
+                    text-neutral-500
+                  "
+                >
+                  {payment.detail}
+                </p>
 
-  <p>
-    {payment.title}
-  </p>
+              </div>
 
-  <p className="text-sm text-neutral-500">
-    {payment.detail}
-  </p>
-
-</div>
-
-
-  </div>
+            </div>
 
 
+            <div
+              className="
+                mt-4
+                flex
+                justify-between
+                text-sm
+              "
+            >
 
-  <div
-    className="
-      mt-4
-      flex
-      justify-between
-      text-sm
-    "
-  >
-
-    <span>
-      Payment Status
-    </span>
-
-
-    <span
-      className="
-        uppercase
-        font-medium
-      "
-    >
-      {order.paymentStatus}
-    </span>
+              <span>
+                Payment Status
+              </span>
 
 
-  </div>
+              <span
+                className="
+                  font-medium
+                  uppercase
+                "
+              >
+                {order.paymentStatus}
+              </span>
+
+            </div>
 
 
+            <div
+              className="
+                mt-4
+                flex
+                justify-between
+                text-sm
+              "
+            >
 
-  <div
-    className="
-      mt-4
-      flex
-      justify-between
-      text-sm
-    "
-  >
-
-    <span>
-      Shipping
-    </span>
-
-
-    <span>
-      {formatPrice(order.shippingFee)}
-    </span>
+              <span>
+                Shipping
+              </span>
 
 
-  </div>
+              <span>
+                {formatPrice(
+                  order.shippingFee
+                )}
+              </span>
+
+            </div>
 
 
+            <div
+              className="
+                mt-5
+                flex
+                justify-between
+                border-t
+                border-stone-200
+                pt-5
+                text-lg
+                font-medium
+              "
+            >
 
-  <div
-    className="
-      mt-5
-      flex
-      justify-between
-      border-t
-      pt-5
-      text-lg
-      font-medium
-    "
-  >
-
-    <span>
-      Total
-    </span>
-
-
-    <span>
-      {formatPrice(order.total)}
-    </span>
+              <span>
+                Total
+              </span>
 
 
-  </div>
+              <span>
+                {formatPrice(
+                  order.total
+                )}
+              </span>
+
+            </div>
+
+          </section>
 
 
-</section>
+          {/* =================================================
+              PAYMENT PROOF
+          ================================================= */}
+
+          {payment.title === "Bank Transfer" &&
+            order.paymentStatus === "pending" && (
+
+              <PaymentProofUpload
+  orderId={order.id}
+  paymentProofPath={
+    order.paymentProofPath
+  }
+/>
+
+            )}
 
 
         </div>
 
-
       </Container>
-
 
     </main>
 

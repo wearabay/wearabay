@@ -61,6 +61,12 @@ export type Order = {
 
   paymentStatus: PaymentStatus;
 
+  paymentProofPath: string | null;
+
+  paymentProofUploadedAt: string | null;
+
+  paymentProofVerifiedAt: string | null;
+
   createdAt: string;
 
 };
@@ -256,6 +262,15 @@ export function mapOrder(
 
     paymentStatus:
       row.payment_status,
+
+    paymentProofPath:
+      row.payment_proof_path ?? null,
+
+    paymentProofUploadedAt:
+      row.payment_proof_uploaded_at ?? null,
+
+    paymentProofVerifiedAt:
+      row.payment_proof_verified_at ?? null,
 
     createdAt:
       row.created_at,
@@ -506,7 +521,7 @@ export async function createOrder(
      Return complete order
   ------------------------------------------------------- */
 
-  return {
+    return {
 
     id:
       orderRow.id,
@@ -543,6 +558,15 @@ export async function createOrder(
 
     paymentStatus:
       orderRow.payment_status,
+
+    paymentProofPath:
+      orderRow.payment_proof_path ?? null,
+
+    paymentProofUploadedAt:
+      orderRow.payment_proof_uploaded_at ?? null,
+
+    paymentProofVerifiedAt:
+      orderRow.payment_proof_verified_at ?? null,
 
     createdAt:
       orderRow.created_at,

@@ -7,22 +7,7 @@ const paymentOptions = [
   {
     id: "bank",
     title: "Bank Transfer",
-    description: "BCA • Mandiri • BNI • BRI",
-  },
-  {
-    id: "ewallet",
-    title: "E-Wallet",
-    description: "GoPay • OVO • DANA • ShopeePay",
-  },
-  {
-    id: "qris",
-    title: "QRIS",
-    description: "Pay using any QRIS supported application",
-  },
-  {
-    id: "cod",
-    title: "Cash on Delivery",
-    description: "Available in selected areas",
+    description: "BCA • Mandiri",
   },
 ];
 
@@ -69,6 +54,7 @@ export default function PaymentMethod() {
               <input
                 type="radio"
                 name="payment"
+                value={option.id}
                 checked={payment === option.id}
                 onChange={() => setPayment(option.id)}
                 className="mt-1"
