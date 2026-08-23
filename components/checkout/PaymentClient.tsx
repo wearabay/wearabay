@@ -8,12 +8,14 @@ import { formatPrice } from "@/lib/currency";
 
 import {
   getOrderById,
-  updateOrderStatus,
-  updateOrderPaymentStatus,
   type Order,
 } from "@/lib/order";
 
 import { useCart } from "@/context/CartContext";
+
+import {
+  confirmPaymentAction,
+} from "@/app/account/orders/[id]/actions";
 
 
 type Props = {
@@ -80,50 +82,72 @@ export default function PaymentClient({
   ======================================================= */
 
   async function handlePaymentSuccess() {
-  if (!order) return;
+
+  if (!order) {
+    return;
+  }
+
 
   setLoading(true);
 
+
   try {
-    await updateOrderStatus(
-      order.id,
-      "paid"
+
+    const result =
+      await confirmPaymentAction(
+        order.id
+      );
+
+
+    if (!result.success) {
+
+      setLoading(false);
+
+      alert(
+        result.message
+      );
+
+      return;
+
+    }
+
+
+    /* =================================================
+       CLEAR CART
+    ================================================= */
+
+    await clearCart();
+
+
+    window.dispatchEvent(
+      new Event("cart-updated")
     );
 
-    await updateOrderPaymentStatus(
-      order.id,
-      "paid"
-    );
 
-    // kosongkan cart
-
-await clearCart();
-
-window.dispatchEvent(
-  new Event("cart-updated")
-);// kosongkan cart
-
-await clearCart();
-
-window.dispatchEvent(
-  new Event("cart-updated")
-);
+    /* =================================================
+       REDIRECT
+    ================================================= */
 
     window.location.href =
       `/checkout/success?order=${order.id}`;
 
   } catch (error) {
+
     console.error(
       "Failed to confirm payment:",
       error
     );
 
+
     setLoading(false);
+
 
     alert(
       "Unable to confirm payment. Please try again."
     );
+
   }
+
 }
 
 

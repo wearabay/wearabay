@@ -50,7 +50,6 @@ export async function savePaymentProofAction(
     }
 
 
-
     const {
       data: order,
       error: orderError,
@@ -80,11 +79,9 @@ export async function savePaymentProofAction(
         .maybeSingle();
 
 
-
     if(orderError){
       throw orderError;
     }
-
 
 
     if(!order){
@@ -98,14 +95,12 @@ export async function savePaymentProofAction(
     }
 
 
-
     const payment =
       String(
         order.payment_method ?? ""
       )
       .trim()
       .toLowerCase();
-
 
 
     if(
@@ -123,7 +118,6 @@ export async function savePaymentProofAction(
     }
 
 
-
     if(
       order.payment_status !== "pending"
     ){
@@ -137,10 +131,8 @@ export async function savePaymentProofAction(
     }
 
 
-
     const expectedPrefix =
       `${user.id}/${orderId}/`;
-
 
 
     if(
@@ -158,10 +150,8 @@ export async function savePaymentProofAction(
     }
 
 
-
     const oldPath =
       order.payment_proof_path;
-
 
 
     const {
@@ -195,11 +185,9 @@ export async function savePaymentProofAction(
         );
 
 
-
     if(updateError){
       throw updateError;
     }
-
 
 
     if(
@@ -219,7 +207,6 @@ export async function savePaymentProofAction(
           ]);
 
 
-
       if(removeError){
 
         console.error(
@@ -232,11 +219,9 @@ export async function savePaymentProofAction(
     }
 
 
-
     revalidatePath(
       `/account/orders/${orderId}`
     );
-
 
 
     return {
@@ -274,6 +259,148 @@ export async function savePaymentProofAction(
 
 }
 
+
+/* =====================================================
+   CONFIRM PAYMENT
+===================================================== */
+
+export async function confirmPaymentAction(
+  orderId: string
+): Promise<ActionResult> {
+
+  try {
+
+    const supabase =
+      await createClient();
+
+
+    /* =================================================
+       AUTH
+    ================================================= */
+
+    const {
+      data: {
+        user,
+      },
+    } =
+      await supabase.auth.getUser();
+
+
+    if (!user) {
+
+      return {
+
+        success: false,
+
+        message:
+          "Unauthorized.",
+
+      };
+
+    }
+
+
+    /* =================================================
+       CONFIRM PAYMENT
+    ================================================= */
+
+    const {
+      data,
+      error,
+    } =
+      await supabase.rpc(
+        "confirm_order_payment",
+        {
+          p_order_id: orderId,
+        }
+      );
+
+
+    if (error) {
+
+      console.error(
+        "Confirm order payment RPC failed:",
+        error
+      );
+
+
+      return {
+
+        success: false,
+
+        message:
+          error.message ||
+          "Unable to confirm payment.",
+
+      };
+
+    }
+
+
+    if (!data) {
+
+      return {
+
+        success: false,
+
+        message:
+          "Payment could not be confirmed.",
+
+      };
+
+    }
+
+
+    /* =================================================
+       REVALIDATE
+    ================================================= */
+
+    revalidatePath(
+      `/account/orders/${orderId}`
+    );
+
+
+    revalidatePath(
+      "/account/orders"
+    );
+
+
+    /* =================================================
+       SUCCESS
+    ================================================= */
+
+    return {
+
+      success: true,
+
+      message:
+        "Payment confirmed.",
+
+    };
+
+
+  } catch (error) {
+
+    console.error(
+      "Confirm payment failed:",
+      error
+    );
+
+
+    return {
+
+      success: false,
+
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to confirm payment.",
+
+    };
+
+  }
+
+}
 
 
 /* =====================================================
@@ -393,7 +520,6 @@ export async function confirmReceivedAction(
         "Order completed.",
 
     };
-
 
   } catch (error) {
 
