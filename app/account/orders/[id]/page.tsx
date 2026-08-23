@@ -11,7 +11,16 @@ import {
 } from "@/lib/payment";
 
 import PaymentProofUpload from "./PaymentProofUpload";
-import { createClient } from "@/lib/supabase/server";
+
+import OrderTimeline from "@/components/orders/OrderTimeline";
+
+import ConfirmReceivedButton from "./ConfirmReceivedButton";
+
+import {
+  getOrderHistory,
+} from "@/lib/order-history";
+
+import OrderHistory from "@/components/orders/OrderHistory";
 
 
 type Props = {
@@ -24,6 +33,7 @@ type Props = {
 export default async function OrderDetailPage({
   params,
 }: Props) {
+
 
   const { id } =
     await params;
@@ -50,11 +60,14 @@ export default async function OrderDetailPage({
   }
 
 
+  const history =
+    await getOrderHistory(id);
+
+
   const payment =
     formatPaymentMethod(
       order.payment
     );
-
 
 
   return (
@@ -106,8 +119,17 @@ export default async function OrderDetailPage({
               {order.orderNumber}
             </p>
 
-
           </div>
+
+
+          {/* =================================================
+              ORDER TIMELINE
+          ================================================= */}
+
+          <OrderTimeline
+            orderStatus={order.status}
+            paymentStatus={order.paymentStatus}
+          />
 
 
           {/* =================================================
@@ -197,7 +219,7 @@ export default async function OrderDetailPage({
 
 
           {/* =================================================
-              SHIPPING
+              SHIPPING ADDRESS
           ================================================= */}
 
           <section
@@ -262,6 +284,166 @@ export default async function OrderDetailPage({
             </div>
 
           </section>
+
+
+          {/* =================================================
+              RECEIVED ORDER
+          ================================================= */}
+
+          {order.status === "shipped" && (
+
+            <section
+              className="
+                rounded-2xl
+                border
+                border-stone-200
+                p-6
+              "
+            >
+
+              <h2 className="mb-4">
+                Received your order?
+              </h2>
+
+
+              <p
+                className="
+                  mb-5
+                  text-sm
+                  text-neutral-500
+                "
+              >
+                Confirm once your package has arrived.
+              </p>
+
+
+              <ConfirmReceivedButton
+                orderId={order.id}
+              />
+
+            </section>
+
+          )}
+
+
+          {/* =================================================
+              ORDER HISTORY
+          ================================================= */}
+
+          <OrderHistory
+            history={history}
+          />
+
+
+          {/* =================================================
+              SHIPMENT
+          ================================================= */}
+
+          {order.trackingNumber && (
+
+            <section
+              className="
+                rounded-2xl
+                border
+                border-stone-200
+                p-6
+              "
+            >
+
+              <h2 className="mb-4">
+                Shipment
+              </h2>
+
+
+              <div
+                className="
+                  text-sm
+                  leading-7
+                  text-neutral-600
+                "
+              >
+
+                <div
+                  className="
+                    flex
+                    justify-between
+                  "
+                >
+
+                  <span>
+                    Courier
+                  </span>
+
+
+                  <span
+                    className="
+                      font-medium
+                      text-black
+                    "
+                  >
+                    {order.courier}
+                  </span>
+
+                </div>
+
+
+                <div
+                  className="
+                    mt-2
+                    flex
+                    justify-between
+                  "
+                >
+
+                  <span>
+                    Tracking Number
+                  </span>
+
+
+                  <span
+                    className="
+                      font-medium
+                      text-black
+                    "
+                  >
+                    {order.trackingNumber}
+                  </span>
+
+                </div>
+
+
+                {order.shippedAt && (
+
+                  <div
+                    className="
+                      mt-2
+                      flex
+                      justify-between
+                    "
+                  >
+
+                    <span>
+                      Shipped At
+                    </span>
+
+
+                    <span>
+                      {new Date(
+                        order.shippedAt
+                      ).toLocaleDateString(
+                        "id-ID"
+                      )}
+                    </span>
+
+                  </div>
+
+                )}
+
+              </div>
+
+            </section>
+
+          )}
 
 
           {/* =================================================
@@ -397,14 +579,13 @@ export default async function OrderDetailPage({
             order.paymentStatus === "pending" && (
 
               <PaymentProofUpload
-  orderId={order.id}
-  paymentProofPath={
-    order.paymentProofPath
-  }
-/>
+                orderId={order.id}
+                paymentProofPath={
+                  order.paymentProofPath
+                }
+              />
 
-            )}
-
+          )}
 
         </div>
 

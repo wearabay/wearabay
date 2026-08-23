@@ -10,6 +10,16 @@ type UploadPaymentProofResult = {
 };
 
 
+type ActionResult = {
+  success: boolean;
+  message: string;
+};
+
+
+/* =====================================================
+   SAVE PAYMENT PROOF
+===================================================== */
+
 export async function savePaymentProofAction(
   orderId: string,
   path: string
@@ -20,10 +30,6 @@ export async function savePaymentProofAction(
     const supabase =
       await createClient();
 
-
-    /* =====================================================
-       AUTH
-    ===================================================== */
 
     const {
       data: {
@@ -36,7 +42,7 @@ export async function savePaymentProofAction(
     if (!user) {
 
       return {
-        success: false,
+        success:false,
         message:
           "You must be logged in.",
       };
@@ -44,9 +50,6 @@ export async function savePaymentProofAction(
     }
 
 
-    /* =====================================================
-       LOAD ORDER
-    ===================================================== */
 
     const {
       data: order,
@@ -77,17 +80,17 @@ export async function savePaymentProofAction(
         .maybeSingle();
 
 
-    if (orderError) {
 
+    if(orderError){
       throw orderError;
-
     }
 
 
-    if (!order) {
+
+    if(!order){
 
       return {
-        success: false,
+        success:false,
         message:
           "Order not found.",
       };
@@ -95,26 +98,24 @@ export async function savePaymentProofAction(
     }
 
 
-    /* =====================================================
-       PAYMENT METHOD
-    ===================================================== */
 
     const payment =
       String(
         order.payment_method ?? ""
       )
-        .trim()
-        .toLowerCase();
+      .trim()
+      .toLowerCase();
 
 
-    if (
+
+    if(
       payment !== "bank" &&
       payment !== "bank_transfer" &&
       payment !== "bank transfer"
-    ) {
+    ){
 
       return {
-        success: false,
+        success:false,
         message:
           "Payment proof is only available for bank transfer orders.",
       };
@@ -122,17 +123,13 @@ export async function savePaymentProofAction(
     }
 
 
-    /* =====================================================
-       PAYMENT STATUS
-    ===================================================== */
 
-    if (
-      order.payment_status !==
-      "pending"
-    ) {
+    if(
+      order.payment_status !== "pending"
+    ){
 
       return {
-        success: false,
+        success:false,
         message:
           "Payment proof can only be uploaded while payment is pending.",
       };
@@ -140,22 +137,20 @@ export async function savePaymentProofAction(
     }
 
 
-    /* =====================================================
-       VERIFY PATH
-    ===================================================== */
 
     const expectedPrefix =
       `${user.id}/${orderId}/`;
 
 
-    if (
+
+    if(
       !path.startsWith(
         expectedPrefix
       )
-    ) {
+    ){
 
       return {
-        success: false,
+        success:false,
         message:
           "Invalid payment proof path.",
       };
@@ -163,16 +158,14 @@ export async function savePaymentProofAction(
     }
 
 
-    /* =====================================================
-       SAVE NEW PAYMENT PROOF
-    ===================================================== */
 
     const oldPath =
       order.payment_proof_path;
 
 
+
     const {
-      error: updateError,
+      error:updateError,
     } =
       await supabase
 
@@ -186,9 +179,6 @@ export async function savePaymentProofAction(
           payment_proof_uploaded_at:
             new Date().toISOString(),
 
-          /*
-           * A new upload must be reviewed again.
-           */
           payment_proof_verified_at:
             null,
 
@@ -205,24 +195,20 @@ export async function savePaymentProofAction(
         );
 
 
-    if (updateError) {
 
+    if(updateError){
       throw updateError;
-
     }
 
 
-    /* =====================================================
-       REMOVE OLD PAYMENT PROOF
-    ===================================================== */
 
-    if (
+    if(
       oldPath &&
       oldPath !== path
-    ) {
+    ){
 
       const {
-        error: removeError,
+        error:removeError,
       } =
         await supabase.storage
 
@@ -233,18 +219,11 @@ export async function savePaymentProofAction(
           ]);
 
 
-      if (removeError) {
 
-        /*
-         * Do not fail the upload because
-         * the old file could not be removed.
-         *
-         * The database already points to
-         * the new payment proof.
-         */
+      if(removeError){
 
         console.error(
-          "Failed to remove old payment proof:",
+          "Failed removing old proof:",
           removeError
         );
 
@@ -253,25 +232,27 @@ export async function savePaymentProofAction(
     }
 
 
-    /* =====================================================
-       REFRESH ORDER PAGE
-    ===================================================== */
 
     revalidatePath(
       `/account/orders/${orderId}`
     );
 
 
+
     return {
-      success: true,
+
+      success:true,
+
       message:
         oldPath
           ? "Payment proof replaced successfully."
           : "Payment proof uploaded successfully.",
+
     };
 
 
-  } catch (error) {
+  } catch(error) {
+
 
     console.error(
       "Failed to save payment proof:",
@@ -280,9 +261,157 @@ export async function savePaymentProofAction(
 
 
     return {
-      success: false,
+
+      success:false,
+
       message:
         "Failed to save payment proof.",
+
+    };
+
+
+  }
+
+}
+
+
+
+/* =====================================================
+   CONFIRM RECEIVED
+===================================================== */
+
+export async function confirmReceivedAction(
+  orderId: string
+): Promise<ActionResult> {
+
+  try {
+
+    const supabase =
+      await createClient();
+
+
+    /* =================================================
+       AUTH
+    ================================================= */
+
+    const {
+      data: {
+        user,
+      },
+    } =
+      await supabase.auth.getUser();
+
+
+    if (!user) {
+
+      return {
+
+        success: false,
+
+        message:
+          "Unauthorized.",
+
+      };
+
+    }
+
+
+    /* =================================================
+       CONFIRM ORDER RECEIVED
+    ================================================= */
+
+    const {
+      data,
+      error,
+    } =
+      await supabase.rpc(
+        "confirm_order_received",
+        {
+          p_order_id: orderId,
+        }
+      );
+
+
+    if (error) {
+
+      console.error(
+        "Confirm order received RPC failed:",
+        error
+      );
+
+
+      return {
+
+        success: false,
+
+        message:
+          error.message ||
+          "Failed completing order.",
+
+      };
+
+    }
+
+
+    if (!data) {
+
+      return {
+
+        success: false,
+
+        message:
+          "Order could not be completed.",
+
+      };
+
+    }
+
+
+    /* =================================================
+       REVALIDATE
+    ================================================= */
+
+    revalidatePath(
+      `/account/orders/${orderId}`
+    );
+
+
+    revalidatePath(
+      "/account/orders"
+    );
+
+
+    /* =================================================
+       SUCCESS
+    ================================================= */
+
+    return {
+
+      success: true,
+
+      message:
+        "Order completed.",
+
+    };
+
+
+  } catch (error) {
+
+    console.error(
+      "Confirm received failed:",
+      error
+    );
+
+
+    return {
+
+      success: false,
+
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed completing order.",
+
     };
 
   }

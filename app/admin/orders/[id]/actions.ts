@@ -1,24 +1,19 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import {
   updateAdminOrderStatus,
   updateAdminPaymentStatus,
+  updateAdminShipping,
   verifyAdminPaymentProof,
   rejectAdminPaymentProof,
 } from "@/lib/admin-orders";
 
-import {
-  type OrderStatus,
-  type PaymentStatus,
+import type {
+  OrderStatus,
+  PaymentStatus,
 } from "@/lib/order";
-
-import { revalidatePath } from "next/cache";
-
-
-type ActionResult = {
-  success: boolean;
-  message: string;
-};
 
 
 /* =========================================================
@@ -26,15 +21,15 @@ type ActionResult = {
 ========================================================= */
 
 export async function updateAdminOrderStatusAction(
-  id: string,
+  orderId: string,
   status: OrderStatus
-): Promise<ActionResult> {
+) {
 
   try {
 
     const order =
       await updateAdminOrderStatus(
-        id,
+        orderId,
         status
       );
 
@@ -44,14 +39,14 @@ export async function updateAdminOrderStatusAction(
       return {
         success: false,
         message:
-          "Unauthorized or order not found.",
+          "Failed to update order status.",
       };
 
     }
 
 
     revalidatePath(
-      `/admin/orders/${id}`
+      `/admin/orders/${orderId}`
     );
 
     revalidatePath(
@@ -60,23 +55,33 @@ export async function updateAdminOrderStatusAction(
 
 
     return {
+
       success: true,
+
       message:
         "Order status updated.",
+
+      order,
+
     };
 
   } catch (error) {
 
     console.error(
-      "Failed to update admin order status:",
+      "Update admin order status failed:",
       error
     );
 
 
     return {
+
       success: false,
+
       message:
-        "Failed to update order status.",
+        error instanceof Error
+          ? error.message
+          : "Failed to update order status.",
+
     };
 
   }
@@ -89,15 +94,15 @@ export async function updateAdminOrderStatusAction(
 ========================================================= */
 
 export async function updateAdminPaymentStatusAction(
-  id: string,
+  orderId: string,
   paymentStatus: PaymentStatus
-): Promise<ActionResult> {
+) {
 
   try {
 
     const order =
       await updateAdminPaymentStatus(
-        id,
+        orderId,
         paymentStatus
       );
 
@@ -105,16 +110,19 @@ export async function updateAdminPaymentStatusAction(
     if (!order) {
 
       return {
+
         success: false,
+
         message:
-          "Unauthorized or order not found.",
+          "Failed to update payment status.",
+
       };
 
     }
 
 
     revalidatePath(
-      `/admin/orders/${id}`
+      `/admin/orders/${orderId}`
     );
 
     revalidatePath(
@@ -123,23 +131,163 @@ export async function updateAdminPaymentStatusAction(
 
 
     return {
+
       success: true,
+
       message:
         "Payment status updated.",
+
+      order,
+
     };
 
   } catch (error) {
 
     console.error(
-      "Failed to update admin payment status:",
+      "Update admin payment status failed:",
       error
     );
 
 
     return {
+
       success: false,
+
       message:
-        "Failed to update payment status.",
+        error instanceof Error
+          ? error.message
+          : "Failed to update payment status.",
+
+    };
+
+  }
+
+}
+
+
+/* =========================================================
+   UPDATE SHIPPING
+========================================================= */
+
+export async function updateAdminShippingAction(
+  orderId: string,
+  input: {
+    courier: string;
+    trackingNumber: string;
+  }
+) {
+
+  try {
+
+    /* -----------------------------------------------------
+       Basic validation
+    ----------------------------------------------------- */
+
+    const courier =
+      input.courier.trim();
+
+
+    const trackingNumber =
+      input.trackingNumber.trim();
+
+
+    if (!courier) {
+
+      return {
+
+        success: false,
+
+        message:
+          "Courier is required.",
+
+      };
+
+    }
+
+
+    if (!trackingNumber) {
+
+      return {
+
+        success: false,
+
+        message:
+          "Tracking number is required.",
+
+      };
+
+    }
+
+
+    /* -----------------------------------------------------
+       Update shipping
+    ----------------------------------------------------- */
+
+    const order =
+      await updateAdminShipping(
+        orderId,
+        {
+          courier,
+          trackingNumber,
+        }
+      );
+
+
+    if (!order) {
+
+      return {
+
+        success: false,
+
+        message:
+          "Shipping can only be updated when the order is processing.",
+
+      };
+
+    }
+
+
+    /* -----------------------------------------------------
+       Revalidate
+    ----------------------------------------------------- */
+
+    revalidatePath(
+      `/admin/orders/${orderId}`
+    );
+
+    revalidatePath(
+      "/admin/orders"
+    );
+
+
+    return {
+
+      success: true,
+
+      message:
+        "Shipping information saved.",
+
+      order,
+
+    };
+
+  } catch (error) {
+
+    console.error(
+      "Update admin shipping failed:",
+      error
+    );
+
+
+    return {
+
+      success: false,
+
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to save shipping information.",
+
     };
 
   }
@@ -153,16 +301,22 @@ export async function updateAdminPaymentStatusAction(
 
 export async function verifyAdminPaymentProofAction(
   formData: FormData
-): Promise<void> {
+) {
 
   const orderId =
     String(
-      formData.get("orderId") ?? ""
+      formData.get(
+        "orderId"
+      ) ?? ""
     );
 
 
   if (!orderId) {
-    return;
+
+    throw new Error(
+      "Missing order ID."
+    );
+
   }
 
 
@@ -176,11 +330,9 @@ export async function verifyAdminPaymentProofAction(
 
     if (!order) {
 
-      console.error(
-        "Unable to verify payment proof."
+      throw new Error(
+        "Payment proof could not be verified."
       );
-
-      return;
 
     }
 
@@ -194,12 +346,26 @@ export async function verifyAdminPaymentProofAction(
     );
 
 
+    return {
+
+      success: true,
+
+      message:
+        "Payment proof verified.",
+
+      order,
+
+    };
+
   } catch (error) {
 
     console.error(
-      "Failed to verify payment proof:",
+      "Verify payment proof failed:",
       error
     );
+
+
+    throw error;
 
   }
 
@@ -212,16 +378,22 @@ export async function verifyAdminPaymentProofAction(
 
 export async function rejectAdminPaymentProofAction(
   formData: FormData
-): Promise<void> {
+) {
 
   const orderId =
     String(
-      formData.get("orderId") ?? ""
+      formData.get(
+        "orderId"
+      ) ?? ""
     );
 
 
   if (!orderId) {
-    return;
+
+    throw new Error(
+      "Missing order ID."
+    );
+
   }
 
 
@@ -235,11 +407,9 @@ export async function rejectAdminPaymentProofAction(
 
     if (!order) {
 
-      console.error(
-        "Unable to reject payment proof."
+      throw new Error(
+        "Payment proof could not be rejected."
       );
-
-      return;
 
     }
 
@@ -253,12 +423,26 @@ export async function rejectAdminPaymentProofAction(
     );
 
 
+    return {
+
+      success: true,
+
+      message:
+        "Payment proof rejected.",
+
+      order,
+
+    };
+
   } catch (error) {
 
     console.error(
-      "Failed to reject payment proof:",
+      "Reject payment proof failed:",
       error
     );
+
+
+    throw error;
 
   }
 

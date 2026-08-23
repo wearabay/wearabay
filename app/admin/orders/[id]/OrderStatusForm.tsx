@@ -26,15 +26,49 @@ type Props = {
 };
 
 
-const orderStatuses: OrderStatus[] = [
-  "pending",
-  "paid",
-  "processing",
-  "shipped",
-  "completed",
-  "cancelled",
-];
+/* =========================================================
+   ORDER FLOW
+========================================================= */
 
+const orderFlow: Record<
+  OrderStatus,
+  OrderStatus[]
+> = {
+
+  pending: [
+    "pending",
+    "paid",
+  ],
+
+  paid: [
+    "paid",
+    "processing",
+  ],
+
+  processing: [
+    "processing",
+    "shipped",
+  ],
+
+  shipped: [
+    "shipped",
+    "completed",
+  ],
+
+  completed: [
+    "completed",
+  ],
+
+  cancelled: [
+    "cancelled",
+  ],
+
+};
+
+
+/* =========================================================
+   PAYMENT STATUS
+========================================================= */
 
 const paymentStatuses: PaymentStatus[] = [
   "pending",
@@ -44,6 +78,10 @@ const paymentStatuses: PaymentStatus[] = [
   "refunded",
 ];
 
+
+/* =========================================================
+   FORMAT LABEL
+========================================================= */
 
 function formatLabel(
   value: string
@@ -63,50 +101,283 @@ function formatLabel(
 }
 
 
+/* =========================================================
+   STATUS SELECT
+========================================================= */
+
+type StatusSelectProps = {
+  value: string;
+
+  options: string[];
+
+  disabled?: boolean;
+
+  open: boolean;
+
+  onToggle: () => void;
+
+  onSelect: (
+    value: string
+  ) => void;
+};
+
+
+function StatusSelect({
+  value,
+  options,
+  disabled,
+  open,
+  onToggle,
+  onSelect,
+}: StatusSelectProps) {
+
+  return (
+
+    <div
+      className="
+        overflow-hidden
+        rounded-xl
+        border
+        border-stone-300
+        bg-white
+      "
+    >
+
+      {/* =================================================
+          SELECTED VALUE
+      ================================================= */}
+
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onToggle}
+        className="
+          flex
+          h-12
+          w-full
+          items-center
+          justify-between
+          bg-white
+          px-4
+          text-left
+          outline-none
+          transition
+          hover:bg-stone-50
+          disabled:cursor-not-allowed
+          disabled:opacity-60
+        "
+      >
+
+        <span
+          className="
+            text-sm
+            font-medium
+            text-black
+          "
+        >
+          {formatLabel(value)}
+        </span>
+
+
+        <span
+          className={`
+            text-xs
+            text-neutral-400
+            transition-transform
+            ${open ? "rotate-180" : ""}
+          `}
+        >
+          ↓
+        </span>
+
+      </button>
+
+
+      {/* =================================================
+          INLINE OPTIONS
+      ================================================= */}
+
+      {open && (
+
+        <div
+          className="
+            border-t
+            border-stone-200
+            bg-white
+          "
+        >
+
+          {options.map(
+            (option) => {
+
+              const selected =
+                option === value;
+
+
+              return (
+
+                <button
+                  key={option}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() =>
+                    onSelect(option)
+                  }
+                  className="
+                    flex
+                    min-h-12
+                    w-full
+                    items-center
+                    justify-between
+                    border-b
+                    border-stone-100
+                    px-4
+                    text-left
+                    last:border-b-0
+                    transition
+                    hover:bg-stone-50
+                    disabled:cursor-not-allowed
+                  "
+                >
+
+                  <span
+                    className={`
+                      transition-all
+                      ${
+                        selected
+                          ? `
+                            text-[15px]
+                            font-extrabold
+                            text-black
+                          `
+                          : `
+                            text-sm
+                            font-normal
+                            text-neutral-600
+                          `
+                      }
+                    `}
+                  >
+                    {formatLabel(option)}
+                  </span>
+
+
+                  {selected && (
+
+                    <span
+                      className="
+                        text-base
+                        font-extrabold
+                        text-black
+                      "
+                    >
+                      ✓
+                    </span>
+
+                  )}
+
+                </button>
+
+              );
+
+            }
+          )}
+
+        </div>
+
+      )}
+
+    </div>
+
+  );
+
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
 export default function OrderStatusForm({
   orderId,
   orderStatus,
   paymentStatus,
 }: Props) {
 
+
+  /* =======================================================
+     ORDER STATUS
+  ======================================================= */
+
   const [
-  currentOrderStatus,
-  setCurrentOrderStatus,
-] =
-  useState<OrderStatus>(
-    orderStatus
-  );
+    currentOrderStatus,
+    setCurrentOrderStatus,
+  ] =
+    useState<OrderStatus>(
+      orderStatus
+    );
 
 
-const [
-  currentPaymentStatus,
-  setCurrentPaymentStatus,
-] =
-  useState<PaymentStatus>(
-    paymentStatus
-  );
+  /* =======================================================
+     PAYMENT STATUS
+  ======================================================= */
+
+  const [
+    currentPaymentStatus,
+    setCurrentPaymentStatus,
+  ] =
+    useState<PaymentStatus>(
+      paymentStatus
+    );
 
 
-useEffect(() => {
+  /* =======================================================
+     OPEN STATE
+  ======================================================= */
 
-  setCurrentOrderStatus(
-    orderStatus
-  );
-
-}, [
-  orderStatus,
-]);
+  const [
+    orderStatusOpen,
+    setOrderStatusOpen,
+  ] =
+    useState(false);
 
 
-useEffect(() => {
+  const [
+    paymentStatusOpen,
+    setPaymentStatusOpen,
+  ] =
+    useState(false);
 
-  setCurrentPaymentStatus(
-    paymentStatus
-  );
 
-}, [
-  paymentStatus,
-]);
+  /* =======================================================
+     SYNC SERVER VALUE
+  ======================================================= */
+
+  useEffect(() => {
+
+    setCurrentOrderStatus(
+      orderStatus
+    );
+
+  }, [
+    orderStatus,
+  ]);
+
+
+  useEffect(() => {
+
+    setCurrentPaymentStatus(
+      paymentStatus
+    );
+
+  }, [
+    paymentStatus,
+  ]);
+
+
+  /* =======================================================
+     TRANSITION
+  ======================================================= */
 
   const [
     isPending,
@@ -115,6 +386,10 @@ useEffect(() => {
     useTransition();
 
 
+  /* =======================================================
+     MESSAGE
+  ======================================================= */
+
   const [
     message,
     setMessage,
@@ -122,9 +397,82 @@ useEffect(() => {
     useState("");
 
 
-  function handleOrderStatusChange(
-    value: OrderStatus
+  /* =========================================================
+     ORDER STATUS CHANGE
+  ========================================================= */
+
+  function handleOrderStatusSelect(
+    value: string
   ) {
+
+    const nextStatus =
+      value as OrderStatus;
+
+
+    /* -----------------------------------------------
+       Same status
+    ----------------------------------------------- */
+
+    if (
+      nextStatus ===
+      currentOrderStatus
+    ) {
+
+      setOrderStatusOpen(
+        false
+      );
+
+      return;
+
+    }
+
+
+    /* -----------------------------------------------
+       Close inline list first
+    ----------------------------------------------- */
+
+    setOrderStatusOpen(
+      false
+    );
+
+
+    /* -----------------------------------------------
+       Confirm
+    ----------------------------------------------- */
+
+    const confirmed =
+      window.confirm(
+        `Change order status from ${formatLabel(
+          currentOrderStatus
+        )} to ${formatLabel(
+          nextStatus
+        )}?`
+      );
+
+
+    /* -----------------------------------------------
+       CANCEL
+    ----------------------------------------------- */
+
+    if (!confirmed) {
+
+      /*
+        IMPORTANT:
+
+        Jangan set state ke value
+        dari dropdown.
+
+        Karena custom dropdown tidak
+        mengubah value sebelum confirm.
+
+        Jadi Cancel otomatis tetap
+        pada status sebelumnya.
+      */
+
+      return;
+
+    }
+
 
     setMessage("");
 
@@ -137,7 +485,7 @@ useEffect(() => {
           const result =
             await updateAdminOrderStatusAction(
               orderId,
-              value
+              nextStatus
             );
 
 
@@ -152,8 +500,13 @@ useEffect(() => {
           }
 
 
+          /*
+            Update UI hanya setelah
+            server berhasil.
+          */
+
           setCurrentOrderStatus(
-            value
+            nextStatus
           );
 
 
@@ -167,6 +520,7 @@ useEffect(() => {
             error
           );
 
+
           setMessage(
             "Failed to update order status."
           );
@@ -179,9 +533,65 @@ useEffect(() => {
   }
 
 
-  function handlePaymentStatusChange(
-    value: PaymentStatus
+  /* =========================================================
+     PAYMENT STATUS CHANGE
+  ========================================================= */
+
+  function handlePaymentStatusSelect(
+    value: string
   ) {
+
+    const nextStatus =
+      value as PaymentStatus;
+
+
+    /* -----------------------------------------------
+       Same status
+    ----------------------------------------------- */
+
+    if (
+      nextStatus ===
+      currentPaymentStatus
+    ) {
+
+      setPaymentStatusOpen(
+        false
+      );
+
+      return;
+
+    }
+
+
+    setPaymentStatusOpen(
+      false
+    );
+
+
+    /* -----------------------------------------------
+       Confirm
+    ----------------------------------------------- */
+
+    const confirmed =
+      window.confirm(
+        `Change payment status from ${formatLabel(
+          currentPaymentStatus
+        )} to ${formatLabel(
+          nextStatus
+        )}?`
+      );
+
+
+    /* -----------------------------------------------
+       CANCEL
+    ----------------------------------------------- */
+
+    if (!confirmed) {
+
+      return;
+
+    }
+
 
     setMessage("");
 
@@ -194,7 +604,7 @@ useEffect(() => {
           const result =
             await updateAdminPaymentStatusAction(
               orderId,
-              value
+              nextStatus
             );
 
 
@@ -210,7 +620,7 @@ useEffect(() => {
 
 
           setCurrentPaymentStatus(
-            value
+            nextStatus
           );
 
 
@@ -224,6 +634,7 @@ useEffect(() => {
             error
           );
 
+
           setMessage(
             "Failed to update payment status."
           );
@@ -235,6 +646,10 @@ useEffect(() => {
 
   }
 
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
 
   return (
 
@@ -258,15 +673,20 @@ useEffect(() => {
       </h2>
 
 
-      <div className="space-y-6">
+      <div
+        className="
+          space-y-6
+        "
+      >
 
 
-        {/* Order Status */}
+        {/* =================================================
+            ORDER STATUS
+        ================================================= */}
 
         <div>
 
           <label
-            htmlFor="order-status"
             className="
               mb-2
               block
@@ -280,53 +700,61 @@ useEffect(() => {
           </label>
 
 
-          <select
-            id="order-status"
-            value={currentOrderStatus}
-            disabled={isPending}
-            onChange={(event) =>
-              handleOrderStatusChange(
-                event.target.value as OrderStatus
-              )
+          <StatusSelect
+            value={
+              currentOrderStatus
             }
-            className="
-              h-12
-              w-full
-              rounded-xl
-              border
-              border-stone-300
-              bg-white
-              px-4
-              text-sm
-              outline-none
-              focus:border-black
-            "
-          >
 
-            {orderStatuses.map(
-              (status) => (
+            options={
+              orderFlow[
+                currentOrderStatus
+              ]
+            }
 
-                <option
-                  key={status}
-                  value={status}
-                >
-                  {formatLabel(status)}
-                </option>
+            disabled={
+              isPending
+            }
 
-              )
-            )}
+            open={
+              orderStatusOpen
+            }
 
-          </select>
+            onToggle={() => {
+
+              if (
+                isPending
+              ) {
+
+                return;
+
+              }
+
+              setPaymentStatusOpen(
+                false
+              );
+
+              setOrderStatusOpen(
+                (value) =>
+                  !value
+              );
+
+            }}
+
+            onSelect={
+              handleOrderStatusSelect
+            }
+          />
 
         </div>
 
 
-        {/* Payment Status */}
+        {/* =================================================
+            PAYMENT STATUS
+        ================================================= */}
 
         <div>
 
           <label
-            htmlFor="payment-status"
             className="
               mb-2
               block
@@ -340,46 +768,55 @@ useEffect(() => {
           </label>
 
 
-          <select
-            id="payment-status"
-            value={currentPaymentStatus}
-            disabled={isPending}
-            onChange={(event) =>
-              handlePaymentStatusChange(
-                event.target.value as PaymentStatus
-              )
+          <StatusSelect
+            value={
+              currentPaymentStatus
             }
-            className="
-              h-12
-              w-full
-              rounded-xl
-              border
-              border-stone-300
-              bg-white
-              px-4
-              text-sm
-              outline-none
-              focus:border-black
-            "
-          >
 
-            {paymentStatuses.map(
-              (status) => (
+            options={
+              paymentStatuses
+            }
 
-                <option
-                  key={status}
-                  value={status}
-                >
-                  {formatLabel(status)}
-                </option>
+            disabled={
+              isPending
+            }
 
-              )
-            )}
+            open={
+              paymentStatusOpen
+            }
 
-          </select>
+            onToggle={() => {
+
+              if (
+                isPending
+              ) {
+
+                return;
+
+              }
+
+              setOrderStatusOpen(
+                false
+              );
+
+              setPaymentStatusOpen(
+                (value) =>
+                  !value
+              );
+
+            }}
+
+            onSelect={
+              handlePaymentStatusSelect
+            }
+          />
 
         </div>
 
+
+        {/* =================================================
+            UPDATING
+        ================================================= */}
 
         {isPending && (
 
@@ -395,7 +832,12 @@ useEffect(() => {
         )}
 
 
-        {!isPending && message && (
+        {/* =================================================
+            MESSAGE
+        ================================================= */}
+
+        {!isPending &&
+          message && (
 
           <p
             className="

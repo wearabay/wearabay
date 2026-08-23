@@ -4,20 +4,40 @@ import Container from "@/components/ui/Container";
 
 import { getAdminUser } from "@/lib/admin";
 
+import {
+  getAdminOrderStats,
+  getAdminPaymentReviewOrders,
+} from "@/lib/admin-orders";
 
 export default async function AdminPage() {
 
-  const admin = await getAdminUser();
+  const admin =
+    await getAdminUser();
+
 
   if (!admin) {
     redirect("/account");
   }
 
+
+  const stats =
+    await getAdminOrderStats();
+
+const paymentReviewOrders =
+    await getAdminPaymentReviewOrders();
+
+
+
   return (
+
     <main>
+
       <Container className="py-24">
 
         <div className="space-y-10">
+
+
+          {/* HEADER */}
 
           <div>
 
@@ -32,6 +52,7 @@ export default async function AdminPage() {
               Administration
             </p>
 
+
             <h1
               className="
                 mt-3
@@ -42,14 +63,35 @@ export default async function AdminPage() {
               Admin Dashboard
             </h1>
 
-            <p className="mt-3 text-sm text-neutral-500">
+
+            <p
+              className="
+                mt-3
+                text-sm
+                text-neutral-500
+              "
+            >
               Welcome back, {admin.fullName}.
             </p>
 
+
           </div>
 
 
-          <div className="grid gap-6 md:grid-cols-3">
+
+
+          {/* SUMMARY CARDS */}
+
+          <div
+            className="
+              grid
+              gap-6
+              md:grid-cols-3
+            "
+          >
+
+
+            {/* ORDERS */}
 
             <div
               className="
@@ -60,16 +102,46 @@ export default async function AdminPage() {
               "
             >
 
-              <p className="text-xs uppercase tracking-widest text-neutral-500">
+              <p
+                className="
+                  text-xs
+                  uppercase
+                  tracking-widest
+                  text-neutral-500
+                "
+              >
                 Orders
               </p>
 
-              <p className="mt-3 text-3xl font-light">
-                —
+
+              <p
+                className="
+                  mt-3
+                  text-3xl
+                  font-light
+                "
+              >
+                {stats?.total ?? 0}
               </p>
+
+
+              <p
+                className="
+                  mt-2
+                  text-xs
+                  text-neutral-500
+                "
+              >
+                Total orders
+              </p>
+
 
             </div>
 
+
+
+
+            {/* PAYMENT REVIEW */}
 
             <div
               className="
@@ -80,16 +152,46 @@ export default async function AdminPage() {
               "
             >
 
-              <p className="text-xs uppercase tracking-widest text-neutral-500">
-                Products
+              <p
+                className="
+                  text-xs
+                  uppercase
+                  tracking-widest
+                  text-neutral-500
+                "
+              >
+                Payment Review
               </p>
 
-              <p className="mt-3 text-3xl font-light">
-                —
+
+              <p
+                className="
+                  mt-3
+                  text-3xl
+                  font-light
+                "
+              >
+                {stats?.needPaymentReview ?? 0}
               </p>
+
+
+              <p
+                className="
+                  mt-2
+                  text-xs
+                  text-neutral-500
+                "
+              >
+                Awaiting verification
+              </p>
+
 
             </div>
 
+
+
+
+            {/* SHIPPING */}
 
             <div
               className="
@@ -100,21 +202,247 @@ export default async function AdminPage() {
               "
             >
 
-              <p className="text-xs uppercase tracking-widest text-neutral-500">
-                Customers
+              <p
+                className="
+                  text-xs
+                  uppercase
+                  tracking-widest
+                  text-neutral-500
+                "
+              >
+                Shipping
               </p>
 
-              <p className="mt-3 text-3xl font-light">
-                —
+
+              <p
+                className="
+                  mt-3
+                  text-3xl
+                  font-light
+                "
+              >
+                {stats?.shipped ?? 0}
               </p>
+
+
+              <p
+                className="
+                  mt-2
+                  text-xs
+                  text-neutral-500
+                "
+              >
+                Orders shipped
+              </p>
+
 
             </div>
+
 
           </div>
 
+
+
+
+
+          {/* QUICK ACTIONS */}
+
+
+          <section
+            className="
+              rounded-2xl
+              border
+              border-stone-200
+              p-6
+            "
+          >
+
+            <p
+              className="
+                text-xs
+                uppercase
+                tracking-[0.3em]
+                text-neutral-500
+              "
+            >
+              Quick Actions
+            </p>
+
+
+
+            <div
+              className="
+                mt-5
+                flex
+                flex-col
+                gap-3
+                sm:flex-row
+              "
+            >
+
+
+              <a
+                href="/admin/orders"
+                className="
+                  rounded-full
+                  bg-black
+                  px-6
+                  py-3
+                  text-center
+                  text-xs
+                  uppercase
+                  tracking-[0.15em]
+                  text-white
+                "
+              >
+                Manage Orders
+              </a>
+
+
+
+              <a
+                href="/admin/orders"
+                className="
+                  rounded-full
+                  border
+                  border-stone-300
+                  px-6
+                  py-3
+                  text-center
+                  text-xs
+                  uppercase
+                  tracking-[0.15em]
+                "
+              >
+                Review Payments
+              </a>
+
+
+            </div>
+
+
+          </section>
+
+
+          {/* PAYMENT REVIEW QUEUE */}
+
+<section
+  className="
+    rounded-2xl
+    border
+    border-stone-200
+    p-6
+  "
+>
+
+  <p
+    className="
+      text-xs
+      uppercase
+      tracking-[0.3em]
+      text-neutral-500
+    "
+  >
+    Payment Verification
+  </p>
+
+
+  <div className="mt-6 space-y-4">
+
+
+    {paymentReviewOrders.length === 0 && (
+
+      <p
+        className="
+          text-sm
+          text-neutral-500
+        "
+      >
+        No payment requires review.
+      </p>
+
+    )}
+
+
+
+    {paymentReviewOrders.map(
+      (order) => (
+
+        <div
+          key={order.id}
+          className="
+            flex
+            items-center
+            justify-between
+            rounded-xl
+            border
+            border-stone-200
+            p-4
+          "
+        >
+
+          <div>
+
+            <p
+              className="
+                text-sm
+                font-medium
+              "
+            >
+              {order.orderNumber}
+            </p>
+
+
+            <p
+              className="
+                text-xs
+                text-neutral-500
+              "
+            >
+              Bank Transfer
+            </p>
+
+
+          </div>
+
+
+          <a
+            href={`/admin/orders/${order.id}`}
+            className="
+              rounded-full
+              border
+              border-stone-300
+              px-4
+              py-2
+              text-xs
+              uppercase
+              tracking-wider
+            "
+          >
+            Review
+          </a>
+
+
         </div>
 
+      )
+    )}
+
+
+  </div>
+
+
+</section>
+
+
+        </div>
+
+
       </Container>
+
+
     </main>
+
   );
+
 }

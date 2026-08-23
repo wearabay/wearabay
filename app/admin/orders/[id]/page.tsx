@@ -21,6 +21,15 @@ import {
   rejectAdminPaymentProofAction,
 } from "./actions";
 
+import ShippingForm from "./ShippingForm";
+
+import {
+  getOrderHistory,
+} from "@/lib/order-history";
+
+import OrderHistory from "@/components/orders/OrderHistory";
+
+
 type Props = {
   params: Promise<{
     id: string;
@@ -160,6 +169,10 @@ export default async function AdminOrderDetailPage({
     );
 
   }
+
+
+  const history =
+  await getOrderHistory(id);
 
 
   /* =======================================================
@@ -934,20 +947,24 @@ export default async function AdminOrderDetailPage({
 ) : (
 
   <p
-    className="
-      mt-5
-      text-sm
-      text-red-600
-    "
-  >
-    Unable to load payment proof.
-  </p>
+className="
+mt-5
+text-sm
+text-neutral-500
+"
+>
+Unable to generate preview.
+</p>
 
 )}
 
             </section>
 
           )}
+
+          <OrderHistory
+  history={history}
+/>
 
 
           {/* =================================================
@@ -959,6 +976,13 @@ export default async function AdminOrderDetailPage({
             orderStatus={order.status}
             paymentStatus={order.paymentStatus}
           />
+
+          <ShippingForm
+  orderId={order.id}
+  status={order.status}
+  courier={order.courier}
+  trackingNumber={order.trackingNumber}
+/>
 
 
         </div>

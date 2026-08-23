@@ -69,6 +69,12 @@ export type Order = {
 
   createdAt: string;
 
+  courier?: string | null;
+
+  trackingNumber?: string | null;
+
+  shippedAt?: string | null;
+
 };
 
 
@@ -274,6 +280,15 @@ export function mapOrder(
 
     createdAt:
       row.created_at,
+
+    courier:
+      row.courier ?? null,
+
+    trackingNumber:
+      row.tracking_number ?? null,
+
+    shippedAt:
+      row.shipped_at ?? null,
 
   };
 }
