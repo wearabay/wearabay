@@ -176,7 +176,9 @@ async function getAuthenticatedAdmin() {
 
 
   if (!user) {
+
     return null;
+
   }
 
 
@@ -280,7 +282,9 @@ export async function getAdminOrders(): Promise<Order[]> {
 
 
   if (!admin) {
+
     return [];
+
   }
 
 
@@ -306,7 +310,9 @@ export async function getAdminOrders(): Promise<Order[]> {
 
 
   if (error) {
+
     throw error;
+
   }
 
 
@@ -336,7 +342,9 @@ export async function getAdminOrderById(
 
 
   if (!admin) {
+
     return undefined;
+
   }
 
 
@@ -362,12 +370,16 @@ export async function getAdminOrderById(
 
 
   if (error) {
+
     throw error;
+
   }
 
 
   if (!data) {
+
     return undefined;
+
   }
 
 
@@ -396,12 +408,14 @@ export async function updateAdminOrderStatus(
 
 
   if (!admin) {
+
     return undefined;
+
   }
 
 
   /* -------------------------------------------------------
-     Get current status
+     Get current order information
   ------------------------------------------------------- */
 
   const {
@@ -412,9 +426,11 @@ export async function updateAdminOrderStatus(
 
       .from("orders")
 
-      .select(
-        "status"
-      )
+      .select(`
+        status,
+        courier,
+        tracking_number
+      `)
 
       .eq(
         "id",
@@ -425,12 +441,14 @@ export async function updateAdminOrderStatus(
 
 
   if (existingError) {
+
     throw existingError;
+
   }
 
 
   /* -------------------------------------------------------
-     Validate transition
+     Validate status transition
   ------------------------------------------------------- */
 
   if (
@@ -448,8 +466,81 @@ export async function updateAdminOrderStatus(
 
 
   /* -------------------------------------------------------
-     Update order
+     SHIPPED REQUIRES SHIPPING INFORMATION
+     
+     Workflow:
+
+     processing
+         ↓
+     courier + tracking
+         ↓
+     shipped
   ------------------------------------------------------- */
+
+  if (
+    status === "shipped"
+  ) {
+
+    const courier =
+      String(
+        existingOrder.courier ?? ""
+      ).trim();
+
+
+    const trackingNumber =
+      String(
+        existingOrder.tracking_number ?? ""
+      ).trim();
+
+
+    if (!courier) {
+
+      throw new Error(
+        "Courier must be saved before the order can be shipped."
+      );
+
+    }
+
+
+    if (!trackingNumber) {
+
+      throw new Error(
+        "Tracking number must be saved before the order can be shipped."
+      );
+
+    }
+
+  }
+
+
+  /* -------------------------------------------------------
+     Update order status
+  ------------------------------------------------------- */
+
+  const updateData: Record<
+    string,
+    unknown
+  > = {
+
+    status,
+
+  };
+
+
+  /*
+   * When the order becomes shipped,
+   * record the shipment timestamp.
+   */
+
+  if (
+    status === "shipped"
+  ) {
+
+    updateData.shipped_at =
+      new Date().toISOString();
+
+  }
+
 
   const {
     data,
@@ -459,11 +550,9 @@ export async function updateAdminOrderStatus(
 
       .from("orders")
 
-      .update({
-
-        status,
-
-      })
+      .update(
+        updateData
+      )
 
       .eq(
         "id",
@@ -479,12 +568,16 @@ export async function updateAdminOrderStatus(
 
 
   if (error) {
+
     throw error;
+
   }
 
 
   if (!data) {
+
     return undefined;
+
   }
 
 
@@ -527,7 +620,9 @@ export async function updateAdminPaymentStatus(
 
 
   if (!admin) {
+
     return undefined;
+
   }
 
 
@@ -556,7 +651,9 @@ export async function updateAdminPaymentStatus(
 
 
   if (existingError) {
+
     throw existingError;
+
   }
 
 
@@ -603,12 +700,16 @@ export async function updateAdminPaymentStatus(
 
 
   if (error) {
+
     throw error;
+
   }
 
 
   if (!data) {
+
     return undefined;
+
   }
 
 
@@ -657,7 +758,9 @@ export async function verifyAdminPaymentProof(
 
 
   if (!admin) {
+
     return undefined;
+
   }
 
 
@@ -687,7 +790,9 @@ export async function verifyAdminPaymentProof(
 
 
   if (existingError) {
+
     throw existingError;
+
   }
 
 
@@ -740,12 +845,16 @@ export async function verifyAdminPaymentProof(
 
 
   if (error) {
+
     throw error;
+
   }
 
 
   if (!data) {
+
     return undefined;
+
   }
 
 
@@ -787,7 +896,9 @@ export async function rejectAdminPaymentProof(
 
 
   if (!admin) {
+
     return undefined;
+
   }
 
 
@@ -817,12 +928,16 @@ export async function rejectAdminPaymentProof(
 
 
   if (existingError) {
+
     throw existingError;
+
   }
 
 
   if (!existingOrder) {
+
     return undefined;
+
   }
 
 
@@ -851,7 +966,9 @@ export async function rejectAdminPaymentProof(
 
 
     if (storageError) {
+
       throw storageError;
+
     }
 
   }
@@ -899,12 +1016,16 @@ export async function rejectAdminPaymentProof(
 
 
   if (error) {
+
     throw error;
+
   }
 
 
   if (!data) {
+
     return undefined;
+
   }
 
 
@@ -950,12 +1071,17 @@ export async function updateAdminShipping(
 
 
   if (!admin) {
+
     return undefined;
+
   }
 
 
   /* -------------------------------------------------------
-     Get current order status
+     Get current order information
+     
+     Shipping can be entered while processing.
+     It can also be corrected after shipped.
   ------------------------------------------------------- */
 
   const {
@@ -966,9 +1092,11 @@ export async function updateAdminShipping(
 
       .from("orders")
 
-      .select(
-        "status"
-      )
+      .select(`
+        status,
+        courier,
+        tracking_number
+      `)
 
       .eq(
         "id",
@@ -979,18 +1107,21 @@ export async function updateAdminShipping(
 
 
   if (existingError) {
+
     throw existingError;
+
   }
 
 
   /* -------------------------------------------------------
-     Shipping information can only be entered
-     after order status is shipped
+     Shipping is not editable after completion/cancellation
   ------------------------------------------------------- */
 
   if (
     existingOrder.status !==
-    "shipped"
+      "processing" &&
+    existingOrder.status !==
+      "shipped"
   ) {
 
     return undefined;
@@ -1034,11 +1165,6 @@ export async function updateAdminShipping(
 
   /* -------------------------------------------------------
      Update shipping information
-     
-     IMPORTANT:
-     Do NOT change order status here.
-     Order status is already handled by
-     updateAdminOrderStatus().
   ------------------------------------------------------- */
 
   const {
@@ -1072,32 +1198,53 @@ export async function updateAdminShipping(
 
 
   if (error) {
+
     throw error;
+
   }
 
 
   if (!data) {
+
     return undefined;
+
   }
 
 
   /* -------------------------------------------------------
-     Create shipping history
+     Only create history when shipping actually changes.
   ------------------------------------------------------- */
 
-  await createOrderHistory(
-    supabase,
-    id,
-    "shipping",
-    null,
-    trackingNumber,
-    `Shipping information saved: ${courier} - ${trackingNumber}`
-  );
+  const oldCourier =
+    String(
+      existingOrder.courier ?? ""
+    ).trim();
 
 
-  /* -------------------------------------------------------
-     Return updated order
-  ------------------------------------------------------- */
+  const oldTracking =
+    String(
+      existingOrder.tracking_number ?? ""
+    ).trim();
+
+
+  const shippingChanged =
+    oldCourier !== courier ||
+    oldTracking !== trackingNumber;
+
+
+  if (shippingChanged) {
+
+    await createOrderHistory(
+      supabase,
+      id,
+      "shipping",
+      oldTracking || null,
+      trackingNumber,
+      `Shipping information saved: ${courier} - ${trackingNumber}`
+    );
+
+  }
+
 
   return mapAdminOrder(
     data
@@ -1121,7 +1268,9 @@ export async function getAdminOrderStats() {
 
 
   if (!admin) {
+
     return null;
+
   }
 
 
@@ -1139,7 +1288,9 @@ export async function getAdminOrderStats() {
 
 
   if (error) {
+
     throw error;
+
   }
 
 
@@ -1213,7 +1364,9 @@ export async function getAdminPaymentReviewOrders():
 
 
   if (!admin) {
+
     return [];
+
   }
 
 
@@ -1250,7 +1403,9 @@ export async function getAdminPaymentReviewOrders():
 
 
   if (error) {
+
     throw error;
+
   }
 
 

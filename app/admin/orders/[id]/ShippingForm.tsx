@@ -127,10 +127,6 @@ function CourierSelect({
         </span>
 
 
-        {/* =================================================
-            SAME ARROW AS MANAGE ORDER
-        ================================================= */}
-
         <span
           className={`
             text-xs
@@ -300,7 +296,7 @@ export default function ShippingForm({
     currentTrackingNumber,
     setCurrentTrackingNumber,
   ] =
-    useState(
+    useState<string>(
       trackingNumber ?? ""
     );
 
@@ -340,14 +336,16 @@ export default function ShippingForm({
 
   /* =======================================================
      SHIPPING EDIT RULE
+     
+     Shipping information can be entered while processing.
+     
+     Once shipped, admin can still correct shipping data.
+     
+     Completed/cancelled orders are locked.
   ======================================================= */
 
-  /*
-    Shipping baru bisa diisi/edit
-    ketika order sudah SHIPPED.
-  */
-
   const canEditShipping =
+    status === "processing" ||
     status === "shipped";
 
 
@@ -454,7 +452,9 @@ export default function ShippingForm({
 
 
     if (!canSubmit) {
+
       return;
+
     }
 
 
@@ -531,7 +531,7 @@ export default function ShippingForm({
 
       <h2
         className="
-          mb-6
+          mb-2
           text-lg
           font-medium
         "
@@ -540,13 +540,28 @@ export default function ShippingForm({
       </h2>
 
 
+      <p
+        className="
+          mb-6
+          text-sm
+          text-neutral-500
+        "
+      >
+        {status === "processing"
+          ? "Add shipping information before marking the order as shipped."
+          : status === "shipped"
+            ? "Shipping information can still be corrected if necessary."
+            : "Shipping information is locked for this order."
+        }
+      </p>
+
+
       <form
         onSubmit={handleSubmit}
         className="
           space-y-6
         "
       >
-
 
         {/* =================================================
             COURIER
@@ -789,7 +804,7 @@ export default function ShippingForm({
 
 
         {/* =================================================
-            NOT YET SHIPPED
+            LOCKED
         ================================================= */}
 
         {!canEditShipping && (
@@ -800,7 +815,10 @@ export default function ShippingForm({
               text-neutral-500
             "
           >
-            Shipping information can be added after the order is marked as shipped.
+            Shipping information is locked because this order is{" "}
+            <span className="font-medium">
+              {status}
+            </span>.
           </p>
 
         )}
