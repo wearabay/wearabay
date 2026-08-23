@@ -980,8 +980,8 @@ Unable to generate preview.
           <ShippingForm
   orderId={order.id}
   status={order.status}
-  courier={order.courier}
-  trackingNumber={order.trackingNumber}
+  courier={order.courier ?? null}
+  trackingNumber={order.trackingNumber ?? null}
 />
 
 

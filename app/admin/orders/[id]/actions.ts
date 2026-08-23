@@ -301,13 +301,11 @@ export async function updateAdminShippingAction(
 
 export async function verifyAdminPaymentProofAction(
   formData: FormData
-) {
+): Promise<void> {
 
   const orderId =
     String(
-      formData.get(
-        "orderId"
-      ) ?? ""
+      formData.get("orderId") ?? ""
     );
 
 
@@ -346,17 +344,6 @@ export async function verifyAdminPaymentProofAction(
     );
 
 
-    return {
-
-      success: true,
-
-      message:
-        "Payment proof verified.",
-
-      order,
-
-    };
-
   } catch (error) {
 
     console.error(
@@ -378,13 +365,11 @@ export async function verifyAdminPaymentProofAction(
 
 export async function rejectAdminPaymentProofAction(
   formData: FormData
-) {
+): Promise<void> {
 
   const orderId =
     String(
-      formData.get(
-        "orderId"
-      ) ?? ""
+      formData.get("orderId") ?? ""
     );
 
 
@@ -422,17 +407,6 @@ export async function rejectAdminPaymentProofAction(
       "/admin/orders"
     );
 
-
-    return {
-
-      success: true,
-
-      message:
-        "Payment proof rejected.",
-
-      order,
-
-    };
 
   } catch (error) {
 
