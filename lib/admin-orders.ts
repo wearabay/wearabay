@@ -8,6 +8,7 @@ import type {
 
 import {
   canUpdateOrderStatus,
+  canUpdatePaymentStatus,
 } from "@/lib/order-status";
 
 
@@ -653,6 +654,39 @@ export async function updateAdminPaymentStatus(
   if (existingError) {
 
     throw existingError;
+
+  }
+
+
+  /* -------------------------------------------------------
+     Validate payment status transition
+
+     Server-side protection:
+
+     pending  → paid
+     pending  → failed
+     pending  → expired
+
+     failed   → pending
+     expired  → pending
+
+     paid     → refunded
+
+     refunded → final
+
+     Backward / invalid transitions are rejected.
+  ------------------------------------------------------- */
+
+  if (
+    !canUpdatePaymentStatus(
+      existingOrder.payment_status,
+      paymentStatus
+    )
+  ) {
+
+    throw new Error(
+      `Cannot move payment status from ${existingOrder.payment_status} to ${paymentStatus}`
+    );
 
   }
 
