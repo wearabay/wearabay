@@ -16,6 +16,11 @@ import type {
   PaymentStatus,
 } from "@/lib/order";
 
+import {
+  canUpdateOrderStatus,
+  canUpdatePaymentStatus,
+} from "@/lib/order-status";
+
 
 type Props = {
   orderId: string;
@@ -38,16 +43,19 @@ const orderFlow: Record<
   pending: [
     "pending",
     "paid",
+    "cancelled",
   ],
 
   paid: [
     "paid",
     "processing",
+    "cancelled",
   ],
 
   processing: [
     "processing",
     "shipped",
+    "cancelled",
   ],
 
   shipped: [
@@ -67,16 +75,41 @@ const orderFlow: Record<
 
 
 /* =========================================================
-   PAYMENT STATUS
+   PAYMENT FLOW
 ========================================================= */
 
-const paymentStatuses: PaymentStatus[] = [
-  "pending",
-  "paid",
-  "failed",
-  "expired",
-  "refunded",
-];
+const paymentFlow: Record<
+  PaymentStatus,
+  PaymentStatus[]
+> = {
+
+  pending: [
+    "pending",
+    "paid",
+    "failed",
+    "expired",
+  ],
+
+  paid: [
+    "paid",
+    "refunded",
+  ],
+
+  failed: [
+    "failed",
+    "pending",
+  ],
+
+  expired: [
+    "expired",
+    "pending",
+  ],
+
+  refunded: [
+    "refunded",
+  ],
+
+};
 
 
 /* =========================================================
@@ -428,6 +461,36 @@ export default function OrderStatusForm({
 
 
     /* -----------------------------------------------
+       Client-side transition guard
+
+       Server validates this again.
+    ----------------------------------------------- */
+
+    if (
+      !canUpdateOrderStatus(
+        currentOrderStatus,
+        nextStatus
+      )
+    ) {
+
+      setOrderStatusOpen(
+        false
+      );
+
+      setMessage(
+        `Cannot move order status from ${formatLabel(
+          currentOrderStatus
+        )} to ${formatLabel(
+          nextStatus
+        )}.`
+      );
+
+      return;
+
+    }
+
+
+    /* -----------------------------------------------
        Close inline list first
     ----------------------------------------------- */
 
@@ -455,19 +518,6 @@ export default function OrderStatusForm({
     ----------------------------------------------- */
 
     if (!confirmed) {
-
-      /*
-        IMPORTANT:
-
-        Jangan set state ke value
-        dari dropdown.
-
-        Karena custom dropdown tidak
-        mengubah value sebelum confirm.
-
-        Jadi Cancel otomatis tetap
-        pada status sebelumnya.
-      */
 
       return;
 
@@ -501,8 +551,8 @@ export default function OrderStatusForm({
 
 
           /*
-            Update UI hanya setelah
-            server berhasil.
+            Update UI only after
+            server succeeds.
           */
 
           setCurrentOrderStatus(
@@ -556,6 +606,36 @@ export default function OrderStatusForm({
 
       setPaymentStatusOpen(
         false
+      );
+
+      return;
+
+    }
+
+
+    /* -----------------------------------------------
+       Client-side transition guard
+
+       Server validates this again.
+    ----------------------------------------------- */
+
+    if (
+      !canUpdatePaymentStatus(
+        currentPaymentStatus,
+        nextStatus
+      )
+    ) {
+
+      setPaymentStatusOpen(
+        false
+      );
+
+      setMessage(
+        `Cannot move payment status from ${formatLabel(
+          currentPaymentStatus
+        )} to ${formatLabel(
+          nextStatus
+        )}.`
       );
 
       return;
@@ -774,7 +854,9 @@ export default function OrderStatusForm({
             }
 
             options={
-              paymentStatuses
+              paymentFlow[
+                currentPaymentStatus
+              ]
             }
 
             disabled={
