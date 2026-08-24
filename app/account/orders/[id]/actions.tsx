@@ -42,7 +42,7 @@ export async function savePaymentProofAction(
     if (!user) {
 
       return {
-        success:false,
+        success: false,
         message:
           "You must be logged in.",
       };
@@ -79,15 +79,15 @@ export async function savePaymentProofAction(
         .maybeSingle();
 
 
-    if(orderError){
+    if (orderError) {
       throw orderError;
     }
 
 
-    if(!order){
+    if (!order) {
 
       return {
-        success:false,
+        success: false,
         message:
           "Order not found.",
       };
@@ -99,18 +99,18 @@ export async function savePaymentProofAction(
       String(
         order.payment_method ?? ""
       )
-      .trim()
-      .toLowerCase();
+        .trim()
+        .toLowerCase();
 
 
-    if(
+    if (
       payment !== "bank" &&
       payment !== "bank_transfer" &&
       payment !== "bank transfer"
-    ){
+    ) {
 
       return {
-        success:false,
+        success: false,
         message:
           "Payment proof is only available for bank transfer orders.",
       };
@@ -118,12 +118,12 @@ export async function savePaymentProofAction(
     }
 
 
-    if(
+    if (
       order.payment_status !== "pending"
-    ){
+    ) {
 
       return {
-        success:false,
+        success: false,
         message:
           "Payment proof can only be uploaded while payment is pending.",
       };
@@ -135,14 +135,14 @@ export async function savePaymentProofAction(
       `${user.id}/${orderId}/`;
 
 
-    if(
+    if (
       !path.startsWith(
         expectedPrefix
       )
-    ){
+    ) {
 
       return {
-        success:false,
+        success: false,
         message:
           "Invalid payment proof path.",
       };
@@ -154,8 +154,13 @@ export async function savePaymentProofAction(
       order.payment_proof_path;
 
 
+    /* =================================================
+       UPDATE PAYMENT PROOF
+    ================================================= */
+
     const {
-      error:updateError,
+      data: updatedOrder,
+      error: updateError,
     } =
       await supabase
 
@@ -182,32 +187,62 @@ export async function savePaymentProofAction(
         .eq(
           "user_id",
           user.id
-        );
+        )
+
+        .select(`
+          id,
+          payment_proof_path,
+          payment_proof_uploaded_at,
+          payment_proof_verified_at
+        `)
+
+        .single();
 
 
-    if(updateError){
+    if (updateError) {
       throw updateError;
     }
 
 
-    if(
+    /*
+     * IMPORTANT:
+     * Make sure the database actually returned
+     * the updated order.
+     */
+
+    if (!updatedOrder) {
+
+      throw new Error(
+        "Payment proof could not be saved to the order."
+      );
+
+    }
+
+
+    /* =================================================
+       REMOVE OLD PAYMENT PROOF
+    ================================================= */
+
+    if (
       oldPath &&
       oldPath !== path
-    ){
+    ) {
 
       const {
-        error:removeError,
+        error: removeError,
       } =
         await supabase.storage
 
-          .from("payment-proofs")
+          .from(
+            "payment-proofs"
+          )
 
           .remove([
             oldPath,
           ]);
 
 
-      if(removeError){
+      if (removeError) {
 
         console.error(
           "Failed removing old proof:",
@@ -215,138 +250,6 @@ export async function savePaymentProofAction(
         );
 
       }
-
-    }
-
-
-    revalidatePath(
-      `/account/orders/${orderId}`
-    );
-
-
-    return {
-
-      success:true,
-
-      message:
-        oldPath
-          ? "Payment proof replaced successfully."
-          : "Payment proof uploaded successfully.",
-
-    };
-
-
-  } catch(error) {
-
-
-    console.error(
-      "Failed to save payment proof:",
-      error
-    );
-
-
-    return {
-
-      success:false,
-
-      message:
-        "Failed to save payment proof.",
-
-    };
-
-
-  }
-
-}
-
-
-/* =====================================================
-   CONFIRM PAYMENT
-===================================================== */
-
-export async function confirmPaymentAction(
-  orderId: string
-): Promise<ActionResult> {
-
-  try {
-
-    const supabase =
-      await createClient();
-
-
-    /* =================================================
-       AUTH
-    ================================================= */
-
-    const {
-      data: {
-        user,
-      },
-    } =
-      await supabase.auth.getUser();
-
-
-    if (!user) {
-
-      return {
-
-        success: false,
-
-        message:
-          "Unauthorized.",
-
-      };
-
-    }
-
-
-    /* =================================================
-       CONFIRM PAYMENT
-    ================================================= */
-
-    const {
-      data,
-      error,
-    } =
-      await supabase.rpc(
-        "confirm_order_payment",
-        {
-          p_order_id: orderId,
-        }
-      );
-
-
-    if (error) {
-
-      console.error(
-        "Confirm order payment RPC failed:",
-        error
-      );
-
-
-      return {
-
-        success: false,
-
-        message:
-          error.message ||
-          "Unable to confirm payment.",
-
-      };
-
-    }
-
-
-    if (!data) {
-
-      return {
-
-        success: false,
-
-        message:
-          "Payment could not be confirmed.",
-
-      };
 
     }
 
@@ -374,7 +277,9 @@ export async function confirmPaymentAction(
       success: true,
 
       message:
-        "Payment confirmed.",
+        oldPath
+          ? "Payment proof replaced successfully."
+          : "Payment proof uploaded successfully.",
 
     };
 
@@ -382,7 +287,7 @@ export async function confirmPaymentAction(
   } catch (error) {
 
     console.error(
-      "Confirm payment failed:",
+      "Failed to save payment proof:",
       error
     );
 
@@ -394,7 +299,7 @@ export async function confirmPaymentAction(
       message:
         error instanceof Error
           ? error.message
-          : "Unable to confirm payment.",
+          : "Failed to save payment proof.",
 
     };
 

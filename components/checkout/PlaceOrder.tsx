@@ -1,25 +1,40 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import {
+  useState,
+} from "react";
+
+import {
+  useRouter,
+} from "next/navigation";
 
 import Button from "@/components/ui/Button";
 
-import { useCart } from "@/context/CartContext";
-import { useCheckout } from "@/context/CheckoutContext";
+import {
+  useCart,
+} from "@/context/CartContext";
 
-import { createOrder } from "@/lib/order";
+import {
+  useCheckout,
+} from "@/context/CheckoutContext";
+
+import {
+  createOrder,
+} from "@/lib/order";
 
 
 export default function PlaceOrder() {
 
-  const router = useRouter();
+  const router =
+    useRouter();
 
 
   const {
     items,
     subtotal,
     clearCart,
-  } = useCart();
+  } =
+    useCart();
 
 
   const {
@@ -27,55 +42,108 @@ export default function PlaceOrder() {
     address,
     delivery,
     payment,
-  } = useCheckout();
+  } =
+    useCheckout();
+
+
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(false);
+
 
   async function handlePlaceOrder() {
+
   if (!items.length) {
+
     router.push("/cart");
+
     return;
+
   }
 
+
   try {
-    const order = await createOrder({
-      items,
 
-      customer: {
-        email: contact.email,
-        phone: contact.phone,
-      },
+    const order =
+      await createOrder({
 
-      address,
+        items,
 
-      delivery,
+        customer: {
 
-      payment,
+          email:
+            contact.email,
 
-      subtotal,
+          phone:
+            contact.phone,
 
-      shippingFee: 0,
+        },
 
-      total: subtotal,
+        address,
 
-      status: "pending",
+        delivery,
 
-      paymentStatus: "pending",
-    });
+        payment,
+
+        subtotal,
+
+        shippingFee:
+          0,
+
+        total:
+          subtotal,
+
+        status:
+          "pending",
+
+        paymentStatus:
+          "pending",
+
+      });
+
+
+    /* =================================================
+       CLEAR CART
+
+       Order sudah berhasil dibuat.
+       Cart tidak boleh tetap berisi item lama.
+    ================================================= */
+
+    await clearCart();
+
+
+    window.dispatchEvent(
+      new Event("cart-updated")
+    );
+
+
+    /* =================================================
+       GO TO PAYMENT
+    ================================================= */
 
     router.push(
       `/checkout/payment?order=${order.id}`
     );
 
+
   } catch (error) {
+
     console.error(
       "Failed to create order:",
       error
     );
 
+
     alert(
       "Unable to place your order. Please try again."
     );
+
   }
+
 }
+
 
   return (
 
@@ -89,15 +157,24 @@ export default function PlaceOrder() {
       "
     >
 
-      <h2 className="mb-4 text-lg font-medium">
+      <h2
+        className="
+          mb-4
+          text-lg
+          font-medium
+        "
+      >
         Complete Order
       </h2>
 
-      <p className="
-        mb-6
-        text-sm
-        text-neutral-500
-      ">
+
+      <p
+        className="
+          mb-6
+          text-sm
+          text-neutral-500
+        "
+      >
         By placing your order, you agree to our
         terms and conditions.
       </p>
@@ -105,10 +182,20 @@ export default function PlaceOrder() {
 
       <Button
         fullWidth
-        onClick={handlePlaceOrder}
+        disabled={loading}
+        onClick={
+          handlePlaceOrder
+        }
       >
-        Place Order
+
+        {loading
+          ? "Placing Order..."
+          : "Place Order"}
+
       </Button>
+
     </section>
+
   );
+
 }

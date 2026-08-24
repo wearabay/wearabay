@@ -29,6 +29,8 @@ import {
 
 import OrderHistory from "@/components/orders/OrderHistory";
 
+import VerifyPaymentButton from "./VerifyPaymentButton";
+
 
 type Props = {
   params: Promise<{
@@ -868,29 +870,7 @@ export default async function AdminOrderDetailPage({
             value={order.id}
           />
 
-          <button
-            type="submit"
-            className="
-              inline-flex
-              h-11
-              w-full
-              items-center
-              justify-center
-              rounded-full
-              bg-black
-              px-6
-              text-xs
-              font-medium
-              uppercase
-              tracking-[0.15em]
-              text-white
-              transition
-              hover:bg-neutral-800
-              sm:w-auto
-            "
-          >
-            Verify Payment
-          </button>
+          <VerifyPaymentButton />
 
         </form>
 

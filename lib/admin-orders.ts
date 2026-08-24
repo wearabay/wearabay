@@ -467,7 +467,7 @@ export async function updateAdminOrderStatus(
 
   /* -------------------------------------------------------
      SHIPPED REQUIRES SHIPPING INFORMATION
-     
+
      Workflow:
 
      processing
@@ -765,7 +765,7 @@ export async function verifyAdminPaymentProof(
 
 
   /* -------------------------------------------------------
-     Get existing payment information
+     Get current payment information
   ------------------------------------------------------- */
 
   const {
@@ -777,6 +777,7 @@ export async function verifyAdminPaymentProof(
       .from("orders")
 
       .select(`
+        status,
         payment_proof_path,
         payment_status
       `)
@@ -796,13 +797,7 @@ export async function verifyAdminPaymentProof(
   }
 
 
-  /* -------------------------------------------------------
-     Make sure payment proof exists
-  ------------------------------------------------------- */
-
-  if (
-    !existingOrder?.payment_proof_path
-  ) {
+  if (!existingOrder) {
 
     return undefined;
 
@@ -810,7 +805,63 @@ export async function verifyAdminPaymentProof(
 
 
   /* -------------------------------------------------------
+     Make sure payment proof exists
+  ------------------------------------------------------- */
+
+  if (
+    !existingOrder.payment_proof_path
+  ) {
+
+    throw new Error(
+      "Payment proof has not been uploaded."
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     Prevent duplicate verification
+
+     Once payment is paid, the payment has already
+     been verified and must not be verified again.
+  ------------------------------------------------------- */
+
+  if (
+    existingOrder.payment_status ===
+    "paid"
+  ) {
+
+    throw new Error(
+      "Payment has already been verified."
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     Payment must still be pending
+  ------------------------------------------------------- */
+
+  if (
+    existingOrder.payment_status !==
+    "pending"
+  ) {
+
+    throw new Error(
+      `Payment cannot be verified from status ${existingOrder.payment_status}.`
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
      Verify payment
+
+     Payment:
+       pending → paid
+
+     Order:
+       pending → processing
   ------------------------------------------------------- */
 
   const {
@@ -826,6 +877,9 @@ export async function verifyAdminPaymentProof(
         payment_status:
           "paid",
 
+        status:
+          "processing",
+
         payment_proof_verified_at:
           new Date().toISOString(),
 
@@ -834,6 +888,11 @@ export async function verifyAdminPaymentProof(
       .eq(
         "id",
         id
+      )
+
+      .eq(
+        "payment_status",
+        "pending"
       )
 
       .select(`
@@ -853,13 +912,15 @@ export async function verifyAdminPaymentProof(
 
   if (!data) {
 
-    return undefined;
+    throw new Error(
+      "Payment verification failed."
+    );
 
   }
 
 
   /* -------------------------------------------------------
-     Create history AFTER update succeeds
+     Create payment history
   ------------------------------------------------------- */
 
   await createOrderHistory(
@@ -869,6 +930,20 @@ export async function verifyAdminPaymentProof(
     existingOrder.payment_status,
     "paid",
     "Payment proof verified by admin"
+  );
+
+
+  /* -------------------------------------------------------
+     Create order status history
+  ------------------------------------------------------- */
+
+  await createOrderHistory(
+    supabase,
+    id,
+    "order_status",
+    existingOrder.status,
+    "processing",
+    "Order moved to processing after payment verification"
   );
 
 
@@ -1079,7 +1154,7 @@ export async function updateAdminShipping(
 
   /* -------------------------------------------------------
      Get current order information
-     
+
      Shipping can be entered while processing.
      It can also be corrected after shipped.
   ------------------------------------------------------- */

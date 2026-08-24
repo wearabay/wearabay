@@ -315,45 +315,12 @@ export default function PaymentProofUpload({
       }
 
 
-      /* -----------------------------------------------------
-         CREATE SIGNED URL
-      ----------------------------------------------------- */
+      /* =====================================================
+        REDIRECT TO MY ORDERS
+      ===================================================== */
 
-      const {
-        data: signedData,
-        error: signedError,
-      } =
-        await supabase.storage
-          .from("payment-proofs")
-          .createSignedUrl(
-            path,
-            60 * 60
-          );
-
-
-      if (!signedError) {
-
-        setProofUrl(
-          signedData.signedUrl
-        );
-
-      }
-
-
-      setFile(null);
-
-      setMessage(
-        result.message
-      );
-
-
-      /*
-       * Refresh Server Component
-       * so paymentProofPath is loaded
-       * from the database.
-       */
-
-      window.location.reload();
+window.location.href =
+  "/account/orders";
 
 
     } catch (uploadError) {

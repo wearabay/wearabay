@@ -1,21 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import Button from "@/components/ui/Button";
-
-import { formatPrice } from "@/lib/currency";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   getOrderById,
   type Order,
 } from "@/lib/order";
 
-import { useCart } from "@/context/CartContext";
-
 import {
-  confirmPaymentAction,
-} from "@/app/account/orders/[id]/actions";
+  BANK_TRANSFER_DETAILS,
+} from "@/lib/payment";
+
+import PaymentProofUpload from "@/app/account/orders/[id]/PaymentProofUpload";
+
+import { formatPrice } from "@/lib/currency";
 
 
 type Props = {
@@ -27,14 +28,11 @@ export default function PaymentClient({
   orderId,
 }: Props) {
 
-  const {
-    clearCart,
-  } = useCart();
-
   const [order, setOrder] =
     useState<Order | null>(null);
 
-  const [loading, setLoading] =
+
+  const [copied, setCopied] =
     useState(false);
 
 
@@ -43,112 +41,99 @@ export default function PaymentClient({
   ======================================================= */
 
   useEffect(() => {
-  if (!orderId) {
-    setOrder(null);
-    return;
-  }
 
-  let mounted = true;
+    if (!orderId) {
 
-  async function loadOrder(id: string) {
-    try {
-      const data = await getOrderById(id);
-
-      if (mounted) {
-        setOrder(data ?? null);
-      }
-    } catch (error) {
-      console.error(
-        "Failed to load order:",
-        error
-      );
-
-      if (mounted) {
-        setOrder(null);
-      }
-    }
-  }
-
-  loadOrder(orderId);
-
-  return () => {
-    mounted = false;
-  };
-}, [orderId]);
-
-
-  /* =======================================================
-     PAYMENT SUCCESS
-  ======================================================= */
-
-  async function handlePaymentSuccess() {
-
-  if (!order) {
-    return;
-  }
-
-
-  setLoading(true);
-
-
-  try {
-
-    const result =
-      await confirmPaymentAction(
-        order.id
-      );
-
-
-    if (!result.success) {
-
-      setLoading(false);
-
-      alert(
-        result.message
-      );
+      setOrder(null);
 
       return;
 
     }
 
 
-    /* =================================================
-       CLEAR CART
-    ================================================= */
-
-    await clearCart();
+    let mounted = true;
 
 
-    window.dispatchEvent(
-      new Event("cart-updated")
-    );
+    async function loadOrder(
+      id: string
+    ) {
+
+      try {
+
+        const data =
+          await getOrderById(id);
 
 
-    /* =================================================
-       REDIRECT
-    ================================================= */
+        if (mounted) {
 
-    window.location.href =
-      `/checkout/success?order=${order.id}`;
+          setOrder(
+            data ?? null
+          );
 
-  } catch (error) {
+        }
 
-    console.error(
-      "Failed to confirm payment:",
-      error
-    );
+      } catch (error) {
 
-
-    setLoading(false);
+        console.error(
+          "Failed to load order:",
+          error
+        );
 
 
-    alert(
-      "Unable to confirm payment. Please try again."
-    );
+        if (mounted) {
+
+          setOrder(null);
+
+        }
+
+      }
+
+    }
+
+
+    loadOrder(orderId);
+
+
+    return () => {
+
+      mounted = false;
+
+    };
+
+  }, [orderId]);
+
+
+  /* =======================================================
+     COPY ACCOUNT NUMBER
+  ======================================================= */
+
+  async function handleCopyAccountNumber() {
+
+    try {
+
+      await navigator.clipboard.writeText(
+        BANK_TRANSFER_DETAILS.accountNumber
+      );
+
+
+      setCopied(true);
+
+
+      window.setTimeout(
+        () => setCopied(false),
+        2000
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Failed to copy account number:",
+        error
+      );
+
+    }
 
   }
-
-}
 
 
   /* =======================================================
@@ -177,6 +162,7 @@ export default function PaymentClient({
           Order Not Found
         </h1>
 
+
         <p
           className="
             mt-3
@@ -192,20 +178,6 @@ export default function PaymentClient({
     );
 
   }
-
-
-  /* =======================================================
-     PAYMENT LABEL
-  ======================================================= */
-
-  const paymentLabel =
-    order.payment === "bank"
-      ? "Bank Transfer"
-      : order.payment === "ewallet"
-        ? "E-Wallet"
-        : order.payment === "qris"
-          ? "QRIS"
-          : "Cash on Delivery";
 
 
   /* =======================================================
@@ -258,31 +230,61 @@ export default function PaymentClient({
         </h1>
 
 
-        <div className="mt-6 space-y-2">
+        <div
+          className="
+            mt-6
+            space-y-3
+          "
+        >
 
-          <p
-            className="
-              text-sm
-              text-neutral-500
-            "
-          >
-            Order Number
-          </p>
+          <div>
+
+            <p
+              className="
+                text-sm
+                text-neutral-500
+              "
+            >
+              Order Number
+            </p>
 
 
-          <p className="font-medium">
-            {order.id}
-          </p>
+            <p
+              className="
+                mt-1
+                font-medium
+              "
+            >
+              {order.orderNumber}
+            </p>
+
+          </div>
 
 
-          <p
-            className="
-              text-sm
-              text-neutral-500
-            "
-          >
-            Status: {order.status}
-          </p>
+          <div>
+
+            <p
+              className="
+                text-sm
+                text-neutral-500
+              "
+            >
+              Payment Status
+            </p>
+
+
+            <p
+              className="
+                mt-1
+                font-medium
+              "
+            >
+              {order.paymentStatus === "pending"
+                ? "Awaiting Payment Verification"
+                : order.paymentStatus}
+            </p>
+
+          </div>
 
         </div>
 
@@ -290,7 +292,7 @@ export default function PaymentClient({
 
 
       {/* ===================================================
-          ITEMS
+          ORDER TOTAL
       =================================================== */}
 
       <section
@@ -302,102 +304,255 @@ export default function PaymentClient({
         "
       >
 
-        <h2
+        <div
           className="
-            mb-6
-            text-lg
-            font-medium
+            flex
+            items-center
+            justify-between
           "
         >
-          Order Summary
-        </h2>
+
+          <span
+            className="
+              text-lg
+              font-medium
+            "
+          >
+            Total Payment
+          </span>
 
 
-        <div className="space-y-5">
-
-          {order.items.map(
-            (item) => (
-
-              <div
-                key={`${item.id}-${item.color}-${item.size}`}
-                className="
-                  flex
-                  justify-between
-                  text-sm
-                "
-              >
-
-                <div>
-
-                  <p>
-                    {item.name}
-                  </p>
-
-
-                  <p
-                    className="
-                      text-neutral-500
-                    "
-                  >
-
-                    {item.color}
-
-                    {item.color &&
-                    item.size
-                      ? " • "
-                      : ""}
-
-                    {item.size}
-
-                    {" "}
-                    x {item.quantity}
-
-                  </p>
-
-                </div>
-
-
-                <p>
-
-                  {formatPrice(
-                    item.price *
-                    item.quantity
-                  )}
-
-                </p>
-
-              </div>
-
-            )
-          )}
+          <span
+            className="
+              text-xl
+              font-medium
+            "
+          >
+            {formatPrice(order.total)}
+          </span>
 
         </div>
+
+      </section>
+
+
+      {/* ===================================================
+          BANK TRANSFER DETAILS
+      =================================================== */}
+
+      <section
+        className="
+          rounded-2xl
+          border
+          border-stone-200
+          p-8
+        "
+      >
+
+        <p
+          className="
+            text-xs
+            uppercase
+            tracking-[0.3em]
+            text-neutral-500
+          "
+        >
+          Bank Transfer
+        </p>
+
+
+        <h2
+          className="
+            mt-3
+            text-2xl
+            font-light
+          "
+        >
+          Transfer to the following account
+        </h2>
 
 
         <div
           className="
-            mt-8
-            flex
-            justify-between
-            border-t
-            pt-6
-            text-lg
-            font-medium
+            mt-6
+            rounded-xl
+            border
+            border-stone-200
+            bg-stone-50
+            p-5
           "
         >
 
-          <span>
-            Total
-          </span>
+          {/* BANK */}
+
+          <div>
+
+            <p
+              className="
+                text-xs
+                uppercase
+                tracking-wider
+                text-neutral-500
+              "
+            >
+              Bank
+            </p>
 
 
-          <span>
+            <p
+              className="
+                mt-1
+                text-lg
+                font-medium
+              "
+            >
+              {BANK_TRANSFER_DETAILS.bank}
+            </p>
 
-            {formatPrice(
-              order.subtotal
-            )}
+          </div>
 
-          </span>
+
+          {/* ACCOUNT NUMBER */}
+
+          <div
+            className="
+              mt-5
+            "
+          >
+
+            <p
+              className="
+                text-xs
+                uppercase
+                tracking-wider
+                text-neutral-500
+              "
+            >
+              Account Number
+            </p>
+
+
+            <div
+              className="
+                mt-2
+                flex
+                items-center
+                justify-between
+                gap-4
+                rounded-lg
+                border
+                border-stone-200
+                bg-white
+                px-4
+                py-3
+              "
+            >
+
+              <span
+                className="
+                  break-all
+                  text-lg
+                  font-medium
+                  tracking-wider
+                "
+              >
+                {BANK_TRANSFER_DETAILS.accountNumber}
+              </span>
+
+
+              <button
+                type="button"
+                onClick={
+                  handleCopyAccountNumber
+                }
+                className="
+                  shrink-0
+                  rounded-full
+                  border
+                  border-stone-300
+                  px-4
+                  py-2
+                  text-xs
+                  font-medium
+                  uppercase
+                  tracking-wider
+                  transition
+                  hover:border-black
+                "
+              >
+                {copied
+                  ? "Copied"
+                  : "Copy"}
+              </button>
+
+            </div>
+
+          </div>
+
+
+          {/* ACCOUNT NAME */}
+
+          <div
+            className="
+              mt-5
+            "
+          >
+
+            <p
+              className="
+                text-xs
+                uppercase
+                tracking-wider
+                text-neutral-500
+              "
+            >
+              Account Name
+            </p>
+
+
+            <p
+              className="
+                mt-1
+                text-lg
+                font-medium
+              "
+            >
+              {BANK_TRANSFER_DETAILS.accountName}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        {/* INSTRUCTION */}
+
+        <div
+          className="
+            mt-6
+            space-y-2
+            text-sm
+            leading-6
+            text-neutral-500
+          "
+        >
+
+          <p>
+            Please transfer the exact total amount
+            shown above.
+          </p>
+
+
+          <p>
+            After completing the transfer, upload
+            your payment receipt below.
+          </p>
+
+
+          <p>
+            Your payment will remain pending until
+            our team verifies the payment proof.
+          </p>
 
         </div>
 
@@ -405,51 +560,15 @@ export default function PaymentClient({
 
 
       {/* ===================================================
-          PAYMENT METHOD
+          PAYMENT PROOF
       =================================================== */}
 
-      <section
-        className="
-          rounded-2xl
-          border
-          border-stone-200
-          p-8
-        "
-      >
-
-        <h2
-          className="
-            mb-4
-            text-lg
-            font-medium
-          "
-        >
-          Payment Method
-        </h2>
-
-
-        <p className="text-sm font-medium">
-          {paymentLabel}
-        </p>
-
-      </section>
-
-
-      {/* ===================================================
-          CONFIRM PAYMENT
-      =================================================== */}
-
-      <Button
-        fullWidth
-        disabled={loading}
-        onClick={handlePaymentSuccess}
-      >
-
-        {loading
-          ? "Processing..."
-          : "Confirm Payment"}
-
-      </Button>
+      <PaymentProofUpload
+        orderId={order.id}
+        paymentProofPath={
+          order.paymentProofPath
+        }
+      />
 
     </div>
 
