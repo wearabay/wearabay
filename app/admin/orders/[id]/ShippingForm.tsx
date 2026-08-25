@@ -335,18 +335,17 @@ export default function ShippingForm({
 
 
   /* =======================================================
-     SHIPPING EDIT RULE
-     
-     Shipping information can be entered while processing.
-     
-     Once shipped, admin can still correct shipping data.
-     
-     Completed/cancelled orders are locked.
-  ======================================================= */
+   SHIPPING EDIT RULE
 
-  const canEditShipping =
-    status === "processing" ||
-    status === "shipped";
+   Shipping information can only be edited
+   while order is processing.
+
+   Once shipped, shipping becomes a shipment record
+   and cannot be modified from this workflow.
+======================================================= */
+
+const canEditShipping =
+  status === "processing";
 
 
   /* =======================================================
@@ -548,11 +547,11 @@ export default function ShippingForm({
         "
       >
         {status === "processing"
-          ? "Add shipping information before marking the order as shipped."
-          : status === "shipped"
-            ? "Shipping information can still be corrected if necessary."
-            : "Shipping information is locked for this order."
-        }
+  ? "Add shipping information before marking the order as shipped."
+  : status === "shipped"
+    ? "Shipping information is locked because the order has been shipped."
+    : "Shipping information is locked for this order."
+}
       </p>
 
 
