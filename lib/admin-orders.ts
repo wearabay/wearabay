@@ -1189,8 +1189,11 @@ export async function updateAdminShipping(
   /* -------------------------------------------------------
      Get current order information
 
-     Shipping can be entered while processing.
-     It can also be corrected after shipped.
+     Shipping can only be edited while processing.
+
+     Once shipped, courier and tracking information
+     become part of the shipment record and must not
+     be changed through this workflow.
   ------------------------------------------------------- */
 
   const {
@@ -1223,14 +1226,12 @@ export async function updateAdminShipping(
 
 
   /* -------------------------------------------------------
-     Shipping is not editable after completion/cancellation
+     Shipping can only be updated while processing
   ------------------------------------------------------- */
 
   if (
     existingOrder.status !==
-      "processing" &&
-    existingOrder.status !==
-      "shipped"
+    "processing"
   ) {
 
     return undefined;

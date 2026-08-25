@@ -39,62 +39,78 @@ export default function OrderTimeline({
 
   const steps = [
 
-    {
-      title:
-        "Order Placed",
+  {
+    title:
+      "Order Placed",
 
-      active:
-        true,
-    },
-
-
-    {
-      title:
-        "Payment Confirmed",
-
-      active:
-        paymentStatus === "paid",
-    },
+    active:
+      true,
+  },
 
 
-    {
-      title:
-        "Processing",
+  {
+    title:
+      "Payment Confirmed",
 
-      active:
-        [
-          "processing",
-          "shipped",
-          "completed",
-        ].includes(
-          orderStatus
-        ),
-    },
+    active:
+      paymentStatus === "paid",
+  },
 
 
-    {
-      title:
-        "Shipped",
+  {
+    title:
+      "Processing",
 
-      active:
-        [
-          "shipped",
-          "completed",
-        ].includes(
-          orderStatus
-        ),
-    },
+    active:
+      [
+        "processing",
+        "shipped",
+        "delivered",
+        "completed",
+      ].includes(
+        orderStatus
+      ),
+  },
 
 
-    {
-      title:
-        "Completed",
+  {
+    title:
+      "Shipped",
 
-      active:
-        orderStatus === "completed",
-    },
+    active:
+      [
+        "shipped",
+        "delivered",
+        "completed",
+      ].includes(
+        orderStatus
+      ),
+  },
 
-  ];
+
+  {
+    title:
+      "Delivered",
+
+    active:
+      [
+        "delivered",
+        "completed",
+      ].includes(
+        orderStatus
+      ),
+  },
+
+
+  {
+    title:
+      "Completed",
+
+    active:
+      orderStatus === "completed",
+  },
+
+];
 
 
 

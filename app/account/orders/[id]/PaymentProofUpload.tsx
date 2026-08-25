@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import {
   useEffect,
   useState,
@@ -35,6 +37,9 @@ export default function PaymentProofUpload({
 
   const supabase =
     createClient();
+
+  const router =
+    useRouter();
 
 
   const [file, setFile] =
@@ -319,8 +324,9 @@ export default function PaymentProofUpload({
         REDIRECT TO MY ORDERS
       ===================================================== */
 
-window.location.href =
-  "/account/orders";
+router.push(
+  "/account/orders"
+);
 
 
     } catch (uploadError) {

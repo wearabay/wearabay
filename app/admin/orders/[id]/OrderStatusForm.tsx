@@ -60,6 +60,11 @@ const orderFlow: Record<
 
   shipped: [
     "shipped",
+    "delivered",
+  ],
+
+  delivered: [
+    "delivered",
     "completed",
   ],
 
@@ -504,13 +509,19 @@ export default function OrderStatusForm({
     ----------------------------------------------- */
 
     const confirmed =
-      window.confirm(
-        `Change order status from ${formatLabel(
-          currentOrderStatus
-        )} to ${formatLabel(
-          nextStatus
-        )}?`
-      );
+  window.confirm(
+    `Change order status from ${formatLabel(
+      currentOrderStatus
+    )} to ${formatLabel(
+      nextStatus
+    )}?`
+  );
+
+console.log(
+  "STATUS CHANGE REQUEST",
+  currentOrderStatus,
+  nextStatus
+);
 
 
     /* -----------------------------------------------

@@ -52,8 +52,13 @@ const allowedTransitions: Record<
 
 
   shipped: [
-    "completed",
+    "delivered",
   ],
+
+
+  delivered: [
+  "completed",
+],
 
 
   completed: [],

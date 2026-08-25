@@ -287,43 +287,43 @@ export default async function OrderDetailPage({
 
 
           {/* =================================================
-              RECEIVED ORDER
-          ================================================= */}
+    RECEIVED ORDER
+================================================= */}
 
-          {order.status === "shipped" && (
+{order.status === "delivered" && (
 
-            <section
-              className="
-                rounded-2xl
-                border
-                border-stone-200
-                p-6
-              "
-            >
+  <section
+    className="
+      rounded-2xl
+      border
+      border-stone-200
+      p-6
+    "
+  >
 
-              <h2 className="mb-4">
-                Received your order?
-              </h2>
-
-
-              <p
-                className="
-                  mb-5
-                  text-sm
-                  text-neutral-500
-                "
-              >
-                Confirm once your package has arrived.
-              </p>
+    <h2 className="mb-4">
+      Received your order?
+    </h2>
 
 
-              <ConfirmReceivedButton
-                orderId={order.id}
-              />
+    <p
+      className="
+        mb-5
+        text-sm
+        text-neutral-500
+      "
+    >
+      Confirm once your package has arrived.
+    </p>
 
-            </section>
 
-          )}
+    <ConfirmReceivedButton
+      orderId={order.id}
+    />
+
+  </section>
+
+)}
 
 
           {/* =================================================

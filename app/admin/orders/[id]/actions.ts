@@ -273,24 +273,25 @@ export async function updateAdminShippingAction(
 
   } catch (error) {
 
-    console.error(
-      "Update admin shipping failed:",
-      error
-    );
+  console.error(
+    "Update admin shipping failed:",
+    error
+  );
 
+  console.log(
+    "SHIPPING ERROR DETAIL:",
+    error
+  );
 
-    return {
+  return {
+    success: false,
+    message:
+      error instanceof Error
+        ? error.message
+        : "Failed to save shipping information.",
+  };
 
-      success: false,
-
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to save shipping information.",
-
-    };
-
-  }
+}
 
 }
 
