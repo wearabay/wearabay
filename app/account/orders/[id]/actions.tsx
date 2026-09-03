@@ -31,6 +31,10 @@ export async function savePaymentProofAction(
       await createClient();
 
 
+    /* =================================================
+       AUTH
+    ================================================= */
+
     const {
       data: {
         user,
@@ -49,6 +53,10 @@ export async function savePaymentProofAction(
 
     }
 
+
+    /* =================================================
+       LOAD ORDER
+    ================================================= */
 
     const {
       data: order,
@@ -80,7 +88,9 @@ export async function savePaymentProofAction(
 
 
     if (orderError) {
+
       throw orderError;
+
     }
 
 
@@ -94,6 +104,10 @@ export async function savePaymentProofAction(
 
     }
 
+
+    /* =================================================
+       PAYMENT METHOD VALIDATION
+    ================================================= */
 
     const payment =
       String(
@@ -118,6 +132,10 @@ export async function savePaymentProofAction(
     }
 
 
+    /* =================================================
+       PAYMENT STATUS VALIDATION
+    ================================================= */
+
     if (
       order.payment_status !== "pending"
     ) {
@@ -130,6 +148,13 @@ export async function savePaymentProofAction(
 
     }
 
+
+    /* =================================================
+       PATH VALIDATION
+       
+       Expected:
+       {user_id}/{order_id}/{filename}
+    ================================================= */
 
     const expectedPrefix =
       `${user.id}/${orderId}/`;
@@ -156,6 +181,13 @@ export async function savePaymentProofAction(
 
     /* =================================================
        UPDATE PAYMENT PROOF
+       
+       Customer may only update:
+       - payment_proof_path
+       - payment_proof_uploaded_at
+       
+       payment_proof_verified_at is intentionally
+       NOT modified here.
     ================================================= */
 
     const {
@@ -173,9 +205,6 @@ export async function savePaymentProofAction(
 
           payment_proof_uploaded_at:
             new Date().toISOString(),
-
-          payment_proof_verified_at:
-            null,
 
         })
 
@@ -200,15 +229,15 @@ export async function savePaymentProofAction(
 
 
     if (updateError) {
+
       throw updateError;
+
     }
 
 
-    /*
-     * IMPORTANT:
-     * Make sure the database actually returned
-     * the updated order.
-     */
+    /* =================================================
+       VERIFY DATABASE UPDATE
+    ================================================= */
 
     if (!updatedOrder) {
 
@@ -221,6 +250,9 @@ export async function savePaymentProofAction(
 
     /* =================================================
        REMOVE OLD PAYMENT PROOF
+       
+       When replacing an existing proof, remove
+       the old file from private storage.
     ================================================= */
 
     if (

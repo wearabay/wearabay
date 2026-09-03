@@ -64,6 +64,9 @@ export default function PlaceOrder() {
   }
 
 
+  setLoading(true);
+
+
   try {
 
     const order =
@@ -104,24 +107,24 @@ export default function PlaceOrder() {
       });
 
 
-    /* =================================================
-       CLEAR CART
-
-       Order sudah berhasil dibuat.
-       Cart tidak boleh tetap berisi item lama.
-    ================================================= */
+    /* -----------------------------------------------------
+       Order berhasil dibuat.
+       Stock juga sudah dikurangi oleh RPC.
+    ----------------------------------------------------- */
 
     await clearCart();
 
 
     window.dispatchEvent(
-      new Event("cart-updated")
+      new Event(
+        "cart-updated"
+      )
     );
 
 
-    /* =================================================
+    /* -----------------------------------------------------
        GO TO PAYMENT
-    ================================================= */
+    ----------------------------------------------------- */
 
     router.push(
       `/checkout/payment?order=${order.id}`
@@ -137,8 +140,15 @@ export default function PlaceOrder() {
 
 
     alert(
-      "Unable to place your order. Please try again."
+      error instanceof Error
+        ? error.message
+        : "Unable to place your order. Please try again."
     );
+
+
+  } finally {
+
+    setLoading(false);
 
   }
 

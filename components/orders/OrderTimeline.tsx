@@ -7,8 +7,8 @@ import type {
 type Props = {
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
+  paymentProofUploaded?: boolean;
 };
-
 
 
 function label(
@@ -29,89 +29,201 @@ function label(
 }
 
 
-
 export default function OrderTimeline({
   orderStatus,
   paymentStatus,
+  paymentProofUploaded = false,
 }: Props) {
 
 
+  /*
+   * =======================================================
+   * PAYMENT STATE
+   *
+   * pending + proof uploaded
+   * means the customer has submitted payment proof
+   * and is waiting for admin verification.
+   * =======================================================
+   */
+
+  const paymentConfirmed =
+    paymentStatus === "paid";
+
+
+  const paymentUnderReview =
+    paymentStatus === "pending" &&
+    paymentProofUploaded;
+
+
+  /*
+   * =======================================================
+   * ORDER PROGRESS
+   * =======================================================
+   */
+
+  const processingActive =
+    [
+      "processing",
+      "shipped",
+      "delivered",
+      "completed",
+    ].includes(
+      orderStatus
+    );
+
+
+  const shippedActive =
+    [
+      "shipped",
+      "delivered",
+      "completed",
+    ].includes(
+      orderStatus
+    );
+
+
+  const deliveredActive =
+    [
+      "delivered",
+      "completed",
+    ].includes(
+      orderStatus
+    );
+
+
+  const completedActive =
+    orderStatus === "completed";
+
+
+  /*
+   * =======================================================
+   * STEPS
+   * =======================================================
+   */
 
   const steps = [
 
-  {
-    title:
-      "Order Placed",
+    {
+      title:
+        "Order Placed",
 
-    active:
-      true,
-  },
+      active:
+        true,
 
-
-  {
-    title:
-      "Payment Confirmed",
-
-    active:
-      paymentStatus === "paid",
-  },
+      status:
+        "Order received",
+    },
 
 
-  {
-    title:
-      "Processing",
+    {
+      title:
+        paymentConfirmed
+          ? "Payment Confirmed"
+          : paymentUnderReview
+            ? "Payment Under Review"
+            : "Payment Pending",
 
-    active:
-      [
-        "processing",
-        "shipped",
-        "delivered",
-        "completed",
-      ].includes(
-        orderStatus
-      ),
-  },
+      active:
+        paymentConfirmed,
 
-
-  {
-    title:
-      "Shipped",
-
-    active:
-      [
-        "shipped",
-        "delivered",
-        "completed",
-      ].includes(
-        orderStatus
-      ),
-  },
+      status:
+        paymentConfirmed
+          ? "Payment verified"
+          : paymentUnderReview
+            ? "Payment proof submitted"
+            : "Waiting for payment",
+    },
 
 
-  {
-    title:
-      "Delivered",
+    {
+      title:
+        "Processing",
 
-    active:
-      [
-        "delivered",
-        "completed",
-      ].includes(
-        orderStatus
-      ),
-  },
+      active:
+        processingActive,
+
+      status:
+        processingActive
+          ? "Order is being prepared"
+          : "Not started",
+    },
 
 
-  {
-    title:
-      "Completed",
+    {
+      title:
+        "Shipped",
 
-    active:
-      orderStatus === "completed",
-  },
+      active:
+        shippedActive,
 
-];
+      status:
+        shippedActive
+          ? "Order has been shipped"
+          : "Not shipped yet",
+    },
 
+
+    {
+      title:
+        "Delivered",
+
+      active:
+        deliveredActive,
+
+      status:
+        deliveredActive
+          ? "Package delivered"
+          : "Waiting for delivery",
+    },
+
+
+    {
+      title:
+        "Completed",
+
+      active:
+        completedActive,
+
+      status:
+        completedActive
+          ? "Order completed"
+          : "Waiting for confirmation",
+    },
+
+  ];
+
+
+  /*
+   * =======================================================
+   * CURRENT STATUS LABEL
+   * =======================================================
+   */
+
+  let currentStatus =
+    label(orderStatus);
+
+
+  if (
+    orderStatus === "pending" &&
+    paymentUnderReview
+  ) {
+
+    currentStatus =
+      "Payment Under Review";
+
+  }
+
+
+  if (
+    orderStatus === "pending" &&
+    !paymentUnderReview &&
+    paymentStatus === "pending"
+  ) {
+
+    currentStatus =
+      "Payment Pending";
+
+  }
 
 
   return (
@@ -125,7 +237,6 @@ export default function OrderTimeline({
       "
     >
 
-
       <h2
         className="
           mb-6
@@ -137,47 +248,47 @@ export default function OrderTimeline({
       </h2>
 
 
-
       <div
         className="
           space-y-5
         "
       >
 
+        {steps.map(
+          (
+            step,
+            index
+          ) => (
 
-        {
-          steps.map(
-            (
-              step,
-              index
-            ) => (
+            <div
+              key={
+                step.title
+              }
+              className="
+                flex
+                items-start
+                gap-4
+              "
+            >
 
+              {/* =================================================
+                  STEP ICON
+              ================================================= */}
 
               <div
-                key={
-                  step.title
-                }
-                className="
+                className={`
                   flex
+                  h-8
+                  w-8
+                  shrink-0
                   items-center
-                  gap-4
-                "
-              >
+                  justify-center
+                  rounded-full
+                  border
+                  text-xs
 
-
-                <div
-                  className={`
-                    flex
-                    h-8
-                    w-8
-                    items-center
-                    justify-center
-                    rounded-full
-                    border
-                    text-xs
-
-                    ${
-                      step.active
+                  ${
+                    step.active
 
                       ?
 
@@ -186,22 +297,22 @@ export default function OrderTimeline({
                       :
 
                       "border-stone-300 text-neutral-400"
-
-                    }
-                  `}
-                >
-
-                  {
-                    step.active
-                    ?
-                    "✓"
-                    :
-                    index + 1
                   }
+                `}
+              >
 
-                </div>
+                {step.active
+                  ? "✓"
+                  : index + 1}
+
+              </div>
 
 
+              {/* =================================================
+                  STEP CONTENT
+              ================================================= */}
+
+              <div>
 
                 <p
                   className={`
@@ -210,34 +321,43 @@ export default function OrderTimeline({
                     ${
                       step.active
 
-                      ?
+                        ?
 
-                      "font-medium text-black"
+                        "font-medium text-black"
 
-                      :
+                        :
 
-                      "text-neutral-400"
-
+                        "text-neutral-400"
                     }
                   `}
                 >
-
                   {step.title}
-
                 </p>
 
 
+                <p
+                  className="
+                    mt-1
+                    text-xs
+                    text-neutral-500
+                  "
+                >
+                  {step.status}
+                </p>
+
               </div>
 
+            </div>
 
-            )
           )
-        }
-
+        )}
 
       </div>
 
 
+      {/* =====================================================
+          CURRENT STATUS
+      ===================================================== */}
 
       <div
         className="
@@ -245,19 +365,33 @@ export default function OrderTimeline({
           border-t
           border-stone-200
           pt-4
-          text-xs
-          uppercase
-          tracking-wider
-          text-neutral-500
         "
       >
 
-        Current Status:
-        {" "}
-        {label(orderStatus)}
+        <p
+          className="
+            text-xs
+            uppercase
+            tracking-wider
+            text-neutral-500
+          "
+        >
+          Current Status
+        </p>
+
+
+        <p
+          className="
+            mt-2
+            text-sm
+            font-medium
+            uppercase
+          "
+        >
+          {currentStatus}
+        </p>
 
       </div>
-
 
     </section>
 

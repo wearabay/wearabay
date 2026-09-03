@@ -7,25 +7,50 @@ import type {
 /* =========================================================
    ALLOWED ORDER STATUS TRANSITIONS
 
-   Normal lifecycle:
+   NORMAL ORDER LIFECYCLE
 
    pending
-      ↓
-   paid
       ↓
    processing
       ↓
    shipped
       ↓
+   delivered
+      ↓
    completed
 
-   Cancellation is allowed before shipment.
+
+   LEGACY / COMPATIBILITY
+
+   paid → processing
+
+   The "paid" order status is kept because it already exists
+   in the application's OrderStatus type and may exist on
+   previously created orders.
+
+   New bank-transfer orders should normally move:
+
+   pending + pending
+          ↓
+   payment verification
+          ↓
+   processing + paid
+
+
+   CANCELLATION
+
+   Cancellation is only allowed while an order is pending.
 
    We intentionally do NOT allow:
-   shipped → processing
-   completed → shipped
 
-   because those are backwards lifecycle transitions.
+   pending    → paid       through the generic status selector
+   processing → cancelled
+   shipped    → cancelled
+   delivered  → cancelled
+   completed  → cancelled
+
+   Payment verification is handled by the dedicated
+   verify_order_payment workflow.
 ========================================================= */
 
 const allowedTransitions: Record<
@@ -34,20 +59,23 @@ const allowedTransitions: Record<
 > = {
 
   pending: [
-    "paid",
     "cancelled",
   ],
 
 
+  /*
+   * Kept for compatibility with existing orders.
+   *
+   * A paid order may continue to processing.
+   */
+
   paid: [
     "processing",
-    "cancelled",
   ],
 
 
   processing: [
     "shipped",
-    "cancelled",
   ],
 
 
@@ -57,8 +85,8 @@ const allowedTransitions: Record<
 
 
   delivered: [
-  "completed",
-],
+    "completed",
+  ],
 
 
   completed: [],
@@ -102,17 +130,9 @@ const allowedTransitions: Record<
       ↓
    [final]
 
-   We intentionally do NOT allow:
 
-   paid → pending
-   paid → failed
-   paid → expired
-
-   because a payment that has already been verified as paid
-   must not be moved backwards through the normal admin
-   payment status workflow.
-
-   Refund is treated as a terminal payment state.
+   Payment verification should normally happen through the
+   dedicated verify_order_payment workflow.
 ========================================================= */
 
 const allowedPaymentTransitions: Record<

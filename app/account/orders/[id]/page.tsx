@@ -127,9 +127,12 @@ export default async function OrderDetailPage({
           ================================================= */}
 
           <OrderTimeline
-            orderStatus={order.status}
-            paymentStatus={order.paymentStatus}
-          />
+  orderStatus={order.status}
+  paymentStatus={order.paymentStatus}
+  paymentProofUploaded={
+    Boolean(order.paymentProofPath)
+  }
+/>
 
 
           {/* =================================================

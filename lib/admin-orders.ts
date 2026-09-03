@@ -6,6 +6,8 @@ import type {
   PaymentStatus,
 } from "@/lib/order";
 
+import type { CartItem } from "@/lib/cart";
+
 import {
   canUpdateOrderStatus,
   canUpdatePaymentStatus,
@@ -13,11 +15,117 @@ import {
 
 
 /* =========================================================
-   HELPERS
+   TYPES
+========================================================= */
+
+type AdminOrderRow = {
+  id: string;
+
+  order_number: string | null;
+
+  customer_email: string | null;
+  customer_phone: string | null;
+
+  first_name: string | null;
+  last_name: string | null;
+
+  country: string | null;
+  province: string | null;
+  city: string | null;
+  postal_code: string | null;
+  street: string | null;
+
+  delivery_method: string | null;
+  payment_method: string | null;
+
+  subtotal: number | string | null;
+  shipping_fee: number | string | null;
+  total: number | string | null;
+
+  status: string | null;
+  payment_status: string | null;
+
+  created_at: string | null;
+  updated_at?: string | null;
+
+  payment_proof_path?: string | null;
+  payment_proof_uploaded_at?: string | null;
+  payment_proof_verified_at?: string | null;
+
+  courier?: string | null;
+  tracking_number?: string | null;
+  shipped_at?: string | null;
+
+  order_items?: AdminOrderItemRow[] | null;
+};
+
+
+type AdminOrderItemRow = {
+  id: string;
+
+  product_id: number | string | null;
+  product_name: string | null;
+  product_image: string | null;
+
+  color: string | null;
+  size: string | null;
+
+  quantity: number | string | null;
+  unit_price: number | string | null;
+
+  product_slug?: string | null;
+};
+
+
+/* =========================================================
+   MAP ORDER ITEMS
+========================================================= */
+
+function mapAdminOrderItems(
+  rows: AdminOrderItemRow[] = []
+): CartItem[] {
+
+  return rows.map(
+    (item) => ({
+
+      id:
+        Number(
+          item.product_id ?? 0
+        ),
+
+      name:
+        item.product_name ?? "",
+
+      price:
+        Number(
+          item.unit_price ?? 0
+        ),
+
+      image:
+        item.product_image ?? "",
+
+      quantity:
+        Number(
+          item.quantity ?? 0
+        ),
+
+      color:
+        item.color ?? undefined,
+
+      size:
+        item.size ?? undefined,
+
+    })
+  );
+}
+
+
+/* =========================================================
+   MAP ADMIN ORDER
 ========================================================= */
 
 function mapAdminOrder(
-  row: any
+  row: AdminOrderRow
 ): Order {
 
   return {
@@ -26,140 +134,116 @@ function mapAdminOrder(
       row.id,
 
     orderNumber:
-      row.order_number,
-
+      row.order_number ?? "",
 
     items:
-      (row.order_items ?? []).map(
-        (item: any) => ({
-
-          id:
-            Number(item.product_id),
-
-          name:
-            item.product_name,
-
-          price:
-            Number(item.unit_price),
-
-          image:
-            item.product_image ?? "",
-
-          quantity:
-            Number(item.quantity),
-
-          color:
-            item.color ?? undefined,
-
-          size:
-            item.size ?? undefined,
-
-        })
+      mapAdminOrderItems(
+        row.order_items ?? []
       ),
-
 
     customer: {
 
       email:
-        row.customer_email,
+        row.customer_email ?? "",
 
       phone:
-        row.customer_phone,
+        row.customer_phone ?? "",
 
     },
-
 
     address: {
 
       firstName:
-        row.first_name,
+        row.first_name ?? "",
 
       lastName:
-        row.last_name,
+        row.last_name ?? "",
 
       street:
-        row.street,
+        row.street ?? "",
 
       city:
-        row.city,
+        row.city ?? "",
 
       province:
-        row.province,
+        row.province ?? "",
 
       postalCode:
-        row.postal_code,
+        row.postal_code ?? "",
 
       country:
-        row.country,
+        row.country ?? "",
 
     },
 
-
     delivery:
-      row.delivery_method,
-
+      row.delivery_method ?? "",
 
     payment:
-      row.payment_method,
-
+      row.payment_method ?? "",
 
     subtotal:
-      Number(row.subtotal),
-
+      Number(
+        row.subtotal ?? 0
+      ),
 
     shippingFee:
-      Number(row.shipping_fee ?? 0),
-
+      Number(
+        row.shipping_fee ?? 0
+      ),
 
     total:
       Number(
         row.total ??
-        row.subtotal
+        row.subtotal ??
+        0
       ),
 
-
     status:
-      row.status,
-
+      (
+        row.status ??
+        "pending"
+      ) as OrderStatus,
 
     paymentStatus:
-      row.payment_status,
-
+      (
+        row.payment_status ??
+        "pending"
+      ) as PaymentStatus,
 
     paymentProofPath:
-      row.payment_proof_path ?? null,
-
+      row.payment_proof_path ??
+      null,
 
     paymentProofUploadedAt:
-      row.payment_proof_uploaded_at ?? null,
-
+      row.payment_proof_uploaded_at ??
+      null,
 
     paymentProofVerifiedAt:
-      row.payment_proof_verified_at ?? null,
-
+      row.payment_proof_verified_at ??
+      null,
 
     createdAt:
-      row.created_at,
-
+      row.created_at ?? "",
 
     courier:
-      row.courier ?? null,
-
+      row.courier ??
+      null,
 
     trackingNumber:
-      row.tracking_number ?? null,
-
+      row.tracking_number ??
+      null,
 
     shippedAt:
-      row.shipped_at ?? null,
+      row.shipped_at ??
+      null,
 
   };
-
 }
 
 
 /* =========================================================
-   ADMIN AUTH
+   AUTHENTICATED ADMIN
 ========================================================= */
 
 async function getAuthenticatedAdmin() {
@@ -178,14 +262,17 @@ async function getAuthenticatedAdmin() {
 
   if (!user) {
 
-    return null;
+    return {
+      supabase,
+      user: null,
+      isAdmin: false,
+    };
 
   }
 
 
   const {
     data: profile,
-    error,
   } =
     await supabase
 
@@ -201,17 +288,17 @@ async function getAuthenticatedAdmin() {
       .maybeSingle();
 
 
-  if (
-    error ||
-    profile?.role !== "admin"
-  ) {
+  return {
 
-    return null;
+    supabase,
 
-  }
+    user,
 
+    isAdmin:
+      profile?.role ===
+      "admin",
 
-  return user;
+  };
 
 }
 
@@ -226,9 +313,9 @@ async function createOrderHistory(
   >,
   orderId: string,
   type: string,
-  oldValue?: string | null,
-  newValue?: string | null,
-  note?: string | null
+  oldValue: string | null,
+  newValue: string | null,
+  note?: string
 ) {
 
   const {
@@ -248,10 +335,10 @@ async function createOrderHistory(
         type,
 
         old_value:
-          oldValue ?? null,
+          oldValue,
 
         new_value:
-          newValue ?? null,
+          newValue,
 
         note:
           note ?? null,
@@ -261,7 +348,9 @@ async function createOrderHistory(
 
   if (error) {
 
-    throw error;
+    throw new Error(
+      error.message
+    );
 
   }
 
@@ -269,23 +358,23 @@ async function createOrderHistory(
 
 
 /* =========================================================
-   GET ALL ADMIN ORDERS
+   GET ADMIN ORDERS
 ========================================================= */
 
-export async function getAdminOrders(): Promise<Order[]> {
+export async function getAdminOrders(): Promise<
+  Order[]
+> {
 
-  const supabase =
-    await createClient();
-
-
-  const admin =
+  const {
+    supabase,
+    user,
+    isAdmin,
+  } =
     await getAuthenticatedAdmin();
 
 
-  if (!admin) {
-
+  if (!user || !isAdmin) {
     return [];
-
   }
 
 
@@ -312,7 +401,12 @@ export async function getAdminOrders(): Promise<Order[]> {
 
   if (error) {
 
-    throw error;
+    console.error(
+      "getAdminOrders:",
+      error
+    );
+
+    return [];
 
   }
 
@@ -320,32 +414,33 @@ export async function getAdminOrders(): Promise<Order[]> {
   return (
     data ?? []
   ).map(
-    mapAdminOrder
+    (row) =>
+      mapAdminOrder(
+        row as AdminOrderRow
+      )
   );
 
 }
 
 
 /* =========================================================
-   GET ONE ADMIN ORDER
+   GET ADMIN ORDER BY ID
 ========================================================= */
 
 export async function getAdminOrderById(
-  id: string
-): Promise<Order | undefined> {
+  orderId: string
+): Promise<Order | null> {
 
-  const supabase =
-    await createClient();
-
-
-  const admin =
+  const {
+    supabase,
+    user,
+    isAdmin,
+  } =
     await getAuthenticatedAdmin();
 
 
-  if (!admin) {
-
-    return undefined;
-
+  if (!user || !isAdmin) {
+    return null;
   }
 
 
@@ -364,7 +459,7 @@ export async function getAdminOrderById(
 
       .eq(
         "id",
-        id
+        orderId
       )
 
       .maybeSingle();
@@ -372,172 +467,250 @@ export async function getAdminOrderById(
 
   if (error) {
 
-    throw error;
+    console.error(
+      "getAdminOrderById:",
+      error
+    );
+
+    return null;
 
   }
 
 
   if (!data) {
-
-    return undefined;
-
+    return null;
   }
 
 
   return mapAdminOrder(
-    data
+    data as AdminOrderRow
   );
 
 }
 
 
 /* =========================================================
-   UPDATE ADMIN ORDER STATUS
+   UPDATE ORDER STATUS
 ========================================================= */
 
 export async function updateAdminOrderStatus(
-  id: string,
-  status: OrderStatus
-): Promise<Order | undefined> {
+  orderId: string,
+  newStatus: OrderStatus
+): Promise<Order> {
 
-  const supabase =
-    await createClient();
-
-
-  const admin =
+  const {
+    supabase,
+    user,
+    isAdmin,
+  } =
     await getAuthenticatedAdmin();
 
 
-  if (!admin) {
+  if (!user || !isAdmin) {
 
-    return undefined;
+    throw new Error(
+      "Unauthorized"
+    );
 
   }
 
 
-  /* -------------------------------------------------------
-     Get current order information
-  ------------------------------------------------------- */
-
   const {
-    data: existingOrder,
-    error: existingError,
+    data: currentOrder,
+    error: fetchError,
   } =
     await supabase
 
       .from("orders")
 
-      .select(`
-        status,
-        courier,
-        tracking_number
-      `)
+      .select(
+        `
+          id,
+          status,
+          payment_status,
+          courier,
+          tracking_number
+        `
+      )
 
       .eq(
         "id",
-        id
+        orderId
       )
 
       .single();
 
 
-  if (existingError) {
+  if (
+    fetchError ||
+    !currentOrder
+  ) {
 
-    throw existingError;
+    throw new Error(
+      fetchError?.message ??
+        "Order not found"
+    );
 
   }
 
 
-  /* -------------------------------------------------------
-     Validate status transition
-  ------------------------------------------------------- */
+  const currentStatus =
+    currentOrder.status as OrderStatus;
+
+
+  const currentPaymentStatus =
+    currentOrder.payment_status as PaymentStatus;
+
 
   if (
     !canUpdateOrderStatus(
-      existingOrder.status,
-      status
+      currentStatus,
+      newStatus
     )
   ) {
 
     throw new Error(
-      `Cannot move order from ${existingOrder.status} to ${status}`
+      `Invalid order status transition: ${currentStatus} → ${newStatus}`
     );
 
   }
 
 
   /* -------------------------------------------------------
-     SHIPPED REQUIRES SHIPPING INFORMATION
+     ATOMIC CANCELLATION + INVENTORY RELEASE
 
-     Workflow:
+     Pending + unpaid/expired orders use the database RPC.
 
-     processing
-         ↓
-     courier + tracking
-         ↓
-     shipped
+     This guarantees that:
+     - order becomes cancelled
+     - reserved inventory is released
+     - release movement is recorded
+     - order history is recorded
+
+     All within one database transaction.
   ------------------------------------------------------- */
 
   if (
-    status === "shipped"
+    newStatus === "cancelled" &&
+    currentStatus === "pending" &&
+    (
+      currentPaymentStatus ===
+        "pending" ||
+      currentPaymentStatus ===
+        "expired"
+    )
   ) {
 
-    const courier =
-      String(
-        existingOrder.courier ?? ""
-      ).trim();
+    const {
+      data: cancelledOrderId,
+      error,
+    } =
+      await supabase.rpc(
+        "cancel_order_and_release_inventory",
+        {
+          p_order_id:
+            orderId,
+        }
+      );
 
 
-    const trackingNumber =
-      String(
-        existingOrder.tracking_number ?? ""
-      ).trim();
-
-
-    if (!courier) {
+    if (error) {
 
       throw new Error(
-        "Courier must be saved before the order can be shipped."
+        error.message
       );
 
     }
 
 
-    if (!trackingNumber) {
+    if (!cancelledOrderId) {
 
       throw new Error(
-        "Tracking number must be saved before the order can be shipped."
+        "Failed to cancel order and release inventory"
       );
 
     }
+
+
+    const {
+      data: updatedOrder,
+      error: reloadError,
+    } =
+      await supabase
+
+        .from("orders")
+
+        .select(`
+          *,
+          order_items (*)
+        `)
+
+        .eq(
+          "id",
+          orderId
+        )
+
+        .single();
+
+
+    if (
+      reloadError ||
+      !updatedOrder
+    ) {
+
+      throw new Error(
+        reloadError?.message ??
+          "Failed to reload cancelled order"
+      );
+
+    }
+
+
+    return mapAdminOrder(
+      updatedOrder as AdminOrderRow
+    );
 
   }
 
 
   /* -------------------------------------------------------
-     Update order status
+     SHIPPING REQUIREMENT
   ------------------------------------------------------- */
 
-  const updateData: Record<
+  if (
+    newStatus === "shipped" &&
+    (
+      !currentOrder.courier ||
+      !currentOrder.tracking_number
+    )
+  ) {
+
+    throw new Error(
+      "Courier and tracking number are required before shipping."
+    );
+
+  }
+
+
+  const updatePayload: Record<
     string,
     unknown
   > = {
 
-    status,
+    status:
+      newStatus,
+
+    updated_at:
+      new Date().toISOString(),
 
   };
 
 
-  /*
-   * When the order becomes shipped,
-   * record the shipment timestamp.
-   */
-
   if (
-    status === "shipped"
+    newStatus === "shipped"
   ) {
 
-    updateData.shipped_at =
+    updatePayload.shipped_at =
       new Date().toISOString();
 
   }
@@ -552,12 +725,12 @@ export async function updateAdminOrderStatus(
       .from("orders")
 
       .update(
-        updateData
+        updatePayload
       )
 
       .eq(
         "id",
-        id
+        orderId
       )
 
       .select(`
@@ -568,132 +741,111 @@ export async function updateAdminOrderStatus(
       .single();
 
 
-  if (error) {
+  if (
+    error ||
+    !data
+  ) {
 
-    throw error;
+    throw new Error(
+      error?.message ??
+        "Failed to update order status"
+    );
 
   }
 
-
-  if (!data) {
-
-    return undefined;
-
-  }
-
-
-  /* -------------------------------------------------------
-     Create history AFTER update succeeds
-  ------------------------------------------------------- */
 
   await createOrderHistory(
     supabase,
-    id,
+    orderId,
     "order_status",
-    existingOrder.status,
-    status,
-    "Admin updated order status"
+    currentStatus,
+    newStatus
   );
 
 
   return mapAdminOrder(
-    data
+    data as AdminOrderRow
   );
 
 }
 
 
 /* =========================================================
-   UPDATE ADMIN PAYMENT STATUS
+   UPDATE PAYMENT STATUS
 ========================================================= */
 
 export async function updateAdminPaymentStatus(
-  id: string,
-  paymentStatus: PaymentStatus
-): Promise<Order | undefined> {
+  orderId: string,
+  newPaymentStatus: PaymentStatus
+): Promise<Order> {
 
-  const supabase =
-    await createClient();
-
-
-  const admin =
+  const {
+    supabase,
+    user,
+    isAdmin,
+  } =
     await getAuthenticatedAdmin();
 
 
-  if (!admin) {
+  if (!user || !isAdmin) {
 
-    return undefined;
+    throw new Error(
+      "Unauthorized"
+    );
 
   }
 
 
-  /* -------------------------------------------------------
-     Get current payment status
-  ------------------------------------------------------- */
-
   const {
-    data: existingOrder,
-    error: existingError,
+    data: currentOrder,
+    error: fetchError,
   } =
     await supabase
 
       .from("orders")
 
       .select(
-        "payment_status"
+        "id, payment_status, status"
       )
 
       .eq(
         "id",
-        id
+        orderId
       )
 
       .single();
 
 
-  if (existingError) {
-
-    throw existingError;
-
-  }
-
-
-  /* -------------------------------------------------------
-     Validate payment status transition
-
-     Server-side protection:
-
-     pending  → paid
-     pending  → failed
-     pending  → expired
-
-     failed   → pending
-     expired  → pending
-
-     paid     → refunded
-
-     refunded → final
-
-     Backward / invalid transitions are rejected.
-  ------------------------------------------------------- */
-
   if (
-    !canUpdatePaymentStatus(
-      existingOrder.payment_status,
-      paymentStatus
-    )
+    fetchError ||
+    !currentOrder
   ) {
 
     throw new Error(
-      `Cannot move payment status from ${existingOrder.payment_status} to ${paymentStatus}`
+      fetchError?.message ??
+        "Order not found"
     );
 
   }
 
 
-  /* -------------------------------------------------------
-     Update payment status
-  ------------------------------------------------------- */
+  const currentPaymentStatus =
+    currentOrder.payment_status as PaymentStatus;
+
+
+  if (
+    !canUpdatePaymentStatus(
+      currentPaymentStatus,
+      newPaymentStatus
+    )
+  ) {
+
+    throw new Error(
+      `Invalid payment status transition: ${currentPaymentStatus} → ${newPaymentStatus}`
+    );
+
+  }
+
 
   const {
     data,
@@ -706,23 +858,16 @@ export async function updateAdminPaymentStatus(
       .update({
 
         payment_status:
-          paymentStatus,
+          newPaymentStatus,
 
-        ...(paymentStatus === "pending"
-          ? {
-
-              payment_proof_verified_at:
-                null,
-
-            }
-
-          : {}),
+        updated_at:
+          new Date().toISOString(),
 
       })
 
       .eq(
         "id",
-        id
+        orderId
       )
 
       .select(`
@@ -733,43 +878,30 @@ export async function updateAdminPaymentStatus(
       .single();
 
 
-  if (error) {
-
-    throw error;
-
-  }
-
-
-  if (!data) {
-
-    return undefined;
-
-  }
-
-
-  /* -------------------------------------------------------
-     Create history AFTER update succeeds
-  ------------------------------------------------------- */
-
   if (
-    existingOrder.payment_status !==
-    paymentStatus
+    error ||
+    !data
   ) {
 
-    await createOrderHistory(
-      supabase,
-      id,
-      "payment_status",
-      existingOrder.payment_status,
-      paymentStatus,
-      "Admin updated payment status"
+    throw new Error(
+      error?.message ??
+        "Failed to update payment status"
     );
 
   }
 
 
+  await createOrderHistory(
+    supabase,
+    orderId,
+    "payment_status",
+    currentPaymentStatus,
+    newPaymentStatus
+  );
+
+
   return mapAdminOrder(
-    data
+    data as AdminOrderRow
   );
 
 }
@@ -780,70 +912,66 @@ export async function updateAdminPaymentStatus(
 ========================================================= */
 
 export async function verifyAdminPaymentProof(
-  id: string
-): Promise<Order | undefined> {
+  orderId: string
+): Promise<Order> {
 
-  const supabase =
-    await createClient();
-
-
-  const admin =
+  const {
+    supabase,
+    user,
+    isAdmin,
+  } =
     await getAuthenticatedAdmin();
 
 
-  if (!admin) {
+  if (!user || !isAdmin) {
 
-    return undefined;
+    throw new Error(
+      "Unauthorized"
+    );
 
   }
 
 
-  /* -------------------------------------------------------
-     Get current payment information
-  ------------------------------------------------------- */
-
   const {
-    data: existingOrder,
-    error: existingError,
+    data: currentOrder,
+    error: fetchError,
   } =
     await supabase
 
       .from("orders")
 
-      .select(`
-        status,
-        payment_proof_path,
-        payment_status
-      `)
+      .select(
+        `
+          id,
+          status,
+          payment_status,
+          payment_proof_path
+        `
+      )
 
       .eq(
         "id",
-        id
+        orderId
       )
 
       .single();
 
 
-  if (existingError) {
+  if (
+    fetchError ||
+    !currentOrder
+  ) {
 
-    throw existingError;
+    throw new Error(
+      fetchError?.message ??
+        "Order not found"
+    );
 
   }
 
-
-  if (!existingOrder) {
-
-    return undefined;
-
-  }
-
-
-  /* -------------------------------------------------------
-     Make sure payment proof exists
-  ------------------------------------------------------- */
 
   if (
-    !existingOrder.payment_proof_path
+    !currentOrder.payment_proof_path
   ) {
 
     throw new Error(
@@ -853,50 +981,21 @@ export async function verifyAdminPaymentProof(
   }
 
 
-  /* -------------------------------------------------------
-     Prevent duplicate verification
-
-     Once payment is paid, the payment has already
-     been verified and must not be verified again.
-  ------------------------------------------------------- */
-
   if (
-    existingOrder.payment_status ===
-    "paid"
-  ) {
-
-    throw new Error(
-      "Payment has already been verified."
-    );
-
-  }
-
-
-  /* -------------------------------------------------------
-     Payment must still be pending
-  ------------------------------------------------------- */
-
-  if (
-    existingOrder.payment_status !==
+    currentOrder.payment_status !==
     "pending"
   ) {
 
     throw new Error(
-      `Payment cannot be verified from status ${existingOrder.payment_status}.`
+      "Only pending payments can be verified."
     );
 
   }
 
 
-  /* -------------------------------------------------------
-     Verify payment
+  const now =
+    new Date().toISOString();
 
-     Payment:
-       pending → paid
-
-     Order:
-       pending → processing
-  ------------------------------------------------------- */
 
   const {
     data,
@@ -915,18 +1014,16 @@ export async function verifyAdminPaymentProof(
           "processing",
 
         payment_proof_verified_at:
-          new Date().toISOString(),
+          now,
+
+        updated_at:
+          now,
 
       })
 
       .eq(
         "id",
-        id
-      )
-
-      .eq(
-        "payment_status",
-        "pending"
+        orderId
       )
 
       .select(`
@@ -937,52 +1034,41 @@ export async function verifyAdminPaymentProof(
       .single();
 
 
-  if (error) {
-
-    throw error;
-
-  }
-
-
-  if (!data) {
+  if (
+    error ||
+    !data
+  ) {
 
     throw new Error(
-      "Payment verification failed."
+      error?.message ??
+        "Failed to verify payment proof"
     );
 
   }
 
 
-  /* -------------------------------------------------------
-     Create payment history
-  ------------------------------------------------------- */
-
   await createOrderHistory(
     supabase,
-    id,
-    "payment_verified",
-    existingOrder.payment_status,
+    orderId,
+    "payment_status",
+    "pending",
     "paid",
     "Payment proof verified by admin"
   );
 
 
-  /* -------------------------------------------------------
-     Create order status history
-  ------------------------------------------------------- */
-
   await createOrderHistory(
     supabase,
-    id,
+    orderId,
     "order_status",
-    existingOrder.status,
+    currentOrder.status,
     "processing",
     "Order moved to processing after payment verification"
   );
 
 
   return mapAdminOrder(
-    data
+    data as AdminOrderRow
   );
 
 }
@@ -993,99 +1079,70 @@ export async function verifyAdminPaymentProof(
 ========================================================= */
 
 export async function rejectAdminPaymentProof(
-  id: string
-): Promise<Order | undefined> {
+  orderId: string
+): Promise<Order> {
 
-  const supabase =
-    await createClient();
-
-
-  const admin =
+  const {
+    supabase,
+    user,
+    isAdmin,
+  } =
     await getAuthenticatedAdmin();
 
 
-  if (!admin) {
+  if (!user || !isAdmin) {
 
-    return undefined;
+    throw new Error(
+      "Unauthorized"
+    );
 
   }
 
 
-  /* -------------------------------------------------------
-     Get existing payment proof
-  ------------------------------------------------------- */
-
   const {
-    data: existingOrder,
-    error: existingError,
+    data: currentOrder,
+    error: fetchError,
   } =
     await supabase
 
       .from("orders")
 
-      .select(`
-        payment_proof_path,
-        payment_status
-      `)
+      .select(
+        "id, status, payment_status"
+      )
 
       .eq(
         "id",
-        id
+        orderId
       )
 
       .single();
 
 
-  if (existingError) {
+  if (
+    fetchError ||
+    !currentOrder
+  ) {
 
-    throw existingError;
-
-  }
-
-
-  if (!existingOrder) {
-
-    return undefined;
-
-  }
-
-
-  const proofPath =
-    existingOrder.payment_proof_path;
-
-
-  /* -------------------------------------------------------
-     Remove proof from Storage
-  ------------------------------------------------------- */
-
-  if (proofPath) {
-
-    const {
-      error: storageError,
-    } =
-      await supabase.storage
-
-        .from(
-          "payment-proofs"
-        )
-
-        .remove([
-          proofPath,
-        ]);
-
-
-    if (storageError) {
-
-      throw storageError;
-
-    }
+    throw new Error(
+      fetchError?.message ??
+        "Order not found"
+    );
 
   }
 
 
-  /* -------------------------------------------------------
-     Reset payment proof
-  ------------------------------------------------------- */
+  if (
+    currentOrder.payment_status !==
+    "pending"
+  ) {
+
+    throw new Error(
+      "Only pending payments can be rejected."
+    );
+
+  }
+
 
   const {
     data,
@@ -1097,23 +1154,17 @@ export async function rejectAdminPaymentProof(
 
       .update({
 
-        payment_proof_path:
-          null,
-
-        payment_proof_uploaded_at:
-          null,
-
-        payment_proof_verified_at:
-          null,
-
         payment_status:
-          "pending",
+          "failed",
+
+        updated_at:
+          new Date().toISOString(),
 
       })
 
       .eq(
         "id",
-        id
+        orderId
       )
 
       .select(`
@@ -1124,36 +1175,31 @@ export async function rejectAdminPaymentProof(
       .single();
 
 
-  if (error) {
+  if (
+    error ||
+    !data
+  ) {
 
-    throw error;
+    throw new Error(
+      error?.message ??
+        "Failed to reject payment proof"
+    );
 
   }
 
-
-  if (!data) {
-
-    return undefined;
-
-  }
-
-
-  /* -------------------------------------------------------
-     Create history AFTER update succeeds
-  ------------------------------------------------------- */
 
   await createOrderHistory(
     supabase,
-    id,
-    "payment_rejected",
-    existingOrder.payment_status,
+    orderId,
+    "payment_status",
     "pending",
+    "failed",
     "Payment proof rejected by admin"
   );
 
 
   return mapAdminOrder(
-    data
+    data as AdminOrderRow
   );
 
 }
@@ -1164,90 +1210,45 @@ export async function rejectAdminPaymentProof(
 ========================================================= */
 
 export async function updateAdminShipping(
-  id: string,
+  orderId: string,
   input: {
-    courier: string;
-    trackingNumber: string;
+    courier?: string | null;
+    trackingNumber?: string | null;
   }
-): Promise<Order | undefined> {
+): Promise<Order> {
 
-  const supabase =
-    await createClient();
-
-
-  const admin =
+  const {
+    supabase,
+    user,
+    isAdmin,
+  } =
     await getAuthenticatedAdmin();
 
 
-  if (!admin) {
+  if (!user || !isAdmin) {
 
-    return undefined;
-
-  }
-
-
-  /* -------------------------------------------------------
-     Get current order information
-
-     Shipping can only be edited while processing.
-
-     Once shipped, courier and tracking information
-     become part of the shipment record and must not
-     be changed through this workflow.
-  ------------------------------------------------------- */
-
-  const {
-    data: existingOrder,
-    error: existingError,
-  } =
-    await supabase
-
-      .from("orders")
-
-      .select(`
-        status,
-        courier,
-        tracking_number
-      `)
-
-      .eq(
-        "id",
-        id
-      )
-
-      .single();
-
-
-  if (existingError) {
-
-    throw existingError;
+    throw new Error(
+      "Unauthorized"
+    );
 
   }
 
 
-  /* -------------------------------------------------------
-     Shipping can only be updated while processing
-  ------------------------------------------------------- */
-
-  if (
-    existingOrder.status !==
-    "processing"
-  ) {
-
-    return undefined;
-
-  }
+  const normalizedCourier =
+    typeof input?.courier ===
+    "string"
+      ? input.courier.trim()
+      : "";
 
 
-  /* -------------------------------------------------------
-     Validate courier
-  ------------------------------------------------------- */
+  const normalizedTrackingNumber =
+    typeof input?.trackingNumber ===
+    "string"
+      ? input.trackingNumber.trim()
+      : "";
 
-  const courier =
-    input.courier.trim();
 
-
-  if (!courier) {
+  if (!normalizedCourier) {
 
     throw new Error(
       "Courier is required."
@@ -1256,15 +1257,7 @@ export async function updateAdminShipping(
   }
 
 
-  /* -------------------------------------------------------
-     Validate tracking number
-  ------------------------------------------------------- */
-
-  const trackingNumber =
-    input.trackingNumber.trim();
-
-
-  if (!trackingNumber) {
+  if (!normalizedTrackingNumber) {
 
     throw new Error(
       "Tracking number is required."
@@ -1273,9 +1266,43 @@ export async function updateAdminShipping(
   }
 
 
-  /* -------------------------------------------------------
-     Update shipping information
-  ------------------------------------------------------- */
+  const {
+    data: currentOrder,
+    error: fetchError,
+  } =
+    await supabase
+
+      .from("orders")
+
+      .select(
+        `
+          id,
+          status,
+          courier,
+          tracking_number
+        `
+      )
+
+      .eq(
+        "id",
+        orderId
+      )
+
+      .single();
+
+
+  if (
+    fetchError ||
+    !currentOrder
+  ) {
+
+    throw new Error(
+      fetchError?.message ??
+        "Order not found"
+    );
+
+  }
+
 
   const {
     data,
@@ -1287,16 +1314,20 @@ export async function updateAdminShipping(
 
       .update({
 
-        courier,
+        courier:
+          normalizedCourier,
 
         tracking_number:
-          trackingNumber,
+          normalizedTrackingNumber,
+
+        updated_at:
+          new Date().toISOString(),
 
       })
 
       .eq(
         "id",
-        id
+        orderId
       )
 
       .select(`
@@ -1307,79 +1338,89 @@ export async function updateAdminShipping(
       .single();
 
 
-  if (error) {
+  if (
+    error ||
+    !data
+  ) {
 
-    throw error;
+    throw new Error(
+      error?.message ??
+        "Failed to update shipping information"
+    );
 
   }
 
 
-  if (!data) {
-
-    return undefined;
-
-  }
-
-
-  /* -------------------------------------------------------
-     Only create history when shipping actually changes.
-  ------------------------------------------------------- */
-
-  const oldCourier =
-    String(
-      existingOrder.courier ?? ""
-    ).trim();
-
-
-  const oldTracking =
-    String(
-      existingOrder.tracking_number ?? ""
-    ).trim();
-
-
-  const shippingChanged =
-    oldCourier !== courier ||
-    oldTracking !== trackingNumber;
-
-
-  if (shippingChanged) {
+  if (
+    currentOrder.courier !==
+      normalizedCourier ||
+    currentOrder.tracking_number !==
+      normalizedTrackingNumber
+  ) {
 
     await createOrderHistory(
       supabase,
-      id,
+      orderId,
       "shipping",
-      oldTracking || null,
-      trackingNumber,
-      `Shipping information saved: ${courier} - ${trackingNumber}`
+      [
+        currentOrder.courier,
+        currentOrder.tracking_number,
+      ]
+        .filter(
+          (
+            value
+          ) =>
+            typeof value ===
+            "string" &&
+            value.length > 0
+        )
+        .join(" / ") ||
+        null,
+      `${normalizedCourier} / ${normalizedTrackingNumber}`,
+      "Shipping information updated by admin"
     );
 
   }
 
 
   return mapAdminOrder(
-    data
+    data as AdminOrderRow
   );
 
 }
 
 
 /* =========================================================
-   GET ADMIN ORDER STATS
+   ADMIN ORDER STATS
 ========================================================= */
 
 export async function getAdminOrderStats() {
 
-  const supabase =
-    await createClient();
-
-
-  const admin =
+  const {
+    supabase,
+    user,
+    isAdmin,
+  } =
     await getAuthenticatedAdmin();
 
 
-  if (!admin) {
+  if (!user || !isAdmin) {
 
-    return null;
+    return {
+
+      total: 0,
+
+      needPaymentReview: 0,
+
+      paid: 0,
+
+      processing: 0,
+
+      shipped: 0,
+
+      completed: 0,
+
+    };
 
   }
 
@@ -1399,7 +1440,27 @@ export async function getAdminOrderStats() {
 
   if (error) {
 
-    throw error;
+    console.error(
+      "getAdminOrderStats:",
+      error
+    );
+
+
+    return {
+
+      total: 0,
+
+      needPaymentReview: 0,
+
+      paid: 0,
+
+      processing: 0,
+
+      shipped: 0,
+
+      completed: 0,
+
+    };
 
   }
 
@@ -1413,14 +1474,14 @@ export async function getAdminOrderStats() {
     total:
       orders.length,
 
-
     needPaymentReview:
       orders.filter(
         (order) =>
           order.payment_status ===
-          "pending"
+            "pending" &&
+          order.status ===
+            "pending"
       ).length,
-
 
     paid:
       orders.filter(
@@ -1429,7 +1490,6 @@ export async function getAdminOrderStats() {
           "paid"
       ).length,
 
-
     processing:
       orders.filter(
         (order) =>
@@ -1437,14 +1497,12 @@ export async function getAdminOrderStats() {
           "processing"
       ).length,
 
-
     shipped:
       orders.filter(
         (order) =>
           order.status ===
           "shipped"
       ).length,
-
 
     completed:
       orders.filter(
@@ -1459,24 +1517,23 @@ export async function getAdminOrderStats() {
 
 
 /* =========================================================
-   GET ADMIN PAYMENT REVIEW ORDERS
+   PAYMENT REVIEW QUEUE
 ========================================================= */
 
-export async function getAdminPaymentReviewOrders():
-  Promise<Order[]> {
+export async function getAdminPaymentReviewOrders(): Promise<
+  Order[]
+> {
 
-  const supabase =
-    await createClient();
-
-
-  const admin =
+  const {
+    supabase,
+    user,
+    isAdmin,
+  } =
     await getAuthenticatedAdmin();
 
 
-  if (!admin) {
-
+  if (!user || !isAdmin) {
     return [];
-
   }
 
 
@@ -1507,14 +1564,19 @@ export async function getAdminPaymentReviewOrders():
       .order(
         "created_at",
         {
-          ascending: false,
+          ascending: true,
         }
       );
 
 
   if (error) {
 
-    throw error;
+    console.error(
+      "getAdminPaymentReviewOrders:",
+      error
+    );
+
+    return [];
 
   }
 
@@ -1522,7 +1584,107 @@ export async function getAdminPaymentReviewOrders():
   return (
     data ?? []
   ).map(
-    mapAdminOrder
+    (row) =>
+      mapAdminOrder(
+        row as AdminOrderRow
+      )
+  );
+
+}
+
+
+/* =========================================================
+   REFUND PAYMENT
+========================================================= */
+
+export async function refundAdminPayment(
+  orderId: string
+): Promise<Order> {
+
+  const {
+    supabase,
+    user,
+    isAdmin,
+  } =
+    await getAuthenticatedAdmin();
+
+
+  if (!user || !isAdmin) {
+
+    throw new Error(
+      "Unauthorized"
+    );
+
+  }
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "refund_order_payment",
+      {
+        p_order_id:
+          orderId,
+      }
+    );
+
+
+  if (error) {
+
+    throw new Error(
+      error.message
+    );
+
+  }
+
+
+  if (!data) {
+
+    throw new Error(
+      "Failed to refund order payment"
+    );
+
+  }
+
+
+  const {
+    data: updatedOrder,
+    error: reloadError,
+  } =
+    await supabase
+
+      .from("orders")
+
+      .select(`
+        *,
+        order_items (*)
+      `)
+
+      .eq(
+        "id",
+        orderId
+      )
+
+      .single();
+
+
+  if (
+    reloadError ||
+    !updatedOrder
+  ) {
+
+    throw new Error(
+      reloadError?.message ??
+        "Failed to reload refunded order"
+    );
+
+  }
+
+
+  return mapAdminOrder(
+    updatedOrder as AdminOrderRow
   );
 
 }

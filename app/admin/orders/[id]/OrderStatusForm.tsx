@@ -42,20 +42,17 @@ const orderFlow: Record<
 
   pending: [
     "pending",
-    "paid",
     "cancelled",
   ],
 
   paid: [
     "paid",
     "processing",
-    "cancelled",
   ],
 
   processing: [
     "processing",
     "shipped",
-    "cancelled",
   ],
 
   shipped: [

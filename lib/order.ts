@@ -314,7 +314,7 @@ export async function createOrder(
 
 
   /* -------------------------------------------------------
-     Get authenticated user
+     AUTH
   ------------------------------------------------------- */
 
   const {
@@ -341,111 +341,116 @@ export async function createOrder(
 
 
   /* -------------------------------------------------------
-     Calculate totals
+     BASIC VALIDATION
   ------------------------------------------------------- */
 
-  const shippingFee =
-    input.shippingFee ?? 0;
+  if (!input.items.length) {
 
+    throw new Error(
+      "Order must contain at least one item."
+    );
 
-  const total =
-    input.total ??
-    input.subtotal + shippingFee;
-
-
-  const status =
-    input.status ?? "pending";
-
-
-  const paymentStatus =
-    input.paymentStatus ?? "pending";
-
-
-  const orderNumber =
-    generateOrderNumber();
-
-
-  /* -------------------------------------------------------
-     Create order
-  ------------------------------------------------------- */
-
-  const {
-    data: orderRow,
-    error: orderError,
-  } =
-    await supabase
-
-      .from("orders")
-
-      .insert({
-
-        user_id:
-          user.id,
-
-        order_number:
-          orderNumber,
-
-        customer_email:
-          input.customer.email,
-
-        customer_phone:
-          input.customer.phone,
-
-        first_name:
-          input.address.firstName,
-
-        last_name:
-          input.address.lastName,
-
-        country:
-          input.address.country,
-
-        province:
-          input.address.province,
-
-        city:
-          input.address.city,
-
-        postal_code:
-          input.address.postalCode,
-
-        street:
-          input.address.street,
-
-        delivery_method:
-          input.delivery,
-
-        payment_method:
-          input.payment,
-
-        subtotal:
-          input.subtotal,
-
-        shipping_fee:
-          shippingFee,
-
-        total:
-          total,
-
-        status:
-          status,
-
-        payment_status:
-          paymentStatus,
-
-      })
-
-      .select()
-
-      .single();
-
-
-  if (orderError) {
-    throw orderError;
   }
 
 
-  if (!orderRow) {
+  /* -------------------------------------------------------
+     PREPARE ITEMS FOR RPC
+     
+     The database resolves:
+     product_id + color + size
+     → product_variants.id
+  ------------------------------------------------------- */
+
+  const rpcItems =
+    input.items.map(
+      (item) => ({
+
+        id:
+          item.id,
+
+        quantity:
+          item.quantity,
+
+        color:
+          item.color ?? null,
+
+        size:
+          item.size ?? null,
+
+      })
+    );
+
+
+  /* -------------------------------------------------------
+     CREATE ORDER
+
+     All order creation, variant validation,
+     stock validation, order_items insertion,
+     and stock deduction happen inside
+     the database transaction.
+  ------------------------------------------------------- */
+
+  const {
+    data: orderId,
+    error: orderError,
+  } =
+    await supabase.rpc(
+      "create_order",
+      {
+
+        p_customer_email:
+          input.customer.email,
+
+        p_customer_phone:
+          input.customer.phone,
+
+        p_first_name:
+          input.address.firstName,
+
+        p_last_name:
+          input.address.lastName,
+
+        p_country:
+          input.address.country,
+
+        p_province:
+          input.address.province,
+
+        p_city:
+          input.address.city,
+
+        p_postal_code:
+          input.address.postalCode,
+
+        p_street:
+          input.address.street,
+
+        p_delivery_method:
+          input.delivery,
+
+        p_payment_method:
+          input.payment,
+
+        p_items:
+          rpcItems,
+
+      }
+    );
+
+
+  if (orderError) {
+
+    console.error(
+      "Failed to create order:",
+      orderError
+    );
+
+    throw orderError;
+
+  }
+
+
+  if (!orderId) {
 
     throw new Error(
       "Failed to create order."
@@ -455,142 +460,27 @@ export async function createOrder(
 
 
   /* -------------------------------------------------------
-     Create order items
+     LOAD CREATED ORDER
   ------------------------------------------------------- */
 
-  const orderItems =
-    input.items.map(
-      (item) => ({
-
-        order_id:
-          orderRow.id,
-
-        product_id:
-          item.id,
-
-        product_name:
-          item.name,
-
-        /*
-         * CartItem currently does not contain
-         * product slug.
-         */
-        product_slug:
-          null,
-
-        product_image:
-          item.image,
-
-        color:
-          item.color ?? null,
-
-        size:
-          item.size ?? null,
-
-        quantity:
-          item.quantity,
-
-        unit_price:
-          item.price,
-
-        subtotal:
-          item.price *
-          item.quantity,
-
-      })
+  const order =
+    await getOrderById(
+      orderId
     );
 
 
-  if (orderItems.length > 0) {
+  if (!order) {
 
-    const {
-      error: itemError,
-    } =
-      await supabase
-
-        .from("order_items")
-
-        .insert(orderItems);
-
-
-    if (itemError) {
-
-      /*
-       * The order header already exists.
-       *
-       * We intentionally do not attempt a client-side
-       * delete here because RLS currently does not give
-       * customers DELETE permission on orders.
-       *
-       * Later we can move order + items creation into
-       * a Supabase RPC for true transactional behavior.
-       */
-
-      throw itemError;
-
-    }
+    throw new Error(
+      "Order was created but could not be loaded."
+    );
 
   }
 
 
-  /* -------------------------------------------------------
-     Return complete order
-  ------------------------------------------------------- */
-
-    return {
-
-    id:
-      orderRow.id,
-
-    orderNumber:
-      orderRow.order_number,
-
-    items:
-      input.items,
-
-    customer:
-      input.customer,
-
-    address:
-      input.address,
-
-    delivery:
-      input.delivery,
-
-    payment:
-      input.payment,
-
-    subtotal:
-      Number(orderRow.subtotal),
-
-    shippingFee:
-      Number(orderRow.shipping_fee ?? 0),
-
-    total:
-      Number(orderRow.total),
-
-    status:
-      orderRow.status,
-
-    paymentStatus:
-      orderRow.payment_status,
-
-    paymentProofPath:
-      orderRow.payment_proof_path ?? null,
-
-    paymentProofUploadedAt:
-      orderRow.payment_proof_uploaded_at ?? null,
-
-    paymentProofVerifiedAt:
-      orderRow.payment_proof_verified_at ?? null,
-
-    createdAt:
-      orderRow.created_at,
-
-  };
+  return order;
 
 }
-
 
 /* =========================================================
    GET ORDERS

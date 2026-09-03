@@ -2,11 +2,18 @@
 
 import Link from "next/link";
 
-import { useMemo, useState } from "react";
+import {
+  useMemo,
+  useState,
+} from "react";
 
 import type { Order } from "@/lib/order";
 
 import { formatPrice } from "@/lib/currency";
+
+import {
+  verifyAdminPaymentProofAction,
+} from "./[id]/actions";
 
 
 type Props = {
@@ -29,7 +36,6 @@ export default function OrdersTable({
   orders,
 }: Props) {
 
-
   const [filter, setFilter] =
     useState<
       typeof filters[number]
@@ -40,9 +46,14 @@ export default function OrdersTable({
     useState("");
 
 
-
   const filteredOrders =
     useMemo(() => {
+
+      const query =
+        search
+          .trim()
+          .toLowerCase();
+
 
       return orders.filter(
         (order) => {
@@ -53,11 +64,10 @@ export default function OrdersTable({
 
 
           const matchSearch =
+            !query ||
             order.orderNumber
               .toLowerCase()
-              .includes(
-                search.toLowerCase()
-              );
+              .includes(query);
 
 
           return (
@@ -75,13 +85,14 @@ export default function OrdersTable({
     ]);
 
 
-
   return (
 
     <div className="space-y-6">
 
 
-      {/* FILTER */}
+      {/* =====================================================
+          FILTER
+      ===================================================== */}
 
       <div
         className="
@@ -93,28 +104,36 @@ export default function OrdersTable({
       >
 
         <input
+          type="search"
           value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
+          onChange={(event) =>
+            setSearch(
+              event.target.value
+            )
           }
           placeholder="Search order number..."
           className="
             h-11
+            w-full
             rounded-full
             border
             border-stone-300
             px-5
             text-sm
             outline-none
+            transition
+            focus:border-black
+            md:max-w-sm
           "
         />
 
 
         <select
           value={filter}
-          onChange={(e) =>
+          onChange={(event) =>
             setFilter(
-              e.target.value as any
+              event.target.value as
+                typeof filters[number]
             )
           }
           className="
@@ -122,8 +141,11 @@ export default function OrdersTable({
             rounded-full
             border
             border-stone-300
+            bg-white
             px-5
             text-sm
+            outline-none
+            focus:border-black
           "
         >
 
@@ -142,106 +164,309 @@ export default function OrdersTable({
 
         </select>
 
+      </div>
+
+
+      {/* =====================================================
+          RESULT COUNT
+      ===================================================== */}
+
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+          text-xs
+          uppercase
+          tracking-widest
+          text-neutral-500
+        "
+      >
+
+        <span>
+          {filteredOrders.length}{" "}
+          {filteredOrders.length === 1
+            ? "order"
+            : "orders"}
+        </span>
 
       </div>
 
 
-
-
-      {/* LIST */}
+      {/* =====================================================
+          LIST
+      ===================================================== */}
 
       <div className="space-y-5">
 
+        {!filteredOrders.length ? (
 
-        {filteredOrders.map(
-          (order) => (
+          <div
+            className="
+              rounded-2xl
+              border
+              border-stone-200
+              p-8
+            "
+          >
 
-            <div
-              key={order.id}
-              className="
-                rounded-2xl
-                border
-                border-stone-200
-                p-6
-              "
-            >
+            <p className="text-sm text-neutral-500">
+              No orders found.
+            </p>
 
-              <div
-                className="
-                  flex
-                  flex-col
-                  gap-5
-                  lg:flex-row
-                  lg:items-center
-                  lg:justify-between
-                "
-              >
+          </div>
 
+        ) : (
 
-                <div>
+          filteredOrders.map(
+            (order) => {
 
-                  <p className="text-xs uppercase tracking-widest text-neutral-500">
-                    Order
-                  </p>
-
-                  <p className="mt-2 font-medium">
-                    {order.orderNumber}
-                  </p>
+              const needsPaymentReview =
+                order.paymentStatus === "pending" &&
+                Boolean(
+                  order.paymentProofPath
+                );
 
 
-                  <p className="mt-1 text-sm text-neutral-500">
-                    {order.status}
-                  </p>
+              return (
 
-                </div>
-
-
-
-                <div>
-
-                  <p className="text-xs uppercase tracking-widest text-neutral-500">
-                    Total
-                  </p>
-
-                  <p className="mt-2">
-                    {formatPrice(
-                      order.total
-                    )}
-                  </p>
-
-                </div>
-
-
-
-                <Link
-                  href={`/admin/orders/${order.id}`}
+                <div
+                  key={order.id}
                   className="
-                    rounded-full
+                    rounded-2xl
                     border
-                    border-black
-                    px-6
-                    py-3
-                    text-center
-                    text-xs
-                    uppercase
-                    tracking-[0.15em]
+                    border-stone-200
+                    p-6
                   "
                 >
-                  View
-                </Link>
+
+                  <div
+                    className="
+                      flex
+                      flex-col
+                      gap-6
+                      lg:flex-row
+                      lg:items-center
+                      lg:justify-between
+                    "
+                  >
+
+                    {/* =================================================
+                        ORDER INFORMATION
+                    ================================================= */}
+
+                    <div>
+
+                      <p
+                        className="
+                          text-xs
+                          uppercase
+                          tracking-widest
+                          text-neutral-500
+                        "
+                      >
+                        Order
+                      </p>
 
 
-              </div>
+                      <p
+                        className="
+                          mt-2
+                          font-medium
+                        "
+                      >
+                        {order.orderNumber}
+                      </p>
 
 
-            </div>
+                      <div
+                        className="
+                          mt-2
+                          flex
+                          flex-wrap
+                          gap-2
+                        "
+                      >
 
+                        <span
+                          className="
+                            rounded-full
+                            border
+                            border-stone-300
+                            px-3
+                            py-1
+                            text-xs
+                            uppercase
+                            tracking-wider
+                          "
+                        >
+                          {order.status}
+                        </span>
+
+
+                        <span
+                          className="
+                            rounded-full
+                            border
+                            border-stone-300
+                            px-3
+                            py-1
+                            text-xs
+                            uppercase
+                            tracking-wider
+                          "
+                        >
+                          Payment:{" "}
+                          {order.paymentStatus}
+                        </span>
+
+                      </div>
+
+
+                      {needsPaymentReview && (
+
+                        <p
+                          className="
+                            mt-3
+                            text-sm
+                            font-medium
+                            text-amber-700
+                          "
+                        >
+                          Payment proof awaiting review
+                        </p>
+
+                      )}
+
+                    </div>
+
+
+                    {/* =================================================
+                        TOTAL
+                    ================================================= */}
+
+                    <div>
+
+                      <p
+                        className="
+                          text-xs
+                          uppercase
+                          tracking-widest
+                          text-neutral-500
+                        "
+                      >
+                        Total
+                      </p>
+
+
+                      <p
+                        className="
+                          mt-2
+                          text-lg
+                          font-medium
+                        "
+                      >
+                        {formatPrice(
+                          order.total
+                        )}
+                      </p>
+
+                    </div>
+
+
+                    {/* =================================================
+                        ACTIONS
+                    ================================================= */}
+
+                    <div
+                      className="
+                        flex
+                        flex-col
+                        gap-3
+                        sm:flex-row
+                      "
+                    >
+
+                      {/* VIEW */}
+
+                      <Link
+                        href={`/admin/orders/${order.id}`}
+                        className="
+                          rounded-full
+                          border
+                          border-black
+                          px-6
+                          py-3
+                          text-center
+                          text-xs
+                          font-medium
+                          uppercase
+                          tracking-[0.15em]
+                          transition
+                          hover:bg-black
+                          hover:text-white
+                        "
+                      >
+                        View
+                      </Link>
+
+
+                      {/* VERIFY PAYMENT */}
+
+                      {needsPaymentReview && (
+
+                        <form
+                          action={
+                            verifyAdminPaymentProofAction
+                          }
+                        >
+
+                          <input
+                            type="hidden"
+                            name="orderId"
+                            value={order.id}
+                          />
+
+
+                          <button
+                            type="submit"
+                            className="
+                              w-full
+                              rounded-full
+                              bg-neutral-900
+                              px-6
+                              py-3
+                              text-xs
+                              font-medium
+                              uppercase
+                              tracking-[0.15em]
+                              text-white
+                              transition
+                              hover:bg-black
+                              sm:w-auto
+                            "
+                          >
+                            Verify Payment
+                          </button>
+
+                        </form>
+
+                      )}
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              );
+
+            }
           )
+
         )}
 
-
       </div>
-
 
     </div>
 

@@ -19,6 +19,7 @@ import OrderStatusForm from "./OrderStatusForm";
 import {
   verifyAdminPaymentProofAction,
   rejectAdminPaymentProofAction,
+  refundAdminPaymentAction,
 } from "./actions";
 
 import ShippingForm from "./ShippingForm";
@@ -31,6 +32,8 @@ import OrderHistory from "@/components/orders/OrderHistory";
 
 import VerifyPaymentButton from "./VerifyPaymentButton";
 
+import RefundPaymentButton from "./RefundPaymentButton";
+
 
 type Props = {
   params: Promise<{
@@ -40,42 +43,33 @@ type Props = {
 
 
 function formatPaymentMethod(
-  payment: string
+  payment: string | null | undefined
 ) {
-
   const value =
-    payment
-      .trim()
-      .toLowerCase();
-
+    typeof payment === "string"
+      ? payment.trim().toLowerCase()
+      : "";
 
   switch (value) {
-
     case "bank":
     case "bank_transfer":
     case "bank transfer":
       return "Bank Transfer";
 
-
     case "qris":
       return "QRIS";
-
 
     case "e-wallet":
     case "ewallet":
     case "e_wallet":
       return "E-Wallet";
 
-
     case "cod":
       return "Cash on Delivery";
 
-
     default:
-      return payment;
-
+      return payment || "—";
   }
-
 }
 
 
@@ -946,6 +940,68 @@ Unable to generate preview.
   history={history}
 />
 
+{/* =================================================
+    REFUND PAYMENT
+================================================= */}
+
+{order.paymentStatus === "paid" &&
+  order.status === "processing" && (
+
+  <section
+    className="
+      rounded-2xl
+      border
+      border-stone-200
+      p-6
+    "
+  >
+
+    <div>
+
+      <h2
+        className="
+          text-lg
+          font-medium
+        "
+      >
+        Refund Payment
+      </h2>
+
+
+      <p
+        className="
+          mt-2
+          text-sm
+          leading-6
+          text-neutral-500
+        "
+      >
+        Mark this payment as refunded after
+        the refund has been completed.
+      </p>
+
+    </div>
+
+
+    <form
+      className="mt-6"
+      action={refundAdminPaymentAction}
+    >
+
+      <input
+        type="hidden"
+        name="orderId"
+        value={order.id}
+      />
+
+
+      <RefundPaymentButton />
+
+    </form>
+
+  </section>
+
+)}
 
           {/* =================================================
               MANAGE ORDER

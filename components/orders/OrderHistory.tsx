@@ -8,6 +8,10 @@ type Props = {
 };
 
 
+/* =========================================================
+   LABEL HELPERS
+========================================================= */
+
 function formatLabel(
   value: string
 ) {
@@ -25,6 +29,42 @@ function formatLabel(
 
 }
 
+
+function formatEventTitle(
+  type: string
+) {
+
+  switch (type) {
+
+    case "order_placed":
+      return "Order Placed";
+
+    case "payment_verified":
+      return "Payment Confirmed";
+
+    case "payment_rejected":
+      return "Payment Proof Rejected";
+
+    case "payment_status":
+      return "Payment Status Updated";
+
+    case "order_status":
+      return "Order Status Updated";
+
+    case "shipping":
+      return "Shipping Information Updated";
+
+    default:
+      return formatLabel(type);
+
+  }
+
+}
+
+
+/* =========================================================
+   COMPONENT
+========================================================= */
 
 export default function OrderHistory({
   history,
@@ -52,173 +92,216 @@ export default function OrderHistory({
       </h2>
 
 
-      <div
-        className="
-          space-y-6
-        "
-      >
+      {history.length === 0 ? (
 
-        {history.length === 0 && (
+        <p
+          className="
+            text-sm
+            text-neutral-500
+          "
+        >
+          No history yet.
+        </p>
 
-          <p
+      ) : (
+
+        <div
+          className="
+            relative
+            space-y-7
+          "
+        >
+
+          {/* =================================================
+              TIMELINE LINE
+          ================================================= */}
+
+          <div
             className="
-              text-sm
-              text-neutral-500
+              absolute
+              left-[5px]
+              top-2
+              bottom-2
+              w-px
+              bg-stone-200
             "
-          >
-            No history yet.
-          </p>
-
-        )}
+          />
 
 
-        {history.map(
-          (item) => (
-
-            <div
-              key={item.id}
-              className="
-                flex
-                gap-4
-              "
-            >
-
-              {/* Timeline dot */}
+          {history.map(
+            (
+              item,
+              index
+            ) => (
 
               <div
+                key={item.id}
                 className="
-                  mt-1.5
-                  h-3
-                  w-3
-                  shrink-0
-                  rounded-full
-                  bg-black
-                "
-              />
-
-
-              <div
-                className="
-                  min-w-0
-                  flex-1
+                  relative
+                  flex
+                  gap-5
                 "
               >
 
-                {/* Event type */}
+                {/* =================================================
+                    DOT
+                ================================================= */}
 
-                <p
+                <div
                   className="
-                    text-sm
-                    font-semibold
-                    text-black
+                    relative
+                    z-10
+                    mt-1.5
+                    h-3
+                    w-3
+                    shrink-0
+                    rounded-full
+                    border
+                    border-white
+                    bg-black
+                    ring-1
+                    ring-stone-300
+                  "
+                />
+
+
+                {/* =================================================
+                    CONTENT
+                ================================================= */}
+
+                <div
+                  className="
+                    min-w-0
+                    flex-1
+                    pb-1
                   "
                 >
-                  {formatLabel(
-                    item.type
-                  )}
-                </p>
 
-
-                {/* Status transition */}
-
-                {(item.oldValue ||
-                  item.newValue) && (
+                  {/* EVENT TITLE */}
 
                   <p
                     className="
-                      mt-1
                       text-sm
-                      text-neutral-600
+                      font-semibold
+                      text-black
                     "
                   >
-
-                    {item.oldValue && (
-
-                      <span>
-                        {formatLabel(
-                          item.oldValue
-                        )}
-                      </span>
-
+                    {formatEventTitle(
+                      item.type
                     )}
+                  </p>
 
 
-                    {item.oldValue &&
-                      item.newValue && (
+                  {/* STATUS TRANSITION */}
+
+                  {(item.oldValue ||
+                    item.newValue) && (
+
+                    <p
+                      className="
+                        mt-1
+                        text-sm
+                        text-neutral-600
+                      "
+                    >
+
+                      {item.oldValue && (
+
+                        <span>
+                          {formatLabel(
+                            item.oldValue
+                          )}
+                        </span>
+
+                      )}
+
+
+                      {item.oldValue &&
+                        item.newValue && (
+
+                          <span
+                            className="
+                              mx-2
+                              text-neutral-400
+                            "
+                          >
+                            →
+                          </span>
+
+                        )}
+
+
+                      {item.newValue && (
 
                         <span
                           className="
-                            mx-2
-                            text-neutral-400
+                            font-medium
+                            text-black
                           "
                         >
-                          →
+                          {formatLabel(
+                            item.newValue
+                          )}
                         </span>
 
-                    )}
+                      )}
+
+                    </p>
+
+                  )}
 
 
-                    {item.newValue && (
+                  {/* NOTE */}
 
-                      <span
-                        className="
-                          font-medium
-                          text-black
-                        "
-                      >
-                        {formatLabel(
-                          item.newValue
-                        )}
-                      </span>
+                  {item.note && (
 
-                    )}
+                    <p
+                      className="
+                        mt-1.5
+                        text-sm
+                        leading-6
+                        text-neutral-500
+                      "
+                    >
+                      {item.note}
+                    </p>
 
-                  </p>
-
-                )}
+                  )}
 
 
-                {/* Note */}
-
-                {item.note && (
+                  {/* DATE */}
 
                   <p
                     className="
-                      mt-1
-                      text-sm
-                      text-neutral-500
+                      mt-2
+                      text-xs
+                      text-neutral-400
                     "
                   >
-                    {item.note}
+                    {new Date(
+                      item.createdAt
+                    ).toLocaleString(
+                      "id-ID",
+                      {
+                        dateStyle:
+                          "medium",
+
+                        timeStyle:
+                          "short",
+                      }
+                    )}
                   </p>
 
-                )}
-
-
-                {/* Date */}
-
-                <p
-                  className="
-                    mt-1
-                    text-xs
-                    text-neutral-400
-                  "
-                >
-                  {new Date(
-                    item.createdAt
-                  ).toLocaleString(
-                    "id-ID"
-                  )}
-                </p>
+                </div>
 
               </div>
 
-            </div>
+            )
+          )}
 
-          )
-        )}
+        </div>
 
-      </div>
+      )}
 
     </section>
 

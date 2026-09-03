@@ -4,6 +4,8 @@ import {
   useState,
 } from "react";
 
+import { useRouter } from "next/navigation";
+
 import {
   confirmReceivedAction,
 } from "./actions";
@@ -25,6 +27,9 @@ export default function ConfirmReceivedButton({
 
   const [message,setMessage] =
     useState("");
+
+  
+  const router = useRouter();
 
 
 
@@ -53,19 +58,12 @@ export default function ConfirmReceivedButton({
 
 
 
-    if(!result.success){
+    if (!result.success) {
+  setMessage(result.message);
+  return;
+}
 
-      setMessage(
-        result.message
-      );
-
-      return;
-
-    }
-
-
-
-    window.location.reload();
+router.refresh();
 
 
   }

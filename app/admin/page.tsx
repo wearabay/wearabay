@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import Container from "@/components/ui/Container";
@@ -8,6 +9,7 @@ import {
   getAdminOrderStats,
   getAdminPaymentReviewOrders,
 } from "@/lib/admin-orders";
+
 
 export default async function AdminPage() {
 
@@ -23,9 +25,9 @@ export default async function AdminPage() {
   const stats =
     await getAdminOrderStats();
 
-const paymentReviewOrders =
-    await getAdminPaymentReviewOrders();
 
+  const paymentReviewOrders =
+    await getAdminPaymentReviewOrders();
 
 
   return (
@@ -37,7 +39,9 @@ const paymentReviewOrders =
         <div className="space-y-10">
 
 
-          {/* HEADER */}
+          {/* =================================================
+              HEADER
+          ================================================= */}
 
           <div>
 
@@ -74,13 +78,12 @@ const paymentReviewOrders =
               Welcome back, {admin.fullName}.
             </p>
 
-
           </div>
 
 
-
-
-          {/* SUMMARY CARDS */}
+          {/* =================================================
+              SUMMARY CARDS
+          ================================================= */}
 
           <div
             className="
@@ -135,10 +138,7 @@ const paymentReviewOrders =
                 Total orders
               </p>
 
-
             </div>
-
-
 
 
             {/* PAYMENT REVIEW */}
@@ -185,10 +185,7 @@ const paymentReviewOrders =
                 Awaiting verification
               </p>
 
-
             </div>
-
-
 
 
             {/* SHIPPING */}
@@ -235,18 +232,15 @@ const paymentReviewOrders =
                 Orders shipped
               </p>
 
-
             </div>
 
 
           </div>
 
 
-
-
-
-          {/* QUICK ACTIONS */}
-
+          {/* =================================================
+              QUICK ACTIONS
+          ================================================= */}
 
           <section
             className="
@@ -269,7 +263,6 @@ const paymentReviewOrders =
             </p>
 
 
-
             <div
               className="
                 mt-5
@@ -277,11 +270,14 @@ const paymentReviewOrders =
                 flex-col
                 gap-3
                 sm:flex-row
+                sm:flex-wrap
               "
             >
 
 
-              <a
+              {/* MANAGE ORDERS */}
+
+              <Link
                 href="/admin/orders"
                 className="
                   rounded-full
@@ -293,14 +289,17 @@ const paymentReviewOrders =
                   uppercase
                   tracking-[0.15em]
                   text-white
+                  transition
+                  hover:bg-stone-800
                 "
               >
                 Manage Orders
-              </a>
+              </Link>
 
 
+              {/* REVIEW PAYMENTS */}
 
-              <a
+              <Link
                 href="/admin/orders"
                 className="
                   rounded-full
@@ -312,10 +311,34 @@ const paymentReviewOrders =
                   text-xs
                   uppercase
                   tracking-[0.15em]
+                  transition
+                  hover:border-black
                 "
               >
                 Review Payments
-              </a>
+              </Link>
+
+
+              {/* MANAGE INVENTORY */}
+
+              <Link
+                href="/admin/inventory"
+                className="
+                  rounded-full
+                  border
+                  border-stone-300
+                  px-6
+                  py-3
+                  text-center
+                  text-xs
+                  uppercase
+                  tracking-[0.15em]
+                  transition
+                  hover:border-black
+                "
+              >
+                Manage Inventory
+              </Link>
 
 
             </div>
@@ -324,115 +347,121 @@ const paymentReviewOrders =
           </section>
 
 
-          {/* PAYMENT REVIEW QUEUE */}
+          {/* =================================================
+              PAYMENT REVIEW QUEUE
+          ================================================= */}
 
-<section
-  className="
-    rounded-2xl
-    border
-    border-stone-200
-    p-6
-  "
->
-
-  <p
-    className="
-      text-xs
-      uppercase
-      tracking-[0.3em]
-      text-neutral-500
-    "
-  >
-    Payment Verification
-  </p>
-
-
-  <div className="mt-6 space-y-4">
-
-
-    {paymentReviewOrders.length === 0 && (
-
-      <p
-        className="
-          text-sm
-          text-neutral-500
-        "
-      >
-        No payment requires review.
-      </p>
-
-    )}
-
-
-
-    {paymentReviewOrders.map(
-      (order) => (
-
-        <div
-          key={order.id}
-          className="
-            flex
-            items-center
-            justify-between
-            rounded-xl
-            border
-            border-stone-200
-            p-4
-          "
-        >
-
-          <div>
-
-            <p
-              className="
-                text-sm
-                font-medium
-              "
-            >
-              {order.orderNumber}
-            </p>
-
+          <section
+            className="
+              rounded-2xl
+              border
+              border-stone-200
+              p-6
+            "
+          >
 
             <p
               className="
                 text-xs
+                uppercase
+                tracking-[0.3em]
                 text-neutral-500
               "
             >
-              Bank Transfer
+              Payment Verification
             </p>
 
 
-          </div>
+            <div
+              className="
+                mt-6
+                space-y-4
+              "
+            >
 
 
-          <a
-            href={`/admin/orders/${order.id}`}
-            className="
-              rounded-full
-              border
-              border-stone-300
-              px-4
-              py-2
-              text-xs
-              uppercase
-              tracking-wider
-            "
-          >
-            Review
-          </a>
+              {paymentReviewOrders.length === 0 && (
+
+                <p
+                  className="
+                    text-sm
+                    text-neutral-500
+                  "
+                >
+                  No payment requires review.
+                </p>
+
+              )}
 
 
-        </div>
+              {paymentReviewOrders.map(
+                (order) => (
 
-      )
-    )}
+                  <div
+                    key={order.id}
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      rounded-xl
+                      border
+                      border-stone-200
+                      p-4
+                    "
+                  >
+
+                    <div>
+
+                      <p
+                        className="
+                          text-sm
+                          font-medium
+                        "
+                      >
+                        {order.orderNumber}
+                      </p>
 
 
-  </div>
+                      <p
+                        className="
+                          text-xs
+                          text-neutral-500
+                        "
+                      >
+                        Bank Transfer
+                      </p>
+
+                    </div>
 
 
-</section>
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="
+                        rounded-full
+                        border
+                        border-stone-300
+                        px-4
+                        py-2
+                        text-xs
+                        uppercase
+                        tracking-wider
+                        transition
+                        hover:border-black
+                      "
+                    >
+                      Review
+                    </Link>
+
+                  </div>
+
+                )
+              )}
+
+
+            </div>
+
+
+          </section>
 
 
         </div>
