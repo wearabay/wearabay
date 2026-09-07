@@ -10,41 +10,28 @@ import {
   getAdminPaymentReviewOrders,
 } from "@/lib/admin-orders";
 
-
 export default async function AdminPage() {
-
-  const admin =
-    await getAdminUser();
-
+  const admin = await getAdminUser();
 
   if (!admin) {
     redirect("/account");
   }
 
-
-  const stats =
-    await getAdminOrderStats();
-
+  const stats = await getAdminOrderStats();
 
   const paymentReviewOrders =
     await getAdminPaymentReviewOrders();
 
-
   return (
-
     <main>
-
       <Container className="py-24">
-
         <div className="space-y-10">
-
 
           {/* =================================================
               HEADER
           ================================================= */}
 
           <div>
-
             <p
               className="
                 text-xs
@@ -56,7 +43,6 @@ export default async function AdminPage() {
               Administration
             </p>
 
-
             <h1
               className="
                 mt-3
@@ -67,7 +53,6 @@ export default async function AdminPage() {
               Admin Dashboard
             </h1>
 
-
             <p
               className="
                 mt-3
@@ -77,9 +62,7 @@ export default async function AdminPage() {
             >
               Welcome back, {admin.fullName}.
             </p>
-
           </div>
-
 
           {/* =================================================
               SUMMARY CARDS
@@ -92,8 +75,6 @@ export default async function AdminPage() {
               md:grid-cols-3
             "
           >
-
-
             {/* ORDERS */}
 
             <div
@@ -104,7 +85,6 @@ export default async function AdminPage() {
                 p-6
               "
             >
-
               <p
                 className="
                   text-xs
@@ -116,7 +96,6 @@ export default async function AdminPage() {
                 Orders
               </p>
 
-
               <p
                 className="
                   mt-3
@@ -127,7 +106,6 @@ export default async function AdminPage() {
                 {stats?.total ?? 0}
               </p>
 
-
               <p
                 className="
                   mt-2
@@ -137,9 +115,7 @@ export default async function AdminPage() {
               >
                 Total orders
               </p>
-
             </div>
-
 
             {/* PAYMENT REVIEW */}
 
@@ -151,7 +127,6 @@ export default async function AdminPage() {
                 p-6
               "
             >
-
               <p
                 className="
                   text-xs
@@ -163,7 +138,6 @@ export default async function AdminPage() {
                 Payment Review
               </p>
 
-
               <p
                 className="
                   mt-3
@@ -174,7 +148,6 @@ export default async function AdminPage() {
                 {stats?.needPaymentReview ?? 0}
               </p>
 
-
               <p
                 className="
                   mt-2
@@ -184,9 +157,7 @@ export default async function AdminPage() {
               >
                 Awaiting verification
               </p>
-
             </div>
-
 
             {/* SHIPPING */}
 
@@ -198,7 +169,6 @@ export default async function AdminPage() {
                 p-6
               "
             >
-
               <p
                 className="
                   text-xs
@@ -210,7 +180,6 @@ export default async function AdminPage() {
                 Shipping
               </p>
 
-
               <p
                 className="
                   mt-3
@@ -221,7 +190,6 @@ export default async function AdminPage() {
                 {stats?.shipped ?? 0}
               </p>
 
-
               <p
                 className="
                   mt-2
@@ -231,12 +199,8 @@ export default async function AdminPage() {
               >
                 Orders shipped
               </p>
-
             </div>
-
-
           </div>
-
 
           {/* =================================================
               QUICK ACTIONS
@@ -250,7 +214,6 @@ export default async function AdminPage() {
               p-6
             "
           >
-
             <p
               className="
                 text-xs
@@ -262,7 +225,6 @@ export default async function AdminPage() {
               Quick Actions
             </p>
 
-
             <div
               className="
                 mt-5
@@ -273,8 +235,6 @@ export default async function AdminPage() {
                 sm:flex-wrap
               "
             >
-
-
               {/* MANAGE ORDERS */}
 
               <Link
@@ -296,11 +256,10 @@ export default async function AdminPage() {
                 Manage Orders
               </Link>
 
-
-              {/* REVIEW PAYMENTS */}
+              {/* MANAGE PRODUCTS */}
 
               <Link
-                href="/admin/orders"
+                href="/admin/products"
                 className="
                   rounded-full
                   border
@@ -315,9 +274,8 @@ export default async function AdminPage() {
                   hover:border-black
                 "
               >
-                Review Payments
+                Manage Products
               </Link>
-
 
               {/* MANAGE INVENTORY */}
 
@@ -339,13 +297,8 @@ export default async function AdminPage() {
               >
                 Manage Inventory
               </Link>
-
-
             </div>
-
-
           </section>
-
 
           {/* =================================================
               PAYMENT REVIEW QUEUE
@@ -359,7 +312,6 @@ export default async function AdminPage() {
               p-6
             "
           >
-
             <p
               className="
                 text-xs
@@ -371,17 +323,13 @@ export default async function AdminPage() {
               Payment Verification
             </p>
 
-
             <div
               className="
                 mt-6
                 space-y-4
               "
             >
-
-
               {paymentReviewOrders.length === 0 && (
-
                 <p
                   className="
                     text-sm
@@ -390,13 +338,10 @@ export default async function AdminPage() {
                 >
                   No payment requires review.
                 </p>
-
               )}
-
 
               {paymentReviewOrders.map(
                 (order) => (
-
                   <div
                     key={order.id}
                     className="
@@ -409,9 +354,7 @@ export default async function AdminPage() {
                       p-4
                     "
                   >
-
                     <div>
-
                       <p
                         className="
                           text-sm
@@ -421,7 +364,6 @@ export default async function AdminPage() {
                         {order.orderNumber}
                       </p>
 
-
                       <p
                         className="
                           text-xs
@@ -430,9 +372,7 @@ export default async function AdminPage() {
                       >
                         Bank Transfer
                       </p>
-
                     </div>
-
 
                     <Link
                       href={`/admin/orders/${order.id}`}
@@ -451,27 +391,14 @@ export default async function AdminPage() {
                     >
                       Review
                     </Link>
-
                   </div>
-
                 )
               )}
-
-
             </div>
-
-
           </section>
 
-
         </div>
-
-
       </Container>
-
-
     </main>
-
   );
-
 }
