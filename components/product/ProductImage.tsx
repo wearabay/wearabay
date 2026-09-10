@@ -24,11 +24,19 @@ export default function ProductImage({
 
 
   const primaryImage =
-    product.images?.[0] ?? product.image;
+    [product.images?.[0], product.image].find(
+      (src) =>
+        typeof src === "string" &&
+        src.trim().length > 0
+    ) ?? null;
 
 
   const secondaryImage =
-    product.images?.[1] ?? primaryImage;
+    [product.images?.[1], primaryImage].find(
+      (src) =>
+        typeof src === "string" &&
+        src.trim().length > 0
+    ) ?? null;
 
 
 
@@ -101,31 +109,55 @@ export default function ProductImage({
 
       {/* Main Image */}
 
-      <Image
+      {primaryImage ? (
 
-        src={primaryImage}
+        <Image
+          src={primaryImage}
+          alt={product.name}
+          fill
+          sizes="
+            (max-width:768px) 50vw,
+            (max-width:1200px) 33vw,
+            25vw
+          "
+          className="
+            object-cover
+            transition-all
+            duration-700
+            ease-out
+            group-hover:opacity-0
+            group-hover:scale-[1.03]
+            group-hover:brightness-95
+          "
+        />
 
-        alt={product.name}
+      ) : (
 
-        fill
+        <div
+          className="
+            absolute
+            inset-0
+            flex
+            items-center
+            justify-center
+            bg-[#ECE8E2]
+          "
+        >
 
-        sizes="
-          (max-width:768px) 50vw,
-          (max-width:1200px) 33vw,
-          25vw
-        "
+          <span
+            className="
+              text-[10px]
+              font-medium
+              tracking-[0.2em]
+              text-neutral-400
+            "
+          >
+            NO IMAGE
+          </span>
 
-        className="
-          object-cover
-          transition-all
-          duration-700
-          ease-out
-          group-hover:opacity-0
-          group-hover:scale-[1.03]
-          group-hover:brightness-95
-        "
+        </div>
 
-      />
+      )}
 
 
 
@@ -133,33 +165,30 @@ export default function ProductImage({
 
       {/* Hover Image */}
 
-      <Image
+      {secondaryImage && (
 
-        src={secondaryImage}
+        <Image
+          src={secondaryImage}
+          alt={product.name}
+          fill
+          sizes="
+            (max-width:768px) 50vw,
+            (max-width:1200px) 33vw,
+            25vw
+          "
+          className="
+            object-cover
+            opacity-0
+            scale-[1.08]
+            transition-all
+            duration-700
+            ease-out
+            group-hover:scale-100
+            group-hover:opacity-100
+          "
+        />
 
-        alt={product.name}
-
-        fill
-
-        sizes="
-          (max-width:768px) 50vw,
-          (max-width:1200px) 33vw,
-          25vw
-        "
-
-        className="
-          object-cover
-          opacity-0
-          scale-[1.08]
-          transition-all
-          duration-700
-          ease-out
-          group-hover:scale-100
-          group-hover:opacity-100
-        "
-
-      />
-
+      )}
 
 
 
@@ -168,7 +197,6 @@ export default function ProductImage({
       {/* Gradient */}
 
       <div
-
         className="
           absolute
           inset-x-0
@@ -183,7 +211,6 @@ export default function ProductImage({
           duration-500
           group-hover:opacity-100
         "
-
       />
 
 
@@ -195,7 +222,6 @@ export default function ProductImage({
       {/* Quick View */}
 
       <button
-
         onClick={(e) => {
 
           e.preventDefault();
@@ -205,7 +231,6 @@ export default function ProductImage({
           openQuickView(product);
 
         }}
-
         className="
           absolute
           left-1/2
@@ -232,7 +257,6 @@ export default function ProductImage({
           group-hover:scale-100
           group-hover:opacity-100
         "
-
       >
 
         QUICK VIEW

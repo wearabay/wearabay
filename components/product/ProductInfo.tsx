@@ -37,11 +37,21 @@ export default function ProductInfo({
   } = useAuthUser();
 
 
+  const colors =
+    product.colors ?? [];
+
+  const sizes =
+    product.sizes ?? [];
+
+  const stock =
+    product.stock ?? 0;
+
+
   const [
     selectedColor,
     setSelectedColor,
   ] = useState(
-    product.colors?.[0] ?? ""
+    colors[0] ?? ""
   );
 
 
@@ -49,7 +59,7 @@ export default function ProductInfo({
     selectedSize,
     setSelectedSize,
   ] = useState(
-    product.sizes?.[0] ?? ""
+    sizes[0] ?? ""
   );
 
 
@@ -76,14 +86,34 @@ export default function ProductInfo({
 
 
   /*
+   * Purchasable state
+   */
+
+  const hasActiveVariant =
+    colors.length > 0 &&
+    sizes.length > 0;
+
+  const hasStock =
+    stock > 0;
+
+  const hasValidSelection =
+    selectedColor.trim().length > 0 &&
+    selectedSize.trim().length > 0;
+
+  const canAddToCart =
+    hasActiveVariant &&
+    hasStock &&
+    hasValidSelection;
+
+
+  /*
    * Quantity
    */
 
   const increaseQuantity = () => {
 
     if (
-      quantity <
-      (product.stock ?? 99)
+      quantity < stock
     ) {
 
       setQuantity(
@@ -119,7 +149,13 @@ export default function ProductInfo({
   const handleAddToCart =
     async () => {
 
+      /*
+       * Never allow cart insertion when
+       * there is no active variant.
+       */
+
       if (
+        !canAddToCart ||
         adding ||
         authLoading
       ) {
@@ -239,7 +275,9 @@ export default function ProductInfo({
       {product.badge && (
 
         <div
-          className="mt-4"
+          className="
+            mt-4
+          "
         >
 
           <Badge>
@@ -279,7 +317,9 @@ export default function ProductInfo({
 
 
       <Divider
-        className="my-10"
+        className="
+          my-10
+        "
       />
 
 
@@ -386,6 +426,12 @@ export default function ProductInfo({
 
         onAddToCart={
           handleAddToCart
+        }
+
+        disabled={
+          !canAddToCart ||
+          adding ||
+          authLoading
         }
 
       />

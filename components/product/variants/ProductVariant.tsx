@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { Product } from "@/types/product";
 import { RefObject } from "react";
 
@@ -9,19 +8,25 @@ import SizeSelector from "./SizeSelector";
 import QuantitySelector from "./QuantitySelector";
 import StockStatus from "./StockStatus";
 
+
 type ProductVariantProps = {
   product: Product;
+
   selectedColor: string;
   onColorChange: (value: string) => void;
+
   selectedSize: string;
   onSizeChange: (value: string) => void;
+
   quantity: number;
   onIncrease: () => void;
   onDecrease: () => void;
+
   onAddToCart: () => void;
 
   addToBagRef?: RefObject<HTMLButtonElement | null>;
 };
+
 
 export default function ProductVariant({
   product,
@@ -33,57 +38,166 @@ export default function ProductVariant({
   onIncrease,
   onDecrease,
   onAddToCart,
-addToBagRef,
+  addToBagRef,
 }: ProductVariantProps) {
+
+  const colors =
+    product.colors ?? [];
+
+  const sizes =
+    product.sizes ?? [];
+
+  const stock =
+    product.stock ?? 0;
+
+
+  /*
+   * A product is purchasable only when:
+   *
+   * - it has an active color option
+   * - it has an active size option
+   * - it has stock available
+   * - a color and size are selected
+   */
+
+  const hasActiveVariant =
+    colors.length > 0 &&
+    sizes.length > 0;
+
+  const hasStock =
+    stock > 0;
+
+  const hasValidSelection =
+    selectedColor.trim().length > 0 &&
+    selectedSize.trim().length > 0;
+
+  const canAddToCart =
+    hasActiveVariant &&
+    hasStock &&
+    hasValidSelection;
+
+
   return (
-    <div className="mt-10 mb-6 space-y-6">
+
+    <div
+      className="
+        mt-10
+        mb-6
+        space-y-6
+      "
+    >
 
       {/* COLOR */}
-      {product.colors && (
+
+      {colors.length > 0 && (
+
         <ColorSelector
-          colors={product.colors}
+          colors={colors}
           selected={selectedColor}
           onChange={onColorChange}
         />
+
       )}
 
+
       {/* SIZE */}
-      {product.sizes && (
+
+      {sizes.length > 0 && (
+
         <SizeSelector
-          sizes={product.sizes}
+          sizes={sizes}
           selected={selectedSize}
           onChange={onSizeChange}
         />
+
       )}
 
+
+      {/* NO VARIANT */}
+
+      {!hasActiveVariant && (
+
+        <div
+          className="
+            rounded-xl
+            border
+            border-neutral-200
+            bg-neutral-50
+            px-5
+            py-4
+            text-sm
+            text-neutral-500
+          "
+        >
+          This product is currently unavailable.
+        </div>
+
+      )}
+
+
       {/* QTY */}
-      {product.stock && (
+
+      {hasStock && (
+
         <QuantitySelector
           quantity={quantity}
-          stock={product.stock}
+          stock={stock}
           onIncrease={onIncrease}
           onDecrease={onDecrease}
         />
+
       )}
+
 
       {/* STOCK */}
-      {product.stock && (
-        <StockStatus stock={product.stock} />
+
+      {hasStock && (
+
+        <StockStatus
+          stock={stock}
+        />
+
       )}
 
-      <div className="mt-10 space-y-4">
 
-  {/* ADD TO BAG */}
-  <button
-  ref={addToBagRef}
-    onClick={onAddToCart}
-    className="w-full h-14 bg-black text-white text-xs uppercase tracking-[0.25em] rounded-full transition hover:bg-neutral-900"
-  >
-    Add to Bag
-  </button>
+      {/* ADD TO BAG */}
 
-</div>
+      <div
+        className="
+          mt-10
+          space-y-4
+        "
+      >
+
+        <button
+          ref={addToBagRef}
+          type="button"
+          onClick={onAddToCart}
+          disabled={!canAddToCart}
+          className="
+            h-14
+            w-full
+            rounded-full
+            bg-black
+            text-xs
+            uppercase
+            tracking-[0.25em]
+            text-white
+            transition
+            hover:bg-neutral-900
+            disabled:cursor-not-allowed
+            disabled:bg-neutral-200
+            disabled:text-neutral-400
+          "
+        >
+          {canAddToCart
+            ? "Add to Bag"
+            : "Not Available"}
+        </button>
+
+      </div>
 
     </div>
+
   );
 }

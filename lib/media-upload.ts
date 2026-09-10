@@ -1,12 +1,14 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+
 import {
   MEDIA_BUCKET,
   MEDIA_FOLDERS,
   getMediaPublicUrl,
   type MediaFolder,
 } from "@/lib/media";
+
 import {
   getMediaType,
   validateMediaFile,
@@ -16,9 +18,10 @@ type UploadMediaOptions = {
   file: File;
   folder: MediaFolder;
   entityId?: string | number;
+  variantId?: string | number;
 };
 
-type UploadMediaResult = {
+export type UploadMediaResult = {
   path: string;
   publicUrl: string;
   type: "image" | "video";
@@ -26,7 +29,9 @@ type UploadMediaResult = {
   size: number;
 };
 
-function sanitizeFileName(fileName: string) {
+function sanitizeFileName(
+  fileName: string
+) {
   return fileName
     .normalize("NFKD")
     .replace(/[^\w.-]+/g, "-")
@@ -39,6 +44,7 @@ export async function uploadMedia({
   file,
   folder,
   entityId,
+  variantId,
 }: UploadMediaOptions): Promise<UploadMediaResult> {
   validateMediaFile(file);
 
@@ -50,34 +56,72 @@ export async function uploadMedia({
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    throw new Error("Anda harus login sebagai admin.");
+    throw new Error(
+      "Anda harus login sebagai admin."
+    );
   }
 
   const mediaType = getMediaType(file);
 
-  const safeName = sanitizeFileName(file.name) || "media";
+  const safeName =
+    sanitizeFileName(file.name) ||
+    "media";
 
-  const extension =
-    safeName.includes(".")
-      ? safeName.split(".").pop()
-      : undefined;
+  const extension = safeName.includes(".")
+    ? safeName.split(".").pop()
+    : undefined;
 
-  const baseName =
-    extension
-      ? safeName.slice(0, -(extension.length + 1))
-      : safeName;
+  const baseName = extension
+    ? safeName.slice(
+        0,
+        -(extension.length + 1)
+      )
+    : safeName;
 
-  const uniqueName = `${baseName}-${crypto.randomUUID()}${
-    extension ? `.${extension}` : ""
-  }`;
+  const uniqueName =
+    `${baseName}-${crypto.randomUUID()}` +
+    `${extension ? `.${extension}` : ""}`;
 
-  const folderName = MEDIA_FOLDERS[folder];
+  const folderName =
+    MEDIA_FOLDERS[folder];
 
-  const path = entityId
-    ? `${folderName}/${entityId}/${uniqueName}`
-    : `${folderName}/${uniqueName}`;
+  if (!folderName) {
+    throw new Error(
+      `Folder media tidak ditemukan: ${folder}`
+    );
+  }
 
-  const { error: uploadError } = await supabase.storage
+  if (
+    variantId !== undefined &&
+    entityId === undefined
+  ) {
+    throw new Error(
+      "Product ID diperlukan untuk media variant."
+    );
+  }
+
+  let path: string;
+
+  if (
+    entityId !== undefined &&
+    variantId !== undefined
+  ) {
+    path =
+      `${folderName}/${entityId}/variants/` +
+      `${variantId}/${uniqueName}`;
+  } else if (
+    entityId !== undefined
+  ) {
+    path =
+      `${folderName}/${entityId}/${uniqueName}`;
+  } else {
+    path =
+      `${folderName}/${uniqueName}`;
+  }
+
+  const {
+    error: uploadError,
+  } = await supabase.storage
     .from(MEDIA_BUCKET)
     .upload(path, file, {
       cacheControl: "31536000",
@@ -86,10 +130,16 @@ export async function uploadMedia({
     });
 
   if (uploadError) {
-    throw new Error(uploadError.message);
+    throw new Error(
+      uploadError.message
+    );
   }
 
-  const publicUrl = getMediaPublicUrl(supabase, path);
+  const publicUrl =
+    getMediaPublicUrl(
+      supabase,
+      path
+    );
 
   return {
     path,
