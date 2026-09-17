@@ -19,6 +19,12 @@ export type AdminProduct = {
   badge: string | null;
   features: string[];
   specifications: AdminProductSpecification[];
+
+  sizeGuide: string;
+  shippingReturns: string;
+  careInstructions: string;
+  craftsmanship: string;
+
   status: AdminProductStatus;
   variantCount: number;
   mediaCount: number;
@@ -34,6 +40,12 @@ export type CreateAdminProductInput = {
   badge?: string | null;
   features?: string[];
   specifications?: AdminProductSpecification[];
+
+  sizeGuide?: string;
+  shippingReturns?: string;
+  careInstructions?: string;
+  craftsmanship?: string;
+
   status?: AdminProductStatus;
 };
 
@@ -48,13 +60,23 @@ type ProductRow = {
   category: string | null;
   badge: string | null;
   features: string[] | null;
-  specifications: AdminProductSpecification[] | null;
+  specifications:
+    | AdminProductSpecification[]
+    | null;
+
+  size_guide: string | null;
+  shipping_returns: string | null;
+  care_instructions: string | null;
+  craftsmanship: string | null;
+
   status: AdminProductStatus;
   created_at: string;
   updated_at: string;
+
   product_variants?: Array<{
     id: number;
   }>;
+
   product_media?: Array<{
     id: number;
   }>;
@@ -66,7 +88,9 @@ function normalizeString(value: unknown) {
     : "";
 }
 
-function normalizeNullableString(value: unknown) {
+function normalizeNullableString(
+  value: unknown
+) {
   const normalized =
     normalizeString(value);
 
@@ -140,19 +164,40 @@ function mapAdminProduct(
       row.category ?? "",
     badge:
       row.badge ?? null,
+
     features:
       normalizeFeatures(row.features),
+
     specifications:
       normalizeSpecifications(
         row.specifications
       ),
+
+    sizeGuide:
+      row.size_guide ?? "",
+
+    shippingReturns:
+      row.shipping_returns ?? "",
+
+    careInstructions:
+      row.care_instructions ?? "",
+
+    craftsmanship:
+      row.craftsmanship ?? "",
+
     status: row.status,
+
     variantCount:
       row.product_variants?.length ?? 0,
+
     mediaCount:
       row.product_media?.length ?? 0,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+
+    createdAt:
+      row.created_at,
+
+    updatedAt:
+      row.updated_at,
   };
 }
 
@@ -193,6 +238,30 @@ async function assertAdmin() {
   return supabase;
 }
 
+const productSelect = `
+  id,
+  slug,
+  name,
+  description,
+  category,
+  badge,
+  features,
+  specifications,
+  size_guide,
+  shipping_returns,
+  care_instructions,
+  craftsmanship,
+  status,
+  created_at,
+  updated_at,
+  product_variants (
+    id
+  ),
+  product_media (
+    id
+  )
+`;
+
 export async function getAdminProducts(): Promise<
   AdminProduct[]
 > {
@@ -205,27 +274,7 @@ export async function getAdminProducts(): Promise<
   } =
     await supabase
       .from("products")
-      .select(
-        `
-        id,
-        slug,
-        name,
-        description,
-        category,
-        badge,
-        features,
-        specifications,
-        status,
-        created_at,
-        updated_at,
-        product_variants (
-          id
-        ),
-        product_media (
-          id
-        )
-      `
-      )
+      .select(productSelect)
       .order("id", {
         ascending: true,
       });
@@ -270,27 +319,7 @@ export async function getAdminProductById(
   } =
     await supabase
       .from("products")
-      .select(
-        `
-        id,
-        slug,
-        name,
-        description,
-        category,
-        badge,
-        features,
-        specifications,
-        status,
-        created_at,
-        updated_at,
-        product_variants (
-          id
-        ),
-        product_media (
-          id
-        )
-      `
-      )
+      .select(productSelect)
       .eq("id", id)
       .maybeSingle();
 
@@ -347,50 +376,56 @@ export async function createAdminProduct(
       .insert({
         name,
         slug,
+
         description:
           normalizeString(
             input.description
           ),
+
         category:
           normalizeString(
             input.category
           ),
+
         badge:
           normalizeNullableString(
             input.badge
           ),
+
         features:
           normalizeFeatures(
             input.features
           ),
+
         specifications:
           normalizeSpecifications(
             input.specifications
           ),
+
+        size_guide:
+          normalizeString(
+            input.sizeGuide
+          ),
+
+        shipping_returns:
+          normalizeString(
+            input.shippingReturns
+          ),
+
+        care_instructions:
+          normalizeString(
+            input.careInstructions
+          ),
+
+        craftsmanship:
+          normalizeString(
+            input.craftsmanship
+          ),
+
         status:
           input.status ?? "draft",
       })
-      .select(
-        `
-        id,
-        slug,
-        name,
-        description,
-        category,
-        badge,
-        features,
-        specifications,
-        status,
-        created_at,
-        updated_at,
-        product_variants (
-          id
-        ),
-        product_media (
-          id
-        )
-      `
-      )
+      .select(productSelect)
       .single();
 
   if (error) {
@@ -497,6 +532,42 @@ export async function updateAdminProduct(
       );
   }
 
+  if (
+    input.sizeGuide !== undefined
+  ) {
+    payload.size_guide =
+      normalizeString(
+        input.sizeGuide
+      );
+  }
+
+  if (
+    input.shippingReturns !== undefined
+  ) {
+    payload.shipping_returns =
+      normalizeString(
+        input.shippingReturns
+      );
+  }
+
+  if (
+    input.careInstructions !== undefined
+  ) {
+    payload.care_instructions =
+      normalizeString(
+        input.careInstructions
+      );
+  }
+
+  if (
+    input.craftsmanship !== undefined
+  ) {
+    payload.craftsmanship =
+      normalizeString(
+        input.craftsmanship
+      );
+  }
+
   if (input.status !== undefined) {
     payload.status =
       input.status;
@@ -518,27 +589,7 @@ export async function updateAdminProduct(
       .from("products")
       .update(payload)
       .eq("id", id)
-      .select(
-        `
-        id,
-        slug,
-        name,
-        description,
-        category,
-        badge,
-        features,
-        specifications,
-        status,
-        created_at,
-        updated_at,
-        product_variants (
-          id
-        ),
-        product_media (
-          id
-        )
-      `
-      )
+      .select(productSelect)
       .single();
 
   if (error) {

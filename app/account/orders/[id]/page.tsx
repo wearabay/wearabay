@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+
 import Container from "@/components/ui/Container";
 
 import {
@@ -22,6 +24,7 @@ import {
 
 import OrderHistory from "@/components/orders/OrderHistory";
 
+import OrderReviewSection from "@/components/account/reviews/OrderReviewSection";
 
 type Props = {
   params: Promise<{
@@ -29,62 +32,32 @@ type Props = {
   }>;
 };
 
-
 export default async function OrderDetailPage({
   params,
 }: Props) {
+  const { id } = await params;
 
-
-  const { id } =
-    await params;
-
-
-  const order =
-    await getOrderByIdServer(id);
-
+  const order = await getOrderByIdServer(id);
 
   if (!order) {
-
-    return (
-
-      <Container className="py-24">
-
-        <h1 className="text-3xl font-light">
-          Order Not Found
-        </h1>
-
-      </Container>
-
-    );
-
+    notFound();
   }
 
+  const history = await getOrderHistory(id);
 
-  const history =
-    await getOrderHistory(id);
-
-
-  const payment =
-    formatPaymentMethod(
-      order.payment
-    );
-
+  const payment = formatPaymentMethod(
+    order.payment
+  );
 
   return (
-
     <main>
-
       <Container className="py-24">
-
         <div className="space-y-10">
-
-
           {/* =================================================
               HEADER
           ================================================= */}
 
           <div>
-
             <p
               className="
                 text-xs
@@ -95,7 +68,6 @@ export default async function OrderDetailPage({
             >
               Order Status
             </p>
-
 
             <h1
               className="
@@ -108,7 +80,6 @@ export default async function OrderDetailPage({
               {order.status}
             </h1>
 
-
             <p
               className="
                 mt-2
@@ -118,22 +89,19 @@ export default async function OrderDetailPage({
             >
               {order.orderNumber}
             </p>
-
           </div>
-
 
           {/* =================================================
               ORDER TIMELINE
           ================================================= */}
 
           <OrderTimeline
-  orderStatus={order.status}
-  paymentStatus={order.paymentStatus}
-  paymentProofUploaded={
-    Boolean(order.paymentProofPath)
-  }
-/>
-
+            orderStatus={order.status}
+            paymentStatus={order.paymentStatus}
+            paymentProofUploaded={
+              Boolean(order.paymentProofPath)
+            }
+          />
 
           {/* =================================================
               ITEMS
@@ -147,79 +115,63 @@ export default async function OrderDetailPage({
               p-6
             "
           >
-
             <h2 className="mb-6 text-lg">
               Items
             </h2>
 
-
             <div className="space-y-5">
+              {order.items.map((item) => (
+                <div
+                  key={`
+                    ${item.id}-
+                    ${item.color ?? ""}-
+                    ${item.size ?? ""}
+                  `}
+                  className="
+                    flex
+                    justify-between
+                    text-sm
+                  "
+                >
+                  <div>
+                    <p>
+                      {item.name}
+                    </p>
 
-              {order.items.map(
-                (item) => (
+                    <p
+                      className="
+                        text-neutral-500
+                      "
+                    >
+                      {item.color}
 
-                  <div
-                    key={`
-                      ${item.id}-
-                      ${item.color ?? ""}-
-                      ${item.size ?? ""}
-                    `}
-                    className="
-                      flex
-                      justify-between
-                      text-sm
-                    "
-                  >
+                      {item.color &&
+                      item.size
+                        ? " • "
+                        : ""}
 
-                    <div>
+                      {item.size}
 
-                      <p>
-                        {item.name}
-                      </p>
+                      {" x "}
 
-
-                      <p
-                        className="
-                          text-neutral-500
-                        "
-                      >
-
-                        {item.color}
-
-                        {item.color &&
-                        item.size
-                          ? " • "
-                          : ""}
-
-                        {item.size}
-
-                        {" x "}
-
-                        {item.quantity}
-
-                      </p>
-
-                    </div>
-
-
-                    <span>
-
-                      {formatPrice(
-                        item.price *
-                        item.quantity
-                      )}
-
-                    </span>
-
+                      {item.quantity}
+                    </p>
                   </div>
 
-                )
-              )}
-
+                  <span>
+                    {formatPrice(
+                      item.price *
+                        item.quantity
+                    )}
+                  </span>
+                </div>
+              ))}
             </div>
-
           </section>
 
+          <OrderReviewSection
+            orderId={order.id}
+          />
 
           {/* =================================================
               SHIPPING ADDRESS
@@ -233,11 +185,9 @@ export default async function OrderDetailPage({
               p-6
             "
           >
-
             <h2 className="mb-4">
               Shipping Address
             </h2>
-
 
             <div
               className="
@@ -246,27 +196,22 @@ export default async function OrderDetailPage({
                 text-neutral-600
               "
             >
-
               <p
                 className="
                   font-medium
                   text-black
                 "
               >
-
                 {order.address.firstName}
 
                 {" "}
 
                 {order.address.lastName}
-
               </p>
-
 
               <p>
                 {order.address.street}
               </p>
-
 
               <p>
                 {order.address.city}
@@ -274,60 +219,48 @@ export default async function OrderDetailPage({
                 {order.address.province}
               </p>
 
-
               <p>
                 {order.address.postalCode}
               </p>
 
-
               <p>
                 {order.address.country}
               </p>
-
             </div>
-
           </section>
 
-
           {/* =================================================
-    RECEIVED ORDER
-================================================= */}
+              RECEIVED ORDER
+          ================================================= */}
 
-{order.status === "delivered" && (
+          {order.status === "delivered" && (
+            <section
+              className="
+                rounded-2xl
+                border
+                border-stone-200
+                p-6
+              "
+            >
+              <h2 className="mb-4">
+                Received your order?
+              </h2>
 
-  <section
-    className="
-      rounded-2xl
-      border
-      border-stone-200
-      p-6
-    "
-  >
+              <p
+                className="
+                  mb-5
+                  text-sm
+                  text-neutral-500
+                "
+              >
+                Confirm once your package has arrived.
+              </p>
 
-    <h2 className="mb-4">
-      Received your order?
-    </h2>
-
-
-    <p
-      className="
-        mb-5
-        text-sm
-        text-neutral-500
-      "
-    >
-      Confirm once your package has arrived.
-    </p>
-
-
-    <ConfirmReceivedButton
-      orderId={order.id}
-    />
-
-  </section>
-
-)}
-
+              <ConfirmReceivedButton
+                orderId={order.id}
+              />
+            </section>
+          )}
 
           {/* =================================================
               ORDER HISTORY
@@ -337,13 +270,11 @@ export default async function OrderDetailPage({
             history={history}
           />
 
-
           {/* =================================================
               SHIPMENT
           ================================================= */}
 
           {order.trackingNumber && (
-
             <section
               className="
                 rounded-2xl
@@ -352,11 +283,9 @@ export default async function OrderDetailPage({
                 p-6
               "
             >
-
               <h2 className="mb-4">
                 Shipment
               </h2>
-
 
               <div
                 className="
@@ -365,18 +294,15 @@ export default async function OrderDetailPage({
                   text-neutral-600
                 "
               >
-
                 <div
                   className="
                     flex
                     justify-between
                   "
                 >
-
                   <span>
                     Courier
                   </span>
-
 
                   <span
                     className="
@@ -386,9 +312,7 @@ export default async function OrderDetailPage({
                   >
                     {order.courier}
                   </span>
-
                 </div>
-
 
                 <div
                   className="
@@ -397,26 +321,21 @@ export default async function OrderDetailPage({
                     justify-between
                   "
                 >
-
                   <span>
                     Tracking Number
                   </span>
-
 
                   <span
                     className="
                       font-medium
                       text-black
-                    "
+                  "
                   >
                     {order.trackingNumber}
                   </span>
-
                 </div>
 
-
                 {order.shippedAt && (
-
                   <div
                     className="
                       mt-2
@@ -424,11 +343,9 @@ export default async function OrderDetailPage({
                       justify-between
                     "
                   >
-
                     <span>
                       Shipped At
                     </span>
-
 
                     <span>
                       {new Date(
@@ -437,17 +354,11 @@ export default async function OrderDetailPage({
                         "id-ID"
                       )}
                     </span>
-
                   </div>
-
                 )}
-
               </div>
-
             </section>
-
           )}
-
 
           {/* =================================================
               PAYMENT SUMMARY
@@ -461,7 +372,6 @@ export default async function OrderDetailPage({
               p-6
             "
           >
-
             <div
               className="
                 flex
@@ -469,18 +379,14 @@ export default async function OrderDetailPage({
                 gap-6
               "
             >
-
               <span>
                 Payment
               </span>
 
-
               <div className="text-right">
-
                 <p>
                   {payment.title}
                 </p>
-
 
                 <p
                   className="
@@ -490,11 +396,8 @@ export default async function OrderDetailPage({
                 >
                   {payment.detail}
                 </p>
-
               </div>
-
             </div>
-
 
             <div
               className="
@@ -504,11 +407,9 @@ export default async function OrderDetailPage({
                 text-sm
               "
             >
-
               <span>
                 Payment Status
               </span>
-
 
               <span
                 className="
@@ -518,9 +419,7 @@ export default async function OrderDetailPage({
               >
                 {order.paymentStatus}
               </span>
-
             </div>
-
 
             <div
               className="
@@ -530,20 +429,16 @@ export default async function OrderDetailPage({
                 text-sm
               "
             >
-
               <span>
                 Shipping
               </span>
-
 
               <span>
                 {formatPrice(
                   order.shippingFee
                 )}
               </span>
-
             </div>
-
 
             <div
               className="
@@ -557,22 +452,17 @@ export default async function OrderDetailPage({
                 font-medium
               "
             >
-
               <span>
                 Total
               </span>
-
 
               <span>
                 {formatPrice(
                   order.total
                 )}
               </span>
-
             </div>
-
           </section>
-
 
           {/* =================================================
               PAYMENT PROOF
@@ -580,22 +470,15 @@ export default async function OrderDetailPage({
 
           {payment.title === "Bank Transfer" &&
             order.paymentStatus === "pending" && (
-
               <PaymentProofUpload
                 orderId={order.id}
                 paymentProofPath={
                   order.paymentProofPath
                 }
               />
-
-          )}
-
+            )}
         </div>
-
       </Container>
-
     </main>
-
   );
-
 }

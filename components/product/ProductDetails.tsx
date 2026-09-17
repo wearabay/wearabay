@@ -1,19 +1,69 @@
 "use client";
 
 import type { Product } from "@/types/product";
+
 import ProductAccordion from "./accordion/ProductAccordion";
 import ProductSpecification from "./ProductSpecification";
+
 
 type ProductDetailsProps = {
   product: Product;
 };
 
+
+function DetailText({
+  content,
+}: {
+  content: string;
+}) {
+
+  const lines =
+    content
+      .split("\n")
+      .map(
+        (line) =>
+          line.trim()
+      )
+      .filter(Boolean);
+
+
+  return (
+    <div className="space-y-1">
+      {lines.map(
+        (line, index) => (
+          <p
+            key={`${line}-${index}`}
+          >
+            {line}
+          </p>
+        )
+      )}
+    </div>
+  );
+}
+
+
 export default function ProductDetails({
   product,
 }: ProductDetailsProps) {
 
+  const sizeGuide =
+    product.sizeGuide?.trim() ?? "";
+
+  const shippingReturns =
+    product.shippingReturns?.trim() ?? "";
+
+  const careInstructions =
+    product.careInstructions?.trim() ?? "";
+
+  const craftsmanship =
+    product.craftsmanship?.trim() ?? "";
+
+
   return (
     <div className="mt-10 border-t border-neutral-200 pt-2">
+
+      {/* Description */}
 
       <ProductAccordion
         title="Description"
@@ -22,67 +72,71 @@ export default function ProductDetails({
         {product.description}
       </ProductAccordion>
 
+
+      {/* Specifications */}
+
       <ProductAccordion
         title="Specifications"
       >
         <ProductSpecification
-          specifications={product.specifications}
+          specifications={
+            product.specifications
+          }
         />
       </ProductAccordion>
 
-      <ProductAccordion
-        title="Size Guide"
-      >
-        <p>
-          Available in sizes XS, S, M, L and XL.
-          Please contact us via WhatsApp for detailed
-          measurements.
-        </p>
-      </ProductAccordion>
 
-      <ProductAccordion
-        title="Shipping & Returns"
-      >
-        <p>
-          • Worldwide shipping available
-</p>
-<p>
-• Processing time: 1–3 business days
-</p>
-<p>
-• Estimated delivery:
-  Indonesia: 2–5 days
-  International: 5–10 days
-</p>
-<p>
-• Easy 7-day return policy
-        </p>
-      </ProductAccordion>
+      {/* Size Guide */}
 
-      <ProductAccordion
-        title="Care Instructions"
-      >
-        <ul className="space-y-2 text-neutral-600">
+      {sizeGuide && (
+        <ProductAccordion
+          title="Size Guide"
+        >
+          <DetailText
+            content={sizeGuide}
+          />
+        </ProductAccordion>
+      )}
 
-  <li>• Dry clean recommended</li>
 
-  <li>• Steam only</li>
+      {/* Shipping & Returns */}
 
-  <li>• Do not bleach</li>
+      {shippingReturns && (
+        <ProductAccordion
+          title="Shipping & Returns"
+        >
+          <DetailText
+            content={shippingReturns}
+          />
+        </ProductAccordion>
+      )}
 
-  <li>• Store on padded hanger</li>
 
-</ul>
-</ProductAccordion>
-<ProductAccordion
-        title="Craftsmanship"
-      >
-        <p>
-          Every Wearabay piece is handcrafted using premium fabrics and refined finishing techniques to ensure timeless elegance and exceptional quality.
-</p>
-      </ProductAccordion>
+      {/* Care Instructions */}
+
+      {careInstructions && (
+        <ProductAccordion
+          title="Care Instructions"
+        >
+          <DetailText
+            content={careInstructions}
+          />
+        </ProductAccordion>
+      )}
+
+
+      {/* Craftsmanship */}
+
+      {craftsmanship && (
+        <ProductAccordion
+          title="Craftsmanship"
+        >
+          <DetailText
+            content={craftsmanship}
+          />
+        </ProductAccordion>
+      )}
 
     </div>
-
   );
 }

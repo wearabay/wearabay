@@ -1,3 +1,16 @@
-export function whatsappLink(message: string) {
-  return `https://wa.me/6281903681777?text=${encodeURIComponent(message)}`;
+import { siteConfig } from "@/data/settings";
+
+
+export function whatsappLink(
+  message: string,
+  whatsapp: string = siteConfig.whatsapp,
+) {
+
+  const phone =
+    whatsapp.replace(/\D/g, "");
+
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(
+    message,
+  )}`;
 }

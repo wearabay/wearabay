@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const adminNavigation = [
+export const adminNavigation = [
   {
     name: "Dashboard",
     href: "/admin",
@@ -27,6 +27,10 @@ const adminNavigation = [
   {
     name: "Customers",
     href: "/admin/customers",
+  },
+  {
+    name: "Reviews",
+    href: "/admin/reviews",
   },
   {
     name: "Settings",
@@ -65,15 +69,15 @@ export default function AdminNavbarMenu({
               text-[11px]
               uppercase
               tracking-[0.16em]
-              transition-colors
+              transition-all
               ${
                 isActive
                   ? dark
-                    ? "text-neutral-900"
-                    : "text-white"
+                    ? "font-medium text-neutral-900"
+                    : "font-medium text-white"
                   : dark
-                    ? "text-neutral-500 hover:text-neutral-900"
-                    : "text-white/70 hover:text-white"
+                    ? "font-light text-neutral-500 hover:text-neutral-900"
+                    : "font-light text-white/70 hover:text-white"
               }
             `}
           >

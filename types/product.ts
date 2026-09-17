@@ -11,7 +11,6 @@ export interface Product {
 
   category: string;
   badge?: string;
-  
 
   features: string[];
 
@@ -22,9 +21,13 @@ export interface Product {
     value: string;
   }[];
 
+  sizeGuide: string;
+  shippingReturns: string;
+  careInstructions: string;
+  craftsmanship: string;
+
   colors: string[];
-sizes: string[];
+  sizes: string[];
 
-stock: number;
-
+  stock: number;
 }

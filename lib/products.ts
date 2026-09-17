@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import { getMediaUrl } from "@/lib/media";
 
 import type { Product } from "@/types/product";
@@ -16,6 +16,12 @@ type ProductRow = {
     label: string;
     value: string;
   }[];
+
+  size_guide: string | null;
+  shipping_returns: string | null;
+  care_instructions: string | null;
+  craftsmanship: string | null;
+
   status: "draft" | "published" | "archived";
 };
 
@@ -239,6 +245,18 @@ function mapProduct(
     specifications:
       row.specifications ?? [],
 
+    sizeGuide:
+      row.size_guide ?? "",
+
+    shippingReturns:
+      row.shipping_returns ?? "",
+
+    careInstructions:
+      row.care_instructions ?? "",
+
+    craftsmanship:
+      row.craftsmanship ?? "",
+
     colors,
 
     sizes,
@@ -253,12 +271,12 @@ export async function getProducts():
   Promise<Product[]> {
 
   const supabase =
-    createClient();
+    await createClient();
 
 
   const {
     data,
-    error,
+    error
   } =
     await supabase
       .from("products")
@@ -272,6 +290,10 @@ export async function getProducts():
           badge,
           features,
           specifications,
+          size_guide,
+          shipping_returns,
+          care_instructions,
+          craftsmanship,
           status,
           product_variants (
             id,
@@ -335,12 +357,12 @@ export async function getProductBySlug(
   > {
 
   const supabase =
-    createClient();
+    await createClient();
 
 
   const {
     data,
-    error,
+    error
   } =
     await supabase
       .from("products")
@@ -354,6 +376,10 @@ export async function getProductBySlug(
           badge,
           features,
           specifications,
+          size_guide,
+          shipping_returns,
+          care_instructions,
+          craftsmanship,
           status,
           product_variants (
             id,

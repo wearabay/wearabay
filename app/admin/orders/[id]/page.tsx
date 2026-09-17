@@ -1,5 +1,5 @@
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import Container from "@/components/ui/Container";
 
@@ -34,13 +34,11 @@ import VerifyPaymentButton from "./VerifyPaymentButton";
 
 import RefundPaymentButton from "./RefundPaymentButton";
 
-
 type Props = {
   params: Promise<{
     id: string;
   }>;
 };
-
 
 function formatPaymentMethod(
   payment: string | null | undefined
@@ -72,170 +70,74 @@ function formatPaymentMethod(
   }
 }
 
-
 export default async function AdminOrderDetailPage({
   params,
 }: Props) {
-
-  const { id } =
-    await params;
-
+  const { id } = await params;
 
   /* =======================================================
      ADMIN AUTH
   ======================================================= */
 
-  const admin =
-    await getAdminUser();
-
+  const admin = await getAdminUser();
 
   if (!admin) {
     redirect("/account");
   }
 
-
   /* =======================================================
      LOAD ORDER
   ======================================================= */
 
-  const order =
-    await getAdminOrderById(id);
-
+  const order = await getAdminOrderById(id);
 
   if (!order) {
-
-    return (
-
-      <main>
-
-        <Container className="py-24">
-
-          <div className="space-y-6">
-
-            <p
-              className="
-                text-xs
-                uppercase
-                tracking-[0.3em]
-                text-neutral-500
-              "
-            >
-              Administration
-            </p>
-
-
-            <h1
-              className="
-                text-3xl
-                font-light
-              "
-            >
-              Order Not Found
-            </h1>
-
-
-            <Link
-              href="/admin/orders"
-              className="
-                inline-flex
-                h-12
-                items-center
-                justify-center
-                rounded-full
-                border
-                border-black
-                px-6
-                text-xs
-                uppercase
-                tracking-[0.2em]
-                transition
-                hover:bg-black
-                hover:text-white
-              "
-            >
-              Back to Orders
-            </Link>
-
-          </div>
-
-        </Container>
-
-      </main>
-
-    );
-
+    notFound();
   }
 
-
-  const history =
-  await getOrderHistory(id);
-
+  const history = await getOrderHistory(id);
 
   /* =======================================================
      PAYMENT LABEL
   ======================================================= */
 
-  const paymentLabel =
-    formatPaymentMethod(
-      order.payment
-    );
-
+  const paymentLabel = formatPaymentMethod(
+    order.payment
+  );
 
   /* =======================================================
      PAYMENT PROOF SIGNED URL
   ======================================================= */
 
-  let paymentProofUrl:
-    string | null = null;
+  let paymentProofUrl: string | null = null;
 
-
-  if (
-    order.paymentProofPath
-  ) {
-
-    const supabase =
-      await createClient();
-
+  if (order.paymentProofPath) {
+    const supabase = await createClient();
 
     const {
       data,
       error,
-    } =
-      await supabase.storage
-
-        .from("payment-proofs")
-
-        .createSignedUrl(
-          order.paymentProofPath,
-          60 * 60
-        );
-
+    } = await supabase.storage
+      .from("payment-proofs")
+      .createSignedUrl(
+        order.paymentProofPath,
+        60 * 60
+      );
 
     if (!error) {
-
-      paymentProofUrl =
-        data.signedUrl;
-
+      paymentProofUrl = data.signedUrl;
     }
-
   }
 
-
   return (
-
     <main>
-
       <Container className="py-24">
-
         <div className="space-y-10">
-
-
           {/* =================================================
               HEADER
           ================================================= */}
 
           <div>
-
             <Link
               href="/admin/orders"
               className="
@@ -250,7 +152,6 @@ export default async function AdminOrderDetailPage({
               ← Back to Orders
             </Link>
 
-
             <p
               className="
                 mt-8
@@ -263,7 +164,6 @@ export default async function AdminOrderDetailPage({
               Administration
             </p>
 
-
             <h1
               className="
                 mt-3
@@ -274,7 +174,6 @@ export default async function AdminOrderDetailPage({
               Order Detail
             </h1>
 
-
             <p
               className="
                 mt-2
@@ -284,7 +183,6 @@ export default async function AdminOrderDetailPage({
             >
               {order.orderNumber}
             </p>
-
 
             <p
               className="
@@ -299,9 +197,7 @@ export default async function AdminOrderDetailPage({
                 "id-ID"
               )}
             </p>
-
           </div>
-
 
           {/* =================================================
               CUSTOMER
@@ -315,7 +211,6 @@ export default async function AdminOrderDetailPage({
               p-6
             "
           >
-
             <h2
               className="
                 mb-5
@@ -326,7 +221,6 @@ export default async function AdminOrderDetailPage({
               Customer
             </h2>
 
-
             <div
               className="
                 space-y-2
@@ -334,20 +228,15 @@ export default async function AdminOrderDetailPage({
                 text-neutral-600
               "
             >
-
               <p>
                 {order.customer.email}
               </p>
 
-
               <p>
                 {order.customer.phone}
               </p>
-
             </div>
-
           </section>
-
 
           {/* =================================================
               ITEMS
@@ -361,7 +250,6 @@ export default async function AdminOrderDetailPage({
               p-6
             "
           >
-
             <h2
               className="
                 mb-6
@@ -372,82 +260,63 @@ export default async function AdminOrderDetailPage({
               Items
             </h2>
 
-
             <div className="space-y-6">
-
-              {order.items.map(
-                (item) => (
-
-                  <div
-                    key={`
-                      ${item.id}-
-                      ${item.color ?? ""}-
-                      ${item.size ?? ""}
-                    `}
-                    className="
-                      flex
-                      items-start
-                      justify-between
-                      gap-6
-                      border-b
-                      border-stone-100
-                      pb-5
-                      last:border-b-0
-                      last:pb-0
-                    "
-                  >
-
-                    <div>
-
-                      <p className="font-medium">
-                        {item.name}
-                      </p>
-
-
-                      <p
-                        className="
-                          mt-1
-                          text-sm
-                          text-neutral-500
-                        "
-                      >
-
-                        {item.color}
-
-                        {item.color &&
-                        item.size
-                          ? " • "
-                          : ""}
-
-                        {item.size}
-
-                        {" • "}
-
-                        Qty {item.quantity}
-
-                      </p>
-
-                    </div>
-
-
+              {order.items.map((item) => (
+                <div
+                  key={`
+                    ${item.id}-
+                    ${item.color ?? ""}-
+                    ${item.size ?? ""}
+                  `}
+                  className="
+                    flex
+                    items-start
+                    justify-between
+                    gap-6
+                    border-b
+                    border-stone-100
+                    pb-5
+                    last:border-b-0
+                    last:pb-0
+                  "
+                >
+                  <div>
                     <p className="font-medium">
-
-                      {formatPrice(
-                        item.price *
-                        item.quantity
-                      )}
-
+                      {item.name}
                     </p>
 
+                    <p
+                      className="
+                        mt-1
+                        text-sm
+                        text-neutral-500
+                      "
+                    >
+                      {item.color}
+
+                      {item.color &&
+                      item.size
+                        ? " • "
+                        : ""}
+
+                      {item.size}
+
+                      {" • "}
+
+                      Qty {item.quantity}
+                    </p>
                   </div>
 
-                )
-              )}
-
+                  <p className="font-medium">
+                    {formatPrice(
+                      item.price *
+                        item.quantity
+                    )}
+                  </p>
+                </div>
+              ))}
             </div>
-
           </section>
-
 
           {/* =================================================
               SHIPPING ADDRESS
@@ -461,7 +330,6 @@ export default async function AdminOrderDetailPage({
               p-6
             "
           >
-
             <h2
               className="
                 mb-5
@@ -472,7 +340,6 @@ export default async function AdminOrderDetailPage({
               Shipping Address
             </h2>
 
-
             <div
               className="
                 text-sm
@@ -480,22 +347,17 @@ export default async function AdminOrderDetailPage({
                 text-neutral-600
               "
             >
-
               <p className="font-medium text-black">
-
                 {order.address.firstName}
 
                 {" "}
 
                 {order.address.lastName}
-
               </p>
-
 
               <p>
                 {order.address.street}
               </p>
-
 
               <p>
                 {order.address.city}
@@ -503,20 +365,15 @@ export default async function AdminOrderDetailPage({
                 {order.address.province}
               </p>
 
-
               <p>
                 {order.address.postalCode}
               </p>
 
-
               <p>
                 {order.address.country}
               </p>
-
             </div>
-
           </section>
-
 
           {/* =================================================
               PAYMENT & TOTAL
@@ -530,7 +387,6 @@ export default async function AdminOrderDetailPage({
               p-6
             "
           >
-
             <h2
               className="
                 mb-6
@@ -541,10 +397,7 @@ export default async function AdminOrderDetailPage({
               Payment
             </h2>
 
-
             <div className="space-y-4">
-
-
               <div
                 className="
                   flex
@@ -553,18 +406,14 @@ export default async function AdminOrderDetailPage({
                   text-sm
                 "
               >
-
                 <span>
                   Payment Method
                 </span>
 
-
                 <span className="font-medium">
                   {paymentLabel}
                 </span>
-
               </div>
-
 
               <div
                 className="
@@ -574,11 +423,9 @@ export default async function AdminOrderDetailPage({
                   text-sm
                 "
               >
-
                 <span>
                   Payment Status
                 </span>
-
 
                 <span
                   className="
@@ -588,9 +435,7 @@ export default async function AdminOrderDetailPage({
                 >
                   {order.paymentStatus}
                 </span>
-
               </div>
-
 
               <div
                 className="
@@ -600,11 +445,9 @@ export default async function AdminOrderDetailPage({
                   text-sm
                 "
               >
-
                 <span>
                   Order Status
                 </span>
-
 
                 <span
                   className="
@@ -614,9 +457,7 @@ export default async function AdminOrderDetailPage({
                 >
                   {order.status}
                 </span>
-
               </div>
-
 
               <div
                 className="
@@ -626,20 +467,16 @@ export default async function AdminOrderDetailPage({
                   text-sm
                 "
               >
-
                 <span>
                   Shipping
                 </span>
-
 
                 <span>
                   {formatPrice(
                     order.shippingFee
                   )}
                 </span>
-
               </div>
-
 
               <div
                 className="
@@ -649,7 +486,6 @@ export default async function AdminOrderDetailPage({
                   pt-5
                 "
               >
-
                 <div
                   className="
                     flex
@@ -659,33 +495,25 @@ export default async function AdminOrderDetailPage({
                     font-medium
                   "
                 >
-
                   <span>
                     Total
                   </span>
-
 
                   <span>
                     {formatPrice(
                       order.total
                     )}
                   </span>
-
                 </div>
-
               </div>
-
             </div>
-
           </section>
-
 
           {/* =================================================
               PAYMENT PROOF
           ================================================= */}
 
           {order.paymentProofPath && (
-
             <section
               className="
                 rounded-2xl
@@ -694,7 +522,6 @@ export default async function AdminOrderDetailPage({
                 p-6
               "
             >
-
               <div
                 className="
                   flex
@@ -703,9 +530,7 @@ export default async function AdminOrderDetailPage({
                   gap-6
                 "
               >
-
                 <div>
-
                   <h2
                     className="
                       text-lg
@@ -714,7 +539,6 @@ export default async function AdminOrderDetailPage({
                   >
                     Payment Proof
                   </h2>
-
 
                   <p
                     className="
@@ -725,9 +549,7 @@ export default async function AdminOrderDetailPage({
                   >
                     Customer payment proof
                   </p>
-
                 </div>
-
 
                 <span
                   className="
@@ -747,12 +569,9 @@ export default async function AdminOrderDetailPage({
                     ? "Verified"
                     : "Pending Review"}
                 </span>
-
               </div>
 
-
               {order.paymentProofUploadedAt && (
-
                 <p
                   className="
                     mt-4
@@ -767,241 +586,211 @@ export default async function AdminOrderDetailPage({
                     "id-ID"
                   )}
                 </p>
-
               )}
 
+              {paymentProofUrl ? (
+                <div className="mt-5">
+                  {/* ===================================================
+                      COMPACT PREVIEW
+                  =================================================== */}
 
-{paymentProofUrl ? (
+                  <div
+                    className="
+                      w-fit
+                      max-w-full
+                      overflow-hidden
+                      rounded-xl
+                      border
+                      border-stone-200
+                      bg-stone-50
+                      p-2
+                    "
+                  >
+                    <img
+                      src={paymentProofUrl}
+                      alt="Customer payment proof"
+                      className="
+                        block
+                        max-h-[220px]
+                        max-w-[260px]
+                        w-auto
+                        object-contain
+                      "
+                    />
+                  </div>
 
-  <div className="mt-5">
+                  {/* ===================================================
+                      VIEW FULL PROOF
+                  =================================================== */}
 
-    {/* ===================================================
-        COMPACT PREVIEW
-    =================================================== */}
+                  <div className="mt-3">
+                    <a
+                      href={paymentProofUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="
+                        text-xs
+                        font-medium
+                        uppercase
+                        tracking-[0.15em]
+                        underline
+                        underline-offset-4
+                        transition
+                        hover:text-neutral-500
+                      "
+                    >
+                      View Full Payment Proof
+                    </a>
+                  </div>
 
-    <div
-      className="
-        w-fit
-        max-w-full
-        overflow-hidden
-        rounded-xl
-        border
-        border-stone-200
-        bg-stone-50
-        p-2
-      "
-    >
+                  {/* ===================================================
+                      REVIEW ACTIONS
+                  =================================================== */}
 
-      <img
-        src={paymentProofUrl}
-        alt="Customer payment proof"
-        className="
-          block
-          max-h-[220px]
-          max-w-[260px]
-          w-auto
-          object-contain
-        "
-      />
+                  {!order.paymentProofVerifiedAt && (
+                    <div
+                      className="
+                        mt-6
+                        flex
+                        flex-col
+                        gap-3
+                        sm:flex-row
+                      "
+                    >
+                      {/* VERIFY */}
 
-    </div>
+                      <form
+                        action={
+                          verifyAdminPaymentProofAction
+                        }
+                      >
+                        <input
+                          type="hidden"
+                          name="orderId"
+                          value={order.id}
+                        />
 
+                        <VerifyPaymentButton />
+                      </form>
 
-    {/* ===================================================
-        VIEW FULL PROOF
-    =================================================== */}
+                      {/* REJECT */}
 
-    <div className="mt-3">
+                      <form
+                        action={
+                          rejectAdminPaymentProofAction
+                        }
+                      >
+                        <input
+                          type="hidden"
+                          name="orderId"
+                          value={order.id}
+                        />
 
-      <a
-        href={paymentProofUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="
-          text-xs
-          font-medium
-          uppercase
-          tracking-[0.15em]
-          underline
-          underline-offset-4
-          transition
-          hover:text-neutral-500
-        "
-      >
-        View Full Payment Proof
-      </a>
-
-    </div>
-
-
-    {/* ===================================================
-        REVIEW ACTIONS
-    =================================================== */}
-
-    {!order.paymentProofVerifiedAt && (
-
-      <div
-        className="
-          mt-6
-          flex
-          flex-col
-          gap-3
-          sm:flex-row
-        "
-      >
-
-        {/* VERIFY */}
-
-        <form
-          action={
-            verifyAdminPaymentProofAction
-          }
-        >
-
-          <input
-            type="hidden"
-            name="orderId"
-            value={order.id}
-          />
-
-          <VerifyPaymentButton />
-
-        </form>
-
-
-        {/* REJECT */}
-
-        <form
-          action={
-            rejectAdminPaymentProofAction
-          }
-        >
-
-          <input
-            type="hidden"
-            name="orderId"
-            value={order.id}
-          />
-
-          <button
-            type="submit"
-            className="
-              inline-flex
-              h-11
-              w-full
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-stone-300
-              bg-white
-              px-6
-              text-xs
-              font-medium
-              uppercase
-              tracking-[0.15em]
-              text-neutral-700
-              transition
-              hover:border-black
-              hover:text-black
-              sm:w-auto
-            "
-          >
-            Reject Payment Proof
-          </button>
-
-        </form>
-
-      </div>
-
-    )}
-
-  </div>
-
-) : (
-
-  <p
-className="
-mt-5
-text-sm
-text-neutral-500
-"
->
-Unable to generate preview.
-</p>
-
-)}
-
+                        <button
+                          type="submit"
+                          className="
+                            inline-flex
+                            h-11
+                            w-full
+                            items-center
+                            justify-center
+                            rounded-full
+                            border
+                            border-stone-300
+                            bg-white
+                            px-6
+                            text-xs
+                            font-medium
+                            uppercase
+                            tracking-[0.15em]
+                            text-neutral-700
+                            transition
+                            hover:border-black
+                            hover:text-black
+                            sm:w-auto
+                          "
+                        >
+                          Reject Payment Proof
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p
+                  className="
+                    mt-5
+                    text-sm
+                    text-neutral-500
+                  "
+                >
+                  Unable to generate preview.
+                </p>
+              )}
             </section>
-
           )}
 
+          {/* =================================================
+              ORDER HISTORY
+          ================================================= */}
+
           <OrderHistory
-  history={history}
-/>
+            history={history}
+          />
 
-{/* =================================================
-    REFUND PAYMENT
-================================================= */}
+          {/* =================================================
+              REFUND PAYMENT
+          ================================================= */}
 
-{order.paymentStatus === "paid" &&
-  order.status === "processing" && (
+          {order.paymentStatus === "paid" &&
+            order.status === "processing" && (
+              <section
+                className="
+                  rounded-2xl
+                  border
+                  border-stone-200
+                  p-6
+                "
+              >
+                <div>
+                  <h2
+                    className="
+                      text-lg
+                      font-medium
+                    "
+                  >
+                    Refund Payment
+                  </h2>
 
-  <section
-    className="
-      rounded-2xl
-      border
-      border-stone-200
-      p-6
-    "
-  >
+                  <p
+                    className="
+                      mt-2
+                      text-sm
+                      leading-6
+                      text-neutral-500
+                    "
+                  >
+                    Mark this payment as refunded after
+                    the refund has been completed.
+                  </p>
+                </div>
 
-    <div>
+                <form
+                  className="mt-6"
+                  action={
+                    refundAdminPaymentAction
+                  }
+                >
+                  <input
+                    type="hidden"
+                    name="orderId"
+                    value={order.id}
+                  />
 
-      <h2
-        className="
-          text-lg
-          font-medium
-        "
-      >
-        Refund Payment
-      </h2>
-
-
-      <p
-        className="
-          mt-2
-          text-sm
-          leading-6
-          text-neutral-500
-        "
-      >
-        Mark this payment as refunded after
-        the refund has been completed.
-      </p>
-
-    </div>
-
-
-    <form
-      className="mt-6"
-      action={refundAdminPaymentAction}
-    >
-
-      <input
-        type="hidden"
-        name="orderId"
-        value={order.id}
-      />
-
-
-      <RefundPaymentButton />
-
-    </form>
-
-  </section>
-
-)}
+                  <RefundPaymentButton />
+                </form>
+              </section>
+            )}
 
           {/* =================================================
               MANAGE ORDER
@@ -1014,19 +803,15 @@ Unable to generate preview.
           />
 
           <ShippingForm
-  orderId={order.id}
-  status={order.status}
-  courier={order.courier ?? null}
-  trackingNumber={order.trackingNumber ?? null}
-/>
-
-
+            orderId={order.id}
+            status={order.status}
+            courier={order.courier ?? null}
+            trackingNumber={
+              order.trackingNumber ?? null
+            }
+          />
         </div>
-
       </Container>
-
     </main>
-
   );
-
 }

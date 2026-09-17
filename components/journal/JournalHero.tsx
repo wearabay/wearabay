@@ -1,7 +1,29 @@
-export default function JournalHero() {
+type Props = {
+  storeName: string;
+};
+
+
+export default function JournalHero({
+  storeName,
+}: Props) {
+
   return (
+
     <section className="border-b border-neutral-200 bg-white">
-      <div className="mx-auto flex max-w-7xl flex-col items-center px-6 py-24 text-center md:py-28">
+
+      <div
+        className="
+          mx-auto
+          flex
+          max-w-7xl
+          flex-col
+          items-center
+          px-6
+          py-24
+          text-center
+          md:py-28
+        "
+      >
 
         <span
           className="
@@ -13,8 +35,9 @@ export default function JournalHero() {
             text-neutral-500
           "
         >
-          Wearabay Journal
+          {storeName} Journal
         </span>
+
 
         <h1
           className="
@@ -32,6 +55,7 @@ export default function JournalHero() {
           Timeless Modest Fashion
         </h1>
 
+
         <p
           className="
             mt-8
@@ -44,10 +68,13 @@ export default function JournalHero() {
         >
           Discover styling advice, fabric care,
           behind-the-scenes stories, and inspiration
-          curated by Wearabay.
+          curated by {storeName}.
         </p>
 
       </div>
+
     </section>
+
   );
+
 }

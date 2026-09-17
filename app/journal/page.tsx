@@ -1,66 +1,18 @@
-"use client";
+import { getStoreSettings } from "@/lib/store-settings";
 
-import { useMemo, useState } from "react";
+import JournalPageClient from "./JournalPageClient";
 
-import JournalHero from "@/components/journal/JournalHero";
-import FeaturedArticle from "@/components/journal/FeaturedArticle";
-import CategoryTabs from "@/components/journal/CategoryTabs";
-import ArticleGrid from "@/components/journal/ArticleGrid";
-import NewsletterBanner from "@/components/journal/NewsletterBanner";
 
-import {
-  featuredArticle,
-  journalArticles,
-} from "@/data/journal";
+export default async function JournalPage() {
 
-import type {
-  JournalCategory,
-} from "@/types/journal";
+  const settings =
+    await getStoreSettings();
 
-export default function JournalPage() {
-
-  const [category, setCategory] =
-    useState<JournalCategory | "All">("All");
-
-  const filteredArticles =
-    useMemo(() => {
-
-      return journalArticles.filter((article) => {
-
-        if (article.featured) {
-          return false;
-        }
-
-        if (category === "All") {
-          return true;
-        }
-
-        return article.category === category;
-
-      });
-
-    }, [category]);
 
   return (
-    <main className="bg-white">
-
-      <JournalHero />
-
-      <FeaturedArticle
-        article={featuredArticle}
-      />
-
-      <CategoryTabs
-        value={category}
-        onChange={setCategory}
-      />
-
-      <ArticleGrid
-        articles={filteredArticles}
-      />
-
-      <NewsletterBanner />
-
-    </main>
+    <JournalPageClient
+      storeName={settings.storeName}
+    />
   );
+
 }

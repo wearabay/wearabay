@@ -14,11 +14,13 @@ import { formatPrice } from "@/lib/currency";
 
 type Props = {
   orderId?: string;
+  storeName: string;
 };
 
 
 export default function SuccessClient({
   orderId,
+  storeName,
 }: Props) {
 
   const [order, setOrder] =
@@ -215,8 +217,8 @@ export default function SuccessClient({
         "
       >
         Your order has been received.
-        We will prepare your order from
-        wearabay.
+        We will prepare your order from{" "}
+        {storeName}.
       </p>
 
 
@@ -252,12 +254,14 @@ export default function SuccessClient({
           </p>
 
 
-          <p className="
-  mt-2
-  font-medium
-">
-  {order.orderNumber}
-</p>
+          <p
+            className="
+              mt-2
+              font-medium
+            "
+          >
+            {order.orderNumber}
+          </p>
 
         </div>
 

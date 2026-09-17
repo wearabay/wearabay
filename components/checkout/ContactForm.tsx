@@ -3,7 +3,13 @@
 import Input from "@/components/ui/Input";
 import { useCheckout } from "@/context/CheckoutContext";
 
-export default function ContactForm() {
+type ContactFormProps = {
+  storeName: string;
+};
+
+export default function ContactForm({
+  storeName,
+}: ContactFormProps) {
   const {
     contact,
     errors,
@@ -98,8 +104,8 @@ export default function ContactForm() {
 
           <span className="text-sm leading-6 text-neutral-600">
             Email me with exclusive offers,
-            new arrivals, and updates from
-            wearabay.
+            new arrivals, and updates from{" "}
+            {storeName}.
           </span>
 
 

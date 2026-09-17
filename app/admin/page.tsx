@@ -10,21 +10,49 @@ import {
   getAdminPaymentReviewOrders,
 } from "@/lib/admin-orders";
 
+import {
+  getAdminReviewStats,
+  getAdminReviews,
+} from "@/lib/admin-reviews";
+
+
 export default async function AdminPage() {
-  const admin = await getAdminUser();
+
+  const admin =
+    await getAdminUser();
+
 
   if (!admin) {
+
     redirect("/account");
+
   }
 
-  const stats = await getAdminOrderStats();
+
+  const stats =
+    await getAdminOrderStats();
+
 
   const paymentReviewOrders =
     await getAdminPaymentReviewOrders();
 
+
+  const reviewStats =
+    await getAdminReviewStats();
+
+
+  const pendingReviews =
+    await getAdminReviews(
+      "pending"
+    );
+
+
   return (
+
     <main>
+
       <Container className="py-24">
+
         <div className="space-y-10">
 
           {/* =================================================
@@ -32,6 +60,7 @@ export default async function AdminPage() {
           ================================================= */}
 
           <div>
+
             <p
               className="
                 text-xs
@@ -43,6 +72,7 @@ export default async function AdminPage() {
               Administration
             </p>
 
+
             <h1
               className="
                 mt-3
@@ -53,6 +83,7 @@ export default async function AdminPage() {
               Admin Dashboard
             </h1>
 
+
             <p
               className="
                 mt-3
@@ -62,7 +93,9 @@ export default async function AdminPage() {
             >
               Welcome back, {admin.fullName}.
             </p>
+
           </div>
+
 
           {/* =================================================
               SUMMARY CARDS
@@ -72,9 +105,10 @@ export default async function AdminPage() {
             className="
               grid
               gap-6
-              md:grid-cols-3
+              md:grid-cols-4
             "
           >
+
             {/* ORDERS */}
 
             <div
@@ -85,6 +119,7 @@ export default async function AdminPage() {
                 p-6
               "
             >
+
               <p
                 className="
                   text-xs
@@ -96,6 +131,7 @@ export default async function AdminPage() {
                 Orders
               </p>
 
+
               <p
                 className="
                   mt-3
@@ -106,6 +142,7 @@ export default async function AdminPage() {
                 {stats?.total ?? 0}
               </p>
 
+
               <p
                 className="
                   mt-2
@@ -115,7 +152,9 @@ export default async function AdminPage() {
               >
                 Total orders
               </p>
+
             </div>
+
 
             {/* PAYMENT REVIEW */}
 
@@ -127,6 +166,7 @@ export default async function AdminPage() {
                 p-6
               "
             >
+
               <p
                 className="
                   text-xs
@@ -138,6 +178,7 @@ export default async function AdminPage() {
                 Payment Review
               </p>
 
+
               <p
                 className="
                   mt-3
@@ -148,6 +189,7 @@ export default async function AdminPage() {
                 {stats?.needPaymentReview ?? 0}
               </p>
 
+
               <p
                 className="
                   mt-2
@@ -157,7 +199,56 @@ export default async function AdminPage() {
               >
                 Awaiting verification
               </p>
+
             </div>
+
+
+            {/* REVIEWS */}
+
+            <div
+              className="
+                rounded-2xl
+                border
+                border-stone-200
+                p-6
+              "
+            >
+
+              <p
+                className="
+                  text-xs
+                  uppercase
+                  tracking-widest
+                  text-neutral-500
+                "
+              >
+                Reviews
+              </p>
+
+
+              <p
+                className="
+                  mt-3
+                  text-3xl
+                  font-light
+                "
+              >
+                {reviewStats.pending}
+              </p>
+
+
+              <p
+                className="
+                  mt-2
+                  text-xs
+                  text-neutral-500
+                "
+              >
+                Awaiting moderation
+              </p>
+
+            </div>
+
 
             {/* SHIPPING */}
 
@@ -169,6 +260,7 @@ export default async function AdminPage() {
                 p-6
               "
             >
+
               <p
                 className="
                   text-xs
@@ -180,6 +272,7 @@ export default async function AdminPage() {
                 Shipping
               </p>
 
+
               <p
                 className="
                   mt-3
@@ -190,6 +283,7 @@ export default async function AdminPage() {
                 {stats?.shipped ?? 0}
               </p>
 
+
               <p
                 className="
                   mt-2
@@ -199,8 +293,11 @@ export default async function AdminPage() {
               >
                 Orders shipped
               </p>
+
             </div>
+
           </div>
+
 
           {/* =================================================
               QUICK ACTIONS
@@ -214,6 +311,7 @@ export default async function AdminPage() {
               p-6
             "
           >
+
             <p
               className="
                 text-xs
@@ -225,6 +323,7 @@ export default async function AdminPage() {
               Quick Actions
             </p>
 
+
             <div
               className="
                 mt-5
@@ -235,6 +334,7 @@ export default async function AdminPage() {
                 sm:flex-wrap
               "
             >
+
               {/* MANAGE ORDERS */}
 
               <Link
@@ -255,6 +355,7 @@ export default async function AdminPage() {
               >
                 Manage Orders
               </Link>
+
 
               {/* MANAGE PRODUCTS */}
 
@@ -277,6 +378,7 @@ export default async function AdminPage() {
                 Manage Products
               </Link>
 
+
               {/* MANAGE INVENTORY */}
 
               <Link
@@ -297,8 +399,33 @@ export default async function AdminPage() {
               >
                 Manage Inventory
               </Link>
+
+
+              {/* MANAGE REVIEWS */}
+
+              <Link
+                href="/admin/reviews"
+                className="
+                  rounded-full
+                  border
+                  border-stone-300
+                  px-6
+                  py-3
+                  text-center
+                  text-xs
+                  uppercase
+                  tracking-[0.15em]
+                  transition
+                  hover:border-black
+                "
+              >
+                Manage Reviews
+              </Link>
+
             </div>
+
           </section>
+
 
           {/* =================================================
               PAYMENT REVIEW QUEUE
@@ -312,6 +439,7 @@ export default async function AdminPage() {
               p-6
             "
           >
+
             <p
               className="
                 text-xs
@@ -323,13 +451,16 @@ export default async function AdminPage() {
               Payment Verification
             </p>
 
+
             <div
               className="
                 mt-6
                 space-y-4
               "
             >
+
               {paymentReviewOrders.length === 0 && (
+
                 <p
                   className="
                     text-sm
@@ -338,10 +469,13 @@ export default async function AdminPage() {
                 >
                   No payment requires review.
                 </p>
+
               )}
+
 
               {paymentReviewOrders.map(
                 (order) => (
+
                   <div
                     key={order.id}
                     className="
@@ -354,7 +488,9 @@ export default async function AdminPage() {
                       p-4
                     "
                   >
+
                     <div>
+
                       <p
                         className="
                           text-sm
@@ -364,6 +500,7 @@ export default async function AdminPage() {
                         {order.orderNumber}
                       </p>
 
+
                       <p
                         className="
                           text-xs
@@ -372,7 +509,9 @@ export default async function AdminPage() {
                       >
                         Bank Transfer
                       </p>
+
                     </div>
+
 
                     <Link
                       href={`/admin/orders/${order.id}`}
@@ -391,14 +530,203 @@ export default async function AdminPage() {
                     >
                       Review
                     </Link>
+
                   </div>
+
                 )
               )}
+
             </div>
+
+          </section>
+
+
+          {/* =================================================
+              REVIEW QUEUE
+          ================================================= */}
+
+          <section
+            className="
+              rounded-2xl
+              border
+              border-stone-200
+              p-6
+            "
+          >
+
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+                gap-4
+              "
+            >
+
+              <div>
+
+                <p
+                  className="
+                    text-xs
+                    uppercase
+                    tracking-[0.3em]
+                    text-neutral-500
+                  "
+                >
+                  Review Moderation
+                </p>
+
+
+                <p
+                  className="
+                    mt-2
+                    text-sm
+                    text-neutral-500
+                  "
+                >
+                  {reviewStats.pending}{" "}
+                  pending review
+                  {reviewStats.pending === 1
+                    ? ""
+                    : "s"}
+                </p>
+
+              </div>
+
+
+              <Link
+                href="/admin/reviews"
+                className="
+                  text-xs
+                  uppercase
+                  tracking-[0.15em]
+                  underline
+                  underline-offset-4
+                "
+              >
+                View All
+              </Link>
+
+            </div>
+
+
+            <div
+              className="
+                mt-6
+                space-y-4
+              "
+            >
+
+              {pendingReviews.length === 0 && (
+
+                <p
+                  className="
+                    text-sm
+                    text-neutral-500
+                  "
+                >
+                  No reviews require moderation.
+                </p>
+
+              )}
+
+
+              {pendingReviews.map(
+                (review) => (
+
+                  <div
+                    key={review.id}
+                    className="
+                      flex
+                      flex-col
+                      gap-4
+                      rounded-xl
+                      border
+                      border-stone-200
+                      p-4
+                      sm:flex-row
+                      sm:items-center
+                      sm:justify-between
+                    "
+                  >
+
+                    <div>
+
+                      <p
+                        className="
+                          text-sm
+                          font-medium
+                        "
+                      >
+                        {review.productName}
+                      </p>
+
+
+                      <p
+                        className="
+                          mt-1
+                          text-xs
+                          text-neutral-500
+                        "
+                      >
+                        {review.customerName}
+                        {" • "}
+                        {"★".repeat(
+                          review.rating
+                        )}
+                      </p>
+
+
+                      {review.title && (
+
+                        <p
+                          className="
+                            mt-2
+                            text-sm
+                          "
+                        >
+                          {review.title}
+                        </p>
+
+                      )}
+
+                    </div>
+
+
+                    <Link
+                      href="/admin/reviews"
+                      className="
+                        shrink-0
+                        rounded-full
+                        border
+                        border-stone-300
+                        px-4
+                        py-2
+                        text-xs
+                        uppercase
+                        tracking-wider
+                        transition
+                        hover:border-black
+                      "
+                    >
+                      Review
+                    </Link>
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
           </section>
 
         </div>
+
       </Container>
+
     </main>
+
   );
+
 }

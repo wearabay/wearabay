@@ -1,8 +1,8 @@
-
-
 import Container from "@/components/ui/Container";
 
 import SuccessClient from "@/components/checkout/SuccessClient";
+
+import { getStoreSettings } from "@/lib/store-settings";
 
 
 type Props = {
@@ -16,18 +16,18 @@ export default async function SuccessPage({
   searchParams,
 }: Props) {
 
-
   const {
     order,
   } = await searchParams;
 
 
+  const settings =
+    await getStoreSettings();
+
 
   return (
 
     <>
-      
-
 
       <main>
 
@@ -35,14 +35,12 @@ export default async function SuccessPage({
 
           <SuccessClient
             orderId={order}
+            storeName={settings.storeName}
           />
 
         </Container>
 
       </main>
-
-
-      
 
     </>
 

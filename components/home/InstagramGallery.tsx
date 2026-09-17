@@ -4,7 +4,19 @@ import Link from "next/link";
 import Container from "../ui/Container";
 import SectionTitle from "../ui/SectionTitle";
 
-export default function InstagramGallery() {
+import { getStoreSettings } from "@/lib/store-settings";
+
+
+export default async function InstagramGallery() {
+
+  const settings =
+    await getStoreSettings();
+
+
+  const instagramUrl =
+    settings.instagram || "#";
+
+
   return (
     <section className="bg-[#FAF8F5] py-16 lg:py-20">
 
@@ -12,19 +24,21 @@ export default function InstagramGallery() {
 
         <SectionTitle
           eyebrow="Follow Our Journey"
-          title='wearabay'
+          title={settings.storeName}
           description="Discover timeless elegance through our latest collections, styling inspiration and behind-the-scenes moments."
         />
+
 
         <div className="mt-20 grid gap-6 lg:grid-cols-[2fr_1fr]">
 
           {/* ================= VIDEO ================= */}
 
           <Link
-            href="https://instagram.com/wearing.abaya"
+            href={instagramUrl}
             target="_blank"
             className="group"
           >
+
             <div className="relative aspect-[16/12] overflow-hidden rounded-3xl bg-neutral-200">
 
               <video
@@ -44,6 +58,7 @@ export default function InstagramGallery() {
                 "
               />
 
+
               <div
                 className="
                   absolute
@@ -53,6 +68,7 @@ export default function InstagramGallery() {
                   to-transparent
                 "
               />
+
 
               {/* Play Badge */}
 
@@ -68,6 +84,7 @@ export default function InstagramGallery() {
                   backdrop-blur-md
                 "
               >
+
                 <span
                   className="
                     text-[9px]
@@ -78,20 +95,24 @@ export default function InstagramGallery() {
                 >
                   Instagram →
                 </span>
+
               </div>
 
             </div>
+
           </Link>
+
 
           {/* ================= RIGHT ================= */}
 
           <div className="grid gap-6">
 
             <Link
-              href="https://instagram.com/wearing.abaya"
+              href={instagramUrl}
               target="_blank"
               className="group"
             >
+
               <div className="relative aspect-[16/11.5] justify-center overflow-hidden rounded-3xl">
 
                 <Image
@@ -107,6 +128,7 @@ export default function InstagramGallery() {
                   "
                 />
 
+
                 <div
                   className="
                     absolute
@@ -119,13 +141,16 @@ export default function InstagramGallery() {
                 />
 
               </div>
+
             </Link>
 
+
             <Link
-              href="https://instagram.com/wearing.abaya"
+              href={instagramUrl}
               target="_blank"
               className="group"
             >
+
               <div className="relative aspect-[16/11.5] justify-center overflow-hidden rounded-3xl">
 
                 <Image
@@ -141,6 +166,7 @@ export default function InstagramGallery() {
                   "
                 />
 
+
                 <div
                   className="
                     absolute
@@ -153,18 +179,20 @@ export default function InstagramGallery() {
                 />
 
               </div>
+
             </Link>
 
           </div>
 
         </div>
 
+
         {/* Bottom CTA */}
 
         <div className="mt-16 text-center">
 
           <Link
-            href="https://instagram.com/wearing.abaya"
+            href={instagramUrl}
             target="_blank"
             className="
               inline-flex

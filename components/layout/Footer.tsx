@@ -1,6 +1,24 @@
 import Link from "next/link";
 
-export default function Footer() {
+import { getStoreSettings } from "@/lib/store-settings";
+
+
+export default async function Footer() {
+
+  const settings =
+    await getStoreSettings();
+
+
+  const whatsappUrl =
+    settings.whatsapp
+      ? `https://wa.me/${settings.whatsapp.replace(/\D/g, "")}`
+      : "#";
+
+
+  const currentYear =
+    new Date().getFullYear();
+
+
   return (
     <footer className="border-t bg-[#FAF8F5] text-neutral-900">
 
@@ -11,17 +29,18 @@ export default function Footer() {
         <div>
 
           <h3 className="text-2xl font-light tracking-[0.18em]">
-            WEARABAY
+            {settings.storeName.toUpperCase()}
           </h3>
 
+
           <p className="mt-1 text-xs uppercase tracking-[0.60em]">
-            MODEST FASHION
+            {settings.tagline}
           </p>
 
 
           <p className="mt-8 leading-8 text-neutral-500">
-            Timeless modest fashion crafted with premium fabrics,
-            elegant silhouettes and refined craftsmanship.
+            {settings.footerText ||
+              "Timeless modest fashion crafted with premium fabrics, elegant silhouettes and refined craftsmanship."}
           </p>
 
         </div>
@@ -119,7 +138,7 @@ export default function Footer() {
 
             <li>
               <a
-                href="https://instagram.com/wearing.abaya"
+                href={settings.instagram || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -130,7 +149,7 @@ export default function Footer() {
 
             <li>
               <a
-                href="https://tiktok.com/@wearabay"
+                href={settings.tiktok || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -141,7 +160,7 @@ export default function Footer() {
 
             <li>
               <a
-                href="https://wa.me/"
+                href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -149,10 +168,18 @@ export default function Footer() {
               </a>
             </li>
 
+
+            <li>
+              <a
+                href={`mailto:${settings.storeEmail}`}
+              >
+                Email
+              </a>
+            </li>
+
           </ul>
 
         </div>
-
 
       </div>
 
@@ -161,12 +188,10 @@ export default function Footer() {
 
       <div className="border-t">
 
-
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-neutral-500 md:flex-row">
 
-
           <p>
-            © 2026 wearabay. All rights reserved.
+            © {currentYear} {settings.storeName}. All rights reserved.
           </p>
 
 
@@ -181,15 +206,11 @@ export default function Footer() {
               Terms
             </Link>
 
-
           </div>
-
 
         </div>
 
-
       </div>
-
 
     </footer>
   );

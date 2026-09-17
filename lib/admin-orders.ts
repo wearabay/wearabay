@@ -733,6 +733,21 @@ export async function updateAdminOrderStatus(
         orderId
       )
 
+      /* ---------------------------------------------------
+         CONCURRENCY PROTECTION
+
+         Only update if the status is still the same
+         status that was validated above.
+
+         If another admin changed the order first,
+         this update affects no row and Supabase returns
+         an error through .single().
+      --------------------------------------------------- */
+      .eq(
+        "status",
+        currentStatus
+      )
+
       .select(`
         *,
         order_items (*)
@@ -748,7 +763,7 @@ export async function updateAdminOrderStatus(
 
     throw new Error(
       error?.message ??
-        "Failed to update order status"
+        "Failed to update order status. The order status may have changed. Please refresh and try again."
     );
 
   }
@@ -833,6 +848,33 @@ export async function updateAdminPaymentStatus(
     currentOrder.payment_status as PaymentStatus;
 
 
+  /* -------------------------------------------------------
+     REFUNDS MUST USE THE DEDICATED REFUND WORKFLOW
+
+     The refund workflow uses the atomic
+     refund_order_payment RPC, which guarantees that:
+
+     - payment becomes refunded
+     - order becomes cancelled
+     - payment history is recorded
+     - order history is recorded
+
+     Therefore the generic payment status updater must
+     never process the "refunded" transition directly.
+  ------------------------------------------------------- */
+
+  if (
+    newPaymentStatus ===
+    "refunded"
+  ) {
+
+    throw new Error(
+      "Refunds must be processed through the refund workflow."
+    );
+
+  }
+
+
   if (
     !canUpdatePaymentStatus(
       currentPaymentStatus,
@@ -870,6 +912,20 @@ export async function updateAdminPaymentStatus(
         orderId
       )
 
+      /* ---------------------------------------------------
+         CONCURRENCY PROTECTION
+
+         Only update if the payment status is still the
+         status that was validated above.
+
+         If another admin changed it first, this update
+         affects no row and .single() returns an error.
+      --------------------------------------------------- */
+      .eq(
+        "payment_status",
+        currentPaymentStatus
+      )
+
       .select(`
         *,
         order_items (*)
@@ -885,7 +941,7 @@ export async function updateAdminPaymentStatus(
 
     throw new Error(
       error?.message ??
-        "Failed to update payment status"
+        "Failed to update payment status. The payment status may have changed. Please refresh and try again."
     );
 
   }
@@ -976,6 +1032,18 @@ export async function verifyAdminPaymentProof(
 
     throw new Error(
       "Payment proof has not been uploaded."
+    );
+
+  }
+
+
+  if (
+    currentOrder.status !==
+    "pending"
+  ) {
+
+    throw new Error(
+      "Only pending orders can have their payment verified."
     );
 
   }
@@ -1299,6 +1367,27 @@ export async function updateAdminShipping(
     throw new Error(
       fetchError?.message ??
         "Order not found"
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     SHIPPING CAN ONLY BE UPDATED WHILE PROCESSING
+
+     The UI locks shipping information for all other
+     order statuses. This server-side check prevents
+     bypassing that restriction by calling the action
+     directly.
+  ------------------------------------------------------- */
+
+  if (
+    currentOrder.status !==
+    "processing"
+  ) {
+
+    throw new Error(
+      "Shipping information can only be updated while the order is processing."
     );
 
   }

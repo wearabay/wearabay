@@ -13,185 +13,170 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
 import { getProducts } from "@/lib/products";
-
+import { getStoreSettings } from "@/lib/store-settings";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
-
 const baseUrl =
   process.env.NEXT_PUBLIC_SITE_URL ??
   "http://localhost:3000";
 
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getStoreSettings();
 
-export const metadata: Metadata = {
+  const storeName = settings.storeName;
+  const tagline = settings.tagline;
 
-  metadataBase: new URL(baseUrl),
+  const siteTitle =
+    `${storeName} | ${tagline}`;
 
-  title: {
-    default: "wearabay",
-    template: "%s | wearabay",
-  },
+  const description =
+    `${tagline}.`;
 
-  description:
-    "Premium modest fashion crafted for the modern Muslimah.",
+  const instagramHandle =
+    settings.instagram
+      ? settings.instagram
+          .replace(/\/+$/, "")
+          .split("/")
+          .pop()
+      : undefined;
 
-  keywords: [
-    "wearabay",
-    "abaya",
-    "modest fashion",
-    "muslim fashion",
-    "premium abaya",
-    "luxury abaya",
-    "muslimah clothing",
-    "indonesia abaya",
-  ],
+  const twitterCreator =
+    instagramHandle
+      ? `@${instagramHandle}`
+      : undefined;
 
-  authors: [
-    {
-      name: "wearabay",
+  return {
+    metadataBase: new URL(baseUrl),
+
+    title: {
+      default: storeName,
+      template: `%s | ${storeName}`,
     },
-  ],
 
-  creator: "wearabay",
+    description,
 
-  publisher: "wearabay",
+    keywords: [
+      storeName,
+      "abaya",
+      "modest fashion",
+      "muslim fashion",
+      "premium abaya",
+      "luxury abaya",
+      "muslimah clothing",
+      "indonesia abaya",
+    ],
 
-  openGraph: {
-
-    type: "website",
-
-    locale: "en_US",
-
-    siteName: "wearabay",
-
-    url: baseUrl,
-
-    title:
-      "wearabay | Premium Modest Fashion",
-
-    description:
-      "Premium modest fashion crafted for the modern Muslimah.",
-
-    images: [
+    authors: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt:
-          "wearabay - Premium Modest Fashion",
+        name: storeName,
       },
     ],
 
-  },
+    creator: storeName,
 
-  twitter: {
+    publisher: storeName,
 
-    card:
-      "summary_large_image",
+    openGraph: {
+      type: "website",
 
-    title:
-      "wearabay | Premium Modest Fashion",
+      locale: "en_US",
 
-    description:
-      "Premium modest fashion crafted for the modern Muslimah.",
+      siteName: storeName,
 
-    images: [
-      "/og-image.jpg",
-    ],
+      url: baseUrl,
 
-    creator:
-      "@wearabay",
+      title: siteTitle,
 
-  },
+      description,
 
-  robots: {
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: siteTitle,
+        },
+      ],
+    },
 
-    index: true,
+    twitter: {
+      card:
+        "summary_large_image",
 
-    follow: true,
+      title: siteTitle,
 
-  },
+      description,
 
-  icons: {
+      images: [
+        "/og-image.png",
+      ],
 
-    icon:
-      "/favicon.ico",
+      ...(twitterCreator
+        ? {
+            creator: twitterCreator,
+          }
+        : {}),
+    },
 
-    shortcut:
-      "/favicon.ico",
+    robots: {
+      index: true,
 
-    apple:
-      "/apple-touch-icon.png",
+      follow: true,
+    },
 
-  },
+    icons: {
+      icon:
+        "/favicon.ico",
 
-};
+      shortcut:
+        "/favicon.ico",
 
+      apple:
+        "/apple-touch-icon.png",
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-
   const products = await getProducts();
 
-
   return (
-
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-
       <body className="min-h-full flex flex-col">
-
-
         <CartProvider>
-
           <CheckoutProvider>
-
-
             <Toast />
-
 
             <Navbar
               products={products}
             />
 
-
             <main className="flex-1">
-
               {children}
-
             </main>
-
 
             <Footer />
 
-
             <BackToTop />
-
-
           </CheckoutProvider>
-
         </CartProvider>
-
-
       </body>
-
-
     </html>
-
   );
 }

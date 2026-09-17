@@ -2,43 +2,48 @@ type Props = {
   title: string;
   description: string;
   image: string;
-  author: string;
   publishedAt: string;
   url: string;
+  storeName: string;
 };
 
 export default function ArticleJsonLd({
   title,
   description,
   image,
-  author,
   publishedAt,
   url,
+  storeName,
 }: Props) {
+
   const jsonLd = {
     "@context": "https://schema.org",
+
     "@type": "Article",
 
     headline: title,
 
     description,
 
-    image: [image],
+    image: [
+      image,
+    ],
 
     author: {
-      "@type": "Person",
-      name: author,
+      "@type": "Organization",
+      name: storeName,
     },
 
     publisher: {
       "@type": "Organization",
-      name: "wearabay",
+      name: storeName,
     },
 
     datePublished: publishedAt,
 
     mainEntityOfPage: url,
   };
+
 
   return (
     <script

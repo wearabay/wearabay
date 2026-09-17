@@ -1,4 +1,3 @@
-
 import Hero from "../components/home/Hero";
 import FeaturedCollections from "../components/home/FeaturedCollections";
 import FeaturedProducts from "../components/home/FeaturedProducts";
@@ -7,20 +6,28 @@ import BrandValues from "../components/home/BrandValues";
 import InstagramGallery from "../components/home/InstagramGallery";
 import Newsletter from "../components/home/Newsletter";
 
+import { getProducts } from "@/lib/products";
 
-export default function Home() {
+export default async function Home() {
+  const products = await getProducts();
+
   return (
-<>
-  
-  <Hero />
-  <FeaturedCollections />
-  <FeaturedProducts />
-  <JournalSection />
-  <BrandValues />
-  <InstagramGallery />
-  <Newsletter />
-  
-</>
+    <>
+      <Hero />
 
+      <FeaturedCollections />
+
+      <FeaturedProducts
+        products={products}
+      />
+
+      <JournalSection />
+
+      <BrandValues />
+
+      <InstagramGallery />
+
+      <Newsletter />
+    </>
   );
 }
