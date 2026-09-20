@@ -38,7 +38,9 @@ export default function SearchDrawer({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+      }
     };
 
     window.addEventListener("keydown", handler);
@@ -52,9 +54,11 @@ export default function SearchDrawer({
 
     setRecent(getRecentSearches());
 
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       inputRef.current?.focus();
     }, 150);
+
+    return () => clearTimeout(timeout);
   }, [open]);
 
   const results = useMemo(() => {
@@ -125,32 +129,28 @@ export default function SearchDrawer({
       />
 
       <aside
-        className={`fixed inset-x-0 top-0 z-50 max-h-[55dvh] overflow-y-auto rounded-b-3x1 bg-white shadow-2x1 transition-all duration-500 ease-out ${
+        className={`fixed inset-x-0 top-0 z-50 max-h-[55dvh] overflow-y-auto rounded-b-3xl bg-white shadow-2xl transition-all duration-500 ease-out ${
           open
             ? "translate-y-0"
             : "-translate-y-full"
         }`}
       >
         <div className="mx-auto max-w-5xl px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-8 md:px-8 md:py-10">
-
           <div className="flex items-center justify-between">
-
             <h2 className="text-2xl font-light text-black">
               Search
             </h2>
 
             <button
               onClick={onClose}
-              className="rounded-full p-2 transition hover:bg-stone-100 text-neutral-400"
+              className="rounded-full p-2 text-neutral-400 transition hover:bg-stone-100"
               aria-label="Close search"
             >
               <X size={22} />
             </button>
-
           </div>
 
           <div className="mt-8 flex items-center gap-4 border-b pb-4">
-
             <Search size={20} />
 
             <input
@@ -160,21 +160,15 @@ export default function SearchDrawer({
                 setQuery(e.target.value)
               }
               placeholder="Search for abaya..."
-              className="w-full bg-transparent text-lg text-black placeholder:text-neutral-400 outline-none"
+              className="w-full bg-transparent text-lg text-black outline-none placeholder:text-neutral-400"
             />
-
           </div>
 
           {!query ? (
-
             <div className="mt-8">
-
               {recent.length > 0 && (
-
                 <div className="mt-10">
-
                   <div className="mb-4 flex items-center justify-between">
-
                     <h3 className="text-xs uppercase tracking-[0.2em] text-neutral-700">
                       Recent Searches
                     </h3>
@@ -190,61 +184,44 @@ export default function SearchDrawer({
                         Clear
                       </button>
                     )}
-
                   </div>
 
                   <div className="flex flex-wrap gap-3">
-
                     {recent.map((item) => (
                       <button
                         key={item}
                         onClick={() => setQuery(item)}
-                        className="rounded-full bg-stone-200 px-5 py-2 text-sm transition hover:bg-black hover:text-white text-neutral-500"
+                        className="rounded-full bg-stone-200 px-5 py-2 text-sm text-neutral-500 transition hover:bg-black hover:text-white"
                       >
                         {item}
                       </button>
                     ))}
-
                   </div>
-
                 </div>
-
               )}
 
               <div className="mt-5">
-
                 <p className="mb-4 text-xs uppercase tracking-[0.2em] text-neutral-700">
                   Popular Searches
                 </p>
 
                 <div className="flex flex-wrap gap-2 md:gap-3">
-
                   {popular.map((item) => (
-
                     <button
                       key={item}
                       onClick={() => setQuery(item)}
-                      className="rounded-full border border-stone-300 px-5 py-2.5 text-sm transition hover:border-black hover:bg-black hover:text-white text-neutral-500"
+                      className="rounded-full border border-stone-300 px-5 py-2.5 text-sm text-neutral-500 transition hover:border-black hover:bg-black hover:text-white"
                     >
                       {item}
                     </button>
-
                   ))}
-
                 </div>
-
               </div>
-
             </div>
-
           ) : (
-
             <div className="mt-8 animate-in fade-in duration-300">
-
               {results.length === 0 ? (
-
                 <div className="py-14 text-center">
-
                   <Search
                     size={42}
                     className="mx-auto text-neutral-300"
@@ -257,22 +234,16 @@ export default function SearchDrawer({
                   <p className="mt-2 text-neutral-500">
                     Try searching with another keyword.
                   </p>
-
                 </div>
-
               ) : (
-
                 <>
-
                   <p className="mb-6 text-xs uppercase tracking-[0.18em] text-neutral-500">
                     {results.length} Result
                     {results.length > 1 ? "s" : ""}
                   </p>
 
                   <div className="space-y-5">
-
                     {results.map((product) => (
-
                       <Link
                         key={product.id}
                         href={`/shop/${product.slug}`}
@@ -282,21 +253,29 @@ export default function SearchDrawer({
                         }}
                         className="flex items-center gap-4 rounded-lg p-3 transition hover:bg-stone-50"
                       >
-
-                        <div className="relative h-24 w-18 overflow-hidden rounded-md bg-stone-100 md:h-28 md:w-20">
-
-                          <Image
-                            src={product.image}
-                            alt={product.name}
-                            fill
-                            sizes="80px"
-                            className="object-cover"
-                          />
-
+                        <div className="relative h-24 w-18 shrink-0 overflow-hidden rounded-md bg-stone-100 md:h-28 md:w-20">
+                          {product.image ? (
+                            <Image
+                              src={product.image}
+                              alt={product.name}
+                              fill
+                              sizes="80px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="flex h-full w-full items-center justify-center"
+                              aria-hidden="true"
+                            >
+                              <Search
+                                size={20}
+                                className="text-neutral-300"
+                              />
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex-1">
-
                           <h3 className="font-medium">
                             {product.name}
                           </h3>
@@ -314,23 +293,14 @@ export default function SearchDrawer({
                           <p className="mt-3 text-sm font-medium">
                             {formatPrice(product.price)}
                           </p>
-
                         </div>
-
                       </Link>
-
                     ))}
-
                   </div>
-
                 </>
-
               )}
-
             </div>
-
           )}
-
         </div>
       </aside>
     </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+
 import CategoryFilter from "./CategoryFilter";
 import ColorFilter from "./ColorFilter";
 import { useShop } from "../context/ShopContext";
@@ -16,7 +17,8 @@ export default function FilterDrawer({
   open,
   onClose,
 }: FilterDrawerProps) {
-    const { clearFilters } = useShop();
+  const { clearFilters } = useShop();
+
   return (
     <>
       {/* Overlay */}
@@ -24,8 +26,19 @@ export default function FilterDrawer({
       <div
         onClick={onClose}
         className={`
-          fixed inset-0 left-0 right-0 top-20 bottom-0 z-40 bg-black/40 transition-all duration-300
-          ${open ? "opacity-100 visible" : "opacity-0 invisible"}
+          fixed
+          inset-x-0
+          top-20
+          bottom-0
+          z-40
+          bg-black/40
+          transition-all
+          duration-300
+          ${
+            open
+              ? "visible opacity-100"
+              : "invisible opacity-0"
+          }
         `}
       />
 
@@ -33,108 +46,98 @@ export default function FilterDrawer({
 
       <aside
         className={`
-          fixed left-0 top-20 bottom-0 z-50
-          h-screen
+          fixed
+          left-0
+          top-20
+          bottom-0
+          z-50
+          flex
           w-full
           max-w-sm
+          flex-col
+          overflow-hidden
           bg-white
           shadow-2xl
           transition-transform
           duration-300
-          flex
-          flex-col
-          ${open ? "translate-x-0" : "-translate-x-full"}
+          ${
+            open
+              ? "translate-x-0"
+              : "-translate-x-full"
+          }
         `}
+        aria-hidden={!open}
       >
         {/* Header */}
 
-        <div className="flex items-center justify-between border-b px-6 py-5">
-
+        <div className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-6 py-5">
           <h2 className="text-lg font-medium uppercase tracking-[0.22em]">
             Filters
           </h2>
 
           <button
+            type="button"
             onClick={onClose}
             className="rounded-full p-2 transition hover:bg-neutral-100"
+            aria-label="Close filters"
           >
             <X size={20} />
           </button>
-
         </div>
 
-        {/* Content */}
+        {/* Scrollable Content */}
 
-        <div className="absolute
-    top-[81px]
-    bottom-[96px]
-    left-0
-    right-0
-    overflow-y-auto
-    px-6
-    py-6
-    pb-10
-  ">
-            <div className="space-y-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 pb-10">
+          <div className="space-y-6">
+            {/* Category */}
 
-          {/* Category */}
+            <section className="border-b border-neutral-300 pb-4">
+              <h3 className="mb-5 text-xs uppercase tracking-[0.25em] text-neutral-500">
+                Category
+              </h3>
 
-          <section className="border-b border-neutral-300 pb-4">
+              <CategoryFilter />
+            </section>
 
-            <h3 className="mb-5 text-xs uppercase tracking-[0.25em] text-neutral-500">
-              Category
-            </h3>
+            {/* Color */}
 
-            <CategoryFilter />
+            <section className="border-b border-neutral-300 pb-4">
+              <h3 className="mb-5 text-xs uppercase tracking-[0.25em] text-neutral-500">
+                Color
+              </h3>
 
-          </section>
+              <ColorFilter />
+            </section>
 
-          {/* Color */}
+            {/* Size */}
 
-          <section className="border-b border-neutral-300 pb-4">
+            <section className="border-b border-neutral-300 pb-4">
+              <h3 className="mb-5 text-xs uppercase tracking-[0.25em] text-neutral-500">
+                Size
+              </h3>
 
-            <h3 className="mb-5 text-xs uppercase tracking-[0.25em] text-neutral-500">
-              Color
-            </h3>
+              <SizeFilter />
+            </section>
 
-            <ColorFilter />
+            {/* Price */}
 
-          </section>
+            <section>
+              <h3 className="mb-5 text-xs uppercase tracking-[0.25em] text-neutral-500">
+                Price
+              </h3>
 
-          {/* Size */}
-
-          <section className="border-b border-neutral-300 pb-4">
-
-            <h3 className="mb-5 text-xs uppercase tracking-[0.25em] text-neutral-500">
-              Size
-            </h3>
-
-            <SizeFilter />
-
-          </section>
-
-          {/* Price */}
-
-          <section>
-
-            <h3 className="mb-5 text-xs uppercase tracking-[0.25em] text-neutral-500">
-              Price
-            </h3>
-
-            <PriceFilter />
-
-          </section>
-
+              <PriceFilter />
+            </section>
+          </div>
         </div>
 
         {/* Footer */}
 
-        <div className="mt-10 border-t border-neutral-300 pt-4">
-
-          <div className="flex py-5 gap-3">
-
+        <div className="shrink-0 border-t border-neutral-300 px-6 py-4">
+          <div className="flex gap-3">
             <button
-            onClick={clearFilters}
+              type="button"
+              onClick={clearFilters}
               className="
                 flex-1
                 rounded-full
@@ -152,6 +155,7 @@ export default function FilterDrawer({
             </button>
 
             <button
+              type="button"
               onClick={onClose}
               className="
                 flex-1
@@ -168,11 +172,8 @@ export default function FilterDrawer({
             >
               Done
             </button>
-
           </div>
-</div>
         </div>
-
       </aside>
     </>
   );
