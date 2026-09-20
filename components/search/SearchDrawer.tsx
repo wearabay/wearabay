@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Search, X } from "lucide-react";
@@ -26,88 +31,142 @@ export default function SearchDrawer({
   onClose,
   products,
 }: SearchDrawerProps) {
-  const [query, setQuery] = useState("");
-  const [recent, setRecent] = useState<string[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [query, setQuery] =
+    useState("");
+
+  const [recent, setRecent] =
+    useState<string[]>([]);
+
+  const inputRef =
+    useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) {
-      setQuery("");
+      const timeout =
+        window.setTimeout(() => {
+          setQuery("");
+        }, 0);
+
+      return () => {
+        window.clearTimeout(timeout);
+      };
     }
   }, [open]);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const handler = (
+      e: KeyboardEvent,
+    ) => {
       if (e.key === "Escape") {
         onClose();
       }
     };
 
-    window.addEventListener("keydown", handler);
+    window.addEventListener(
+      "keydown",
+      handler,
+    );
 
     return () =>
-      window.removeEventListener("keydown", handler);
+      window.removeEventListener(
+        "keydown",
+        handler,
+      );
   }, [onClose]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
 
-    setRecent(getRecentSearches());
+    const recentSearches =
+      getRecentSearches();
 
-    const timeout = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 150);
+    const stateTimeout =
+      window.setTimeout(() => {
+        setRecent(recentSearches);
+      }, 0);
 
-    return () => clearTimeout(timeout);
+    const focusTimeout =
+      window.setTimeout(() => {
+        inputRef.current?.focus();
+      }, 150);
+
+    return () => {
+      window.clearTimeout(
+        stateTimeout,
+      );
+      window.clearTimeout(
+        focusTimeout,
+      );
+    };
   }, [open]);
 
   const results = useMemo(() => {
-    if (!query.trim()) return [];
+    if (!query.trim()) {
+      return [];
+    }
 
-    const q = query.toLowerCase();
+    const q =
+      query.toLowerCase();
 
-    return products.filter((product) => {
-      const matchName =
-        product.name.toLowerCase().includes(q);
-
-      const matchCategory =
-        product.category.toLowerCase().includes(q);
-
-      const matchBadge =
-        product.badge?.toLowerCase().includes(q);
-
-      const matchColor =
-        product.colors?.some((color) =>
-          color.toLowerCase().includes(q)
-        );
-
-      const matchFeature =
-        product.features?.some((feature) =>
-          feature.toLowerCase().includes(q)
-        ) ?? false;
-
-      const matchDescription =
-        product.description
-          .toLowerCase()
-          .includes(q);
-
-      const matchSpecification =
-        product.specifications?.some((item) =>
-          `${item.label} ${item.value}`
+    return products.filter(
+      (product) => {
+        const matchName =
+          product.name
             .toLowerCase()
-            .includes(q)
-        ) ?? false;
+            .includes(q);
 
-      return (
-        matchName ||
-        matchCategory ||
-        matchBadge ||
-        matchColor ||
-        matchFeature ||
-        matchDescription ||
-        matchSpecification
-      );
-    });
+        const matchCategory =
+          product.category
+            .toLowerCase()
+            .includes(q);
+
+        const matchBadge =
+          product.badge
+            ?.toLowerCase()
+            .includes(q);
+
+        const matchColor =
+          product.colors?.some(
+            (color) =>
+              color
+                .toLowerCase()
+                .includes(q),
+          );
+
+        const matchFeature =
+          product.features?.some(
+            (feature) =>
+              feature
+                .toLowerCase()
+                .includes(q),
+          ) ?? false;
+
+        const matchDescription =
+          product.description
+            .toLowerCase()
+            .includes(q);
+
+        const matchSpecification =
+          product.specifications?.some(
+            (item) =>
+              `${item.label} ${item.value}`
+                .toLowerCase()
+                .includes(q),
+          ) ?? false;
+
+        return (
+          matchName ||
+          matchCategory ||
+          matchBadge ||
+          matchColor ||
+          matchFeature ||
+          matchDescription ||
+          matchSpecification
+        );
+      },
+    );
   }, [query, products]);
 
   const popular = [
@@ -157,7 +216,9 @@ export default function SearchDrawer({
               ref={inputRef}
               value={query}
               onChange={(e) =>
-                setQuery(e.target.value)
+                setQuery(
+                  e.target.value,
+                )
               }
               placeholder="Search for abaya..."
               className="w-full bg-transparent text-lg text-black outline-none placeholder:text-neutral-400"
@@ -187,15 +248,19 @@ export default function SearchDrawer({
                   </div>
 
                   <div className="flex flex-wrap gap-3">
-                    {recent.map((item) => (
-                      <button
-                        key={item}
-                        onClick={() => setQuery(item)}
-                        className="rounded-full bg-stone-200 px-5 py-2 text-sm text-neutral-500 transition hover:bg-black hover:text-white"
-                      >
-                        {item}
-                      </button>
-                    ))}
+                    {recent.map(
+                      (item) => (
+                        <button
+                          key={item}
+                          onClick={() =>
+                            setQuery(item)
+                          }
+                          className="rounded-full bg-stone-200 px-5 py-2 text-sm text-neutral-500 transition hover:bg-black hover:text-white"
+                        >
+                          {item}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
               )}
@@ -206,15 +271,19 @@ export default function SearchDrawer({
                 </p>
 
                 <div className="flex flex-wrap gap-2 md:gap-3">
-                  {popular.map((item) => (
-                    <button
-                      key={item}
-                      onClick={() => setQuery(item)}
-                      className="rounded-full border border-stone-300 px-5 py-2.5 text-sm text-neutral-500 transition hover:border-black hover:bg-black hover:text-white"
-                    >
-                      {item}
-                    </button>
-                  ))}
+                  {popular.map(
+                    (item) => (
+                      <button
+                        key={item}
+                        onClick={() =>
+                          setQuery(item)
+                        }
+                        className="rounded-full border border-stone-300 px-5 py-2.5 text-sm text-neutral-500 transition hover:border-black hover:bg-black hover:text-white"
+                      >
+                        {item}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
             </div>
@@ -232,70 +301,89 @@ export default function SearchDrawer({
                   </h3>
 
                   <p className="mt-2 text-neutral-500">
-                    Try searching with another keyword.
+                    Try searching with another
+                    keyword.
                   </p>
                 </div>
               ) : (
                 <>
                   <p className="mb-6 text-xs uppercase tracking-[0.18em] text-neutral-500">
                     {results.length} Result
-                    {results.length > 1 ? "s" : ""}
+                    {results.length > 1
+                      ? "s"
+                      : ""}
                   </p>
 
                   <div className="space-y-5">
-                    {results.map((product) => (
-                      <Link
-                        key={product.id}
-                        href={`/shop/${product.slug}`}
-                        onClick={() => {
-                          saveRecentSearch(query);
-                          onClose();
-                        }}
-                        className="flex items-center gap-4 rounded-lg p-3 transition hover:bg-stone-50"
-                      >
-                        <div className="relative h-24 w-18 shrink-0 overflow-hidden rounded-md bg-stone-100 md:h-28 md:w-20">
-                          {product.image ? (
-                            <Image
-                              src={product.image}
-                              alt={product.name}
-                              fill
-                              sizes="80px"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div
-                              className="flex h-full w-full items-center justify-center"
-                              aria-hidden="true"
-                            >
-                              <Search
-                                size={20}
-                                className="text-neutral-300"
+                    {results.map(
+                      (product) => (
+                        <Link
+                          key={product.id}
+                          href={`/shop/${product.slug}`}
+                          onClick={() => {
+                            saveRecentSearch(
+                              query,
+                            );
+                            onClose();
+                          }}
+                          className="flex items-center gap-4 rounded-lg p-3 transition hover:bg-stone-50"
+                        >
+                          <div className="relative h-24 w-18 shrink-0 overflow-hidden rounded-md bg-stone-100 md:h-28 md:w-20">
+                            {product.image ? (
+                              <Image
+                                src={
+                                  product.image
+                                }
+                                alt={
+                                  product.name
+                                }
+                                fill
+                                sizes="80px"
+                                className="object-cover"
                               />
-                            </div>
-                          )}
-                        </div>
+                            ) : (
+                              <div
+                                className="flex h-full w-full items-center justify-center"
+                                aria-hidden="true"
+                              >
+                                <Search
+                                  size={20}
+                                  className="text-neutral-300"
+                                />
+                              </div>
+                            )}
+                          </div>
 
-                        <div className="flex-1">
-                          <h3 className="font-medium">
-                            {product.name}
-                          </h3>
+                          <div className="flex-1">
+                            <h3 className="font-medium">
+                              {
+                                product.name
+                              }
+                            </h3>
 
-                          <p className="mt-1 text-xs uppercase tracking-[0.18em] text-neutral-400">
-                            {product.category}
-                          </p>
+                            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-neutral-400">
+                              {
+                                product.category
+                              }
+                            </p>
 
-                          {product.badge && (
-                            <span className="mt-2 inline-flex rounded-full bg-stone-900 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white">
-                              {product.badge}
-                            </span>
-                          )}
+                            {product.badge && (
+                              <span className="mt-2 inline-flex rounded-full bg-stone-900 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white">
+                                {
+                                  product.badge
+                                }
+                              </span>
+                            )}
 
-                          <p className="mt-3 text-sm font-medium">
-                            {formatPrice(product.price)}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
+                            <p className="mt-3 text-sm font-medium">
+                              {formatPrice(
+                                product.price,
+                              )}
+                            </p>
+                          </div>
+                        </Link>
+                      ),
+                    )}
                   </div>
                 </>
               )}

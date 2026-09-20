@@ -606,17 +606,25 @@ export default async function AdminOrderDetailPage({
                       p-2
                     "
                   >
-                    <img
-                      src={paymentProofUrl}
-                      alt="Customer payment proof"
+                    <div
                       className="
-                        block
-                        max-h-[220px]
-                        max-w-[260px]
-                        w-auto
-                        object-contain
+                        w-fit
+                        max-w-full
                       "
-                    />
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={paymentProofUrl}
+                        alt="Customer payment proof"
+                        className="
+                          block
+                          max-h-[220px]
+                          max-w-[260px]
+                          w-auto
+                          object-contain
+                        "
+                      />
+                    </div>
                   </div>
 
                   {/* ===================================================
@@ -657,8 +665,6 @@ export default async function AdminOrderDetailPage({
                         sm:flex-row
                       "
                     >
-                      {/* VERIFY */}
-
                       <form
                         action={
                           verifyAdminPaymentProofAction
@@ -672,8 +678,6 @@ export default async function AdminOrderDetailPage({
 
                         <VerifyPaymentButton />
                       </form>
-
-                      {/* REJECT */}
 
                       <form
                         action={
@@ -730,17 +734,9 @@ export default async function AdminOrderDetailPage({
             </section>
           )}
 
-          {/* =================================================
-              ORDER HISTORY
-          ================================================= */}
-
           <OrderHistory
             history={history}
           />
-
-          {/* =================================================
-              REFUND PAYMENT
-          ================================================= */}
 
           {order.paymentStatus === "paid" &&
             order.status === "processing" && (
@@ -791,10 +787,6 @@ export default async function AdminOrderDetailPage({
                 </form>
               </section>
             )}
-
-          {/* =================================================
-              MANAGE ORDER
-          ================================================= */}
 
           <OrderStatusForm
             orderId={order.id}

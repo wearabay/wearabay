@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import Button from "@/components/ui/Button";
 
@@ -62,7 +65,14 @@ export default function AddressBook() {
   }
 
   useEffect(() => {
-    refreshAddresses();
+    const timeoutId =
+      window.setTimeout(() => {
+        void refreshAddresses();
+      }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleAdd = () => {
@@ -196,13 +206,11 @@ export default function AddressBook() {
 
       </div>
 
-
       {error && (
         <div className="mb-6 rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
           {error}
         </div>
       )}
-
 
       {loading ? (
 
@@ -245,7 +253,6 @@ export default function AddressBook() {
         </div>
 
       )}
-
 
       <AddressForm
         open={open}

@@ -1,18 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { Trash2, ArrowLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  Trash2,
+} from "lucide-react";
+import {
+  useEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
+
 import type { Product } from "@/types/product";
+
 import ProductCard from "@/components/product/ProductCard";
+import EmptyWishlist from "@/components/wishlist/EmptyWishlist";
 
 import {
-  getWishlist,
   clearWishlist,
+  getWishlist,
   loadWishlist,
 } from "@/lib/wishlist";
-
-import EmptyWishlist from "@/components/wishlist/EmptyWishlist";
 
 import { useAuthUser } from "@/hooks/useAuthUser";
 
@@ -32,6 +40,10 @@ export default function WishlistPage({
   } = useAuthUser();
 
 
+  const userId =
+    user?.id;
+
+
   const [
     wishlist,
     setWishlist,
@@ -45,29 +57,30 @@ export default function WishlistPage({
 
 
   const [
-    mounted,
-    setMounted,
-  ] = useState(false);
-
-
-  const [
     showClearModal,
     setShowClearModal,
   ] = useState(false);
 
 
   /*
-   * Prevent hydration mismatch.
+   * Hydration state.
    *
-   * Server and first client render
-   * both use the same empty shell.
+   * useSyncExternalStore gives us:
+   * - false during the server render
+   * - false during the first client render
+   * - true after hydration
+   *
+   * This avoids a synchronous setState inside
+   * useEffect and keeps the server/client shell
+   * identical during hydration.
    */
 
-  useEffect(() => {
-
-    setMounted(true);
-
-  }, []);
+  const mounted =
+    useSyncExternalStore(
+      () => () => {},
+      () => true,
+      () => false
+    );
 
 
   /*
@@ -100,7 +113,7 @@ export default function WishlistPage({
          * Guest
          */
 
-        if (!user) {
+        if (!userId) {
 
           const localWishlist =
             getWishlist();
@@ -127,7 +140,7 @@ export default function WishlistPage({
 
         const remoteWishlist =
           await loadWishlist(
-            user.id
+            userId
           );
 
 
@@ -184,7 +197,7 @@ export default function WishlistPage({
   }, [
     mounted,
     authLoading,
-    user?.id,
+    userId,
   ]);
 
 
@@ -203,7 +216,7 @@ export default function WishlistPage({
 
       setWishlist(
         getWishlist(
-          user?.id
+          userId
         )
       );
 
@@ -227,7 +240,7 @@ export default function WishlistPage({
 
   }, [
     mounted,
-    user?.id,
+    userId,
   ]);
 
 
@@ -262,7 +275,7 @@ export default function WishlistPage({
       try {
 
         await clearWishlist(
-          user?.id
+          userId
         );
 
 

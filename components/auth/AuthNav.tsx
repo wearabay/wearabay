@@ -3,99 +3,54 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { UserRound } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
 
+export default function AuthNav() {
+  const [user, setUser] = useState<User | null>(null);
 
-export default function AuthNav(){
-
-  const [user,setUser] = useState<any>(null);
-
-
-
-  useEffect(()=>{
-
+  useEffect(() => {
     const supabase = createClient();
 
-
-    async function loadUser(){
-
+    async function loadUser() {
       const {
-        data:{
-          session
-        }
+        data: { session },
       } = await supabase.auth.getSession();
 
-
-      setUser(
-        session?.user ?? null
-      );
-
+      setUser(session?.user ?? null);
     }
 
-
-    loadUser();
-
-
+    void loadUser();
 
     const {
-      data:{
-        subscription
-      }
-    } =
-    supabase.auth.onAuthStateChange(
-      (event, session)=>{
-
-  if(
-    event === "USER_UPDATED" ||
-    event === "SIGNED_IN"
-  ){
-
-    setUser(
-      session?.user ?? null
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (
+          event === "USER_UPDATED" ||
+          event === "SIGNED_IN"
+        ) {
+          setUser(session?.user ?? null);
+        }
+      },
     );
 
-  }
-
-}
-    );
-
-
-    return ()=>{
-
+    return () => {
       subscription.unsubscribe();
-
     };
-
-
-  },[]);
-
-
-
+  }, []);
 
   const fullName =
     user?.user_metadata?.full_name ??
     user?.email?.split("@")[0] ??
     "";
 
-
-
-  const firstName =
-    fullName.split(" ")[0];
-
-
-
+  const firstName = fullName.split(" ")[0];
 
   return (
-
     <Link
-
-      href={
-        user
-        ? "/account"
-        : "/login"
-      }
-
+      href={user ? "/account" : "/login"}
       className="
         flex
         items-center
@@ -103,67 +58,30 @@ export default function AuthNav(){
         transition-opacity
         hover:opacity-60
       "
-
     >
-
-
-      {
-        user
-
-        ?
-
-        (
-
-          <>
-
-            <span
-
-              className="
-                hidden
-                md:block
-                text-sm
-              "
-
-            >
-
-              Hi, {firstName}
-
-            </span>
-
-
-
-            <UserRound
-
-              size={22}
-
-              strokeWidth={1.8}
-
-            />
-
-
-          </>
-
-        )
-
-        :
-
-        (
+      {user ? (
+        <>
+          <span
+            className="
+              hidden
+              md:block
+              text-sm
+            "
+          >
+            Hi, {firstName}
+          </span>
 
           <UserRound
-
             size={22}
-
             strokeWidth={1.8}
-
           />
-
-        )
-
-      }
-
-
+        </>
+      ) : (
+        <UserRound
+          size={22}
+          strokeWidth={1.8}
+        />
+      )}
     </Link>
-
   );
-
 }

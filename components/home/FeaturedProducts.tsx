@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import ProductCard from "../product/ProductCard";
 import QuickViewModal from "../product/QuickViewModal";
 
@@ -13,9 +15,9 @@ export default function FeaturedProducts({
   return (
     <>
       <section className="bg-white py-16 lg:py-32">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto mb-20 max-w-3xl text-center">
-            <p className="uppercase tracking-[0.35em] text-[11px] text-gray-500">
+            <p className="text-[11px] uppercase tracking-[0.35em] text-gray-500">
               Featured Collection
             </p>
 
@@ -23,23 +25,23 @@ export default function FeaturedProducts({
               Featured Products
             </h2>
 
-            <p
-              className="mx-auto mt-4 max-w-xl text-base leading-8 text-neutral-500"
-            >
-              Carefully selected pieces designed for timeless elegance and effortless sophistication.
+            <p className="mx-auto mt-4 max-w-xl text-base leading-8 text-neutral-500">
+              Carefully selected pieces designed
+              for timeless elegance and effortless
+              sophistication.
             </p>
 
             <div className="mt-6">
-              <a
+              <Link
                 href="/shop"
                 className="inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.28em] text-neutral-900 transition hover:opacity-60"
               >
                 View All Collection →
-              </a>
+              </Link>
             </div>
           </div>
 
-          <div className="mt-14 grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-14 text-neutral-900">
+          <div className="mt-14 grid grid-cols-2 gap-x-8 gap-y-14 text-neutral-900 lg:grid-cols-4">
             {products.map((product) => (
               <ProductCard
                 key={product.id}

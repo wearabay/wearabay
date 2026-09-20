@@ -17,7 +17,6 @@ import { openCart } from "@/lib/cart-drawer";
 
 import type { Product } from "@/types/product";
 
-
 type NavbarClientProps = {
   transparent?: boolean;
   products: Product[];
@@ -27,7 +26,6 @@ type NavbarClientProps = {
   tiktok: string;
 };
 
-
 export default function NavbarClient({
   transparent = false,
   products,
@@ -36,66 +34,46 @@ export default function NavbarClient({
   instagram,
   tiktok,
 }: NavbarClientProps) {
+  const pathname = usePathname();
 
-  const pathname =
-    usePathname();
+  const [searchOpen, setSearchOpen] = useState(false);
 
-
-  const [searchOpen, setSearchOpen] =
-    useState(false);
-
-
-  const [scrolled, setScrolled] =
-    useState(false);
-
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-
     const handleScroll = () => {
-
-      setScrolled(
-        window.scrollY > 80
-      );
-
+      setScrolled(window.scrollY > 80);
     };
-
 
     handleScroll();
 
-
-    window.addEventListener(
-      "scroll",
-      handleScroll
-    );
-
+    window.addEventListener("scroll", handleScroll);
 
     return () => {
-
-      window.removeEventListener(
-        "scroll",
-        handleScroll
-      );
-
+      window.removeEventListener("scroll", handleScroll);
     };
-
   }, []);
-
 
   const isTransparentPage =
     pathname === "/" ||
     pathname === "/shop";
 
-
   const isAdminPage =
     pathname === "/admin" ||
     pathname.startsWith("/admin/");
-
 
   const darkNavbar =
     isTransparentPage && !isAdminPage
       ? scrolled
       : true;
 
+  const shouldStartTransparent =
+    transparent && isTransparentPage && !isAdminPage;
+
+  const effectiveDarkNavbar =
+    shouldStartTransparent
+      ? scrolled
+      : darkNavbar;
 
   return (
     <>
@@ -108,8 +86,9 @@ export default function NavbarClient({
           z-50
           transition-all
           duration-500
+
           ${
-            darkNavbar
+            effectiveDarkNavbar
               ? `
                 bg-white/90
                 backdrop-blur-md
@@ -125,7 +104,6 @@ export default function NavbarClient({
           }
         `}
       >
-
         <div
           className="
             mx-auto
@@ -138,13 +116,11 @@ export default function NavbarClient({
             sm:px-6
           "
         >
-
           <Logo
-            dark={darkNavbar}
+            dark={effectiveDarkNavbar}
             storeName={storeName}
             tagline={tagline}
           />
-
 
           {/* =================================================
               DESKTOP NAVIGATION
@@ -156,23 +132,16 @@ export default function NavbarClient({
               xl:block
             "
           >
-
             {isAdminPage ? (
-
               <AdminNavbarMenu
-                dark={darkNavbar}
+                dark={effectiveDarkNavbar}
               />
-
             ) : (
-
               <NavbarMenu
-                dark={darkNavbar}
+                dark={effectiveDarkNavbar}
               />
-
             )}
-
           </div>
-
 
           {/* =================================================
               ACTIONS
@@ -185,9 +154,8 @@ export default function NavbarClient({
               gap-5
             "
           >
-
             <NavbarIcons
-              dark={darkNavbar}
+              dark={effectiveDarkNavbar}
               onSearchClick={() =>
                 setSearchOpen(true)
               }
@@ -196,26 +164,19 @@ export default function NavbarClient({
               }
             />
 
-
             <AuthNav />
 
-
             <MobileMenu
-              dark={darkNavbar}
+              dark={effectiveDarkNavbar}
               storeName={storeName}
               instagram={instagram}
               tiktok={tiktok}
             />
-
           </div>
-
         </div>
-
       </header>
 
-
       <CartDrawer />
-
 
       <SearchDrawer
         open={searchOpen}
@@ -224,7 +185,6 @@ export default function NavbarClient({
           setSearchOpen(false)
         }
       />
-
     </>
   );
 }

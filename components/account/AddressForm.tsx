@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import ProvinceSelect from "@/components/address/ProvinceSelect";
 import CitySelect from "@/components/address/CitySelect";
 import AddressLabelSelect from "@/components/address/AddressLabelSelect";
+import DistrictSelect from "@/components/address/DistrictSelect";
 
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import DistrictSelect from "@/components/address/DistrictSelect";
 
 import type { Address } from "@/types/address";
 
@@ -17,8 +21,8 @@ type AddressFormProps = {
   initialData?: Address;
   onClose: () => void;
   onSave: (
-  address: Address
-) => void | Promise<void>;
+    address: Address
+  ) => void | Promise<void>;
 };
 
 const createEmptyAddress = (): Address => ({
@@ -52,13 +56,21 @@ export default function AddressForm({
   onSave,
 }: AddressFormProps) {
 
-  const modalRef = useRef<HTMLDivElement>(null);
+  const modalRef =
+    useRef<HTMLDivElement>(null);
 
-  const [form, setForm] =
-    useState<Address>(createEmptyAddress());
+  const [
+    form,
+    setForm,
+  ] = useState<Address>(
+    createEmptyAddress()
+  );
 
-  const [errors, setErrors] =
-    useState<Record<string, string>>({});
+  const [
+    errors,
+    setErrors,
+  ] = useState<Record<string, string>>({});
+
 
   // -----------------------------
   // Reset Form
@@ -68,25 +80,34 @@ export default function AddressForm({
 
     if (!open) return;
 
-    setForm(
-      initialData ?? createEmptyAddress()
-    );
+    const frameId =
+      window.requestAnimationFrame(() => {
 
-    setErrors({});
+        setForm(
+          initialData ??
+            createEmptyAddress()
+        );
 
-    requestAnimationFrame(() => {
+        setErrors({});
 
-      modalRef.current?.scrollTo({
-        top: 0,
-        behavior: "auto",
+        modalRef.current?.scrollTo({
+          top: 0,
+          behavior: "auto",
+        });
+
       });
 
-    });
+    return () => {
+      window.cancelAnimationFrame(
+        frameId
+      );
+    };
 
   }, [
     open,
     initialData,
   ]);
+
 
   // -----------------------------
   // Lock Body Scroll
@@ -96,13 +117,16 @@ export default function AddressForm({
 
     if (!open) return;
 
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow =
+      "hidden";
 
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow =
+        "";
     };
 
   }, [open]);
+
 
   // -----------------------------
   // ESC Key
@@ -116,7 +140,9 @@ export default function AddressForm({
       event: KeyboardEvent
     ) => {
 
-      if (event.key === "Escape") {
+      if (
+        event.key === "Escape"
+      ) {
         onClose();
       }
 
@@ -141,7 +167,9 @@ export default function AddressForm({
     onClose,
   ]);
 
+
   if (!open) return null;
+
 
   const updateField = <
     K extends keyof Address
@@ -181,17 +209,22 @@ export default function AddressForm({
 
   };
 
+
   const validate = () => {
 
     const nextErrors:
       Record<string, string> = {};
 
-    if (!form.firstName.trim()) {
+    if (
+      !form.firstName.trim()
+    ) {
       nextErrors.firstName =
         "First name is required";
     }
 
-    if (!form.lastName.trim()) {
+    if (
+      !form.lastName.trim()
+    ) {
       nextErrors.lastName =
         "Last name is required";
     }
@@ -201,7 +234,9 @@ export default function AddressForm({
         "Phone number is required";
     }
 
-    if (!form.province.trim()) {
+    if (
+      !form.province.trim()
+    ) {
       nextErrors.province =
         "Province is required";
     }
@@ -211,12 +246,16 @@ export default function AddressForm({
         "City is required";
     }
 
-    if (!form.district.trim()) {
+    if (
+      !form.district.trim()
+    ) {
       nextErrors.district =
         "District is required";
     }
 
-    if (!form.postalCode.trim()) {
+    if (
+      !form.postalCode.trim()
+    ) {
       nextErrors.postalCode =
         "Postal code is required";
     }
@@ -229,266 +268,340 @@ export default function AddressForm({
     setErrors(nextErrors);
 
     return (
-      Object.keys(nextErrors).length === 0
+      Object.keys(nextErrors).length ===
+      0
     );
 
   };
 
+
   const handleSave = async () => {
 
-  if (!validate()) return;
+    if (!validate()) return;
 
-  await onSave({
-    ...form,
-    id: form.id || crypto.randomUUID(),
-  });
+    await onSave({
+      ...form,
+      id:
+        form.id ||
+        crypto.randomUUID(),
+    });
 
-};
+  };
+
 
   return (
 
-<div
-  className="
-    fixed inset-0
-    z-[100]
-    bg-black/40
-    flex
-    items-center
-    justify-center
-    p-4
-  "
-  onClick={onClose}
->
-
-  <div
-    ref={modalRef}
-    className="
-      w-full
-      max-w-2xl
-      max-h-[90vh]
-      overflow-y-auto
-      rounded-3xl
-      bg-white
-      shadow-xl
-    "
-    onClick={(e) => e.stopPropagation()}
-  >
-
-    {/* Header */}
-
     <div
       className="
-        sticky
-        top-0
-        z-10
-        border-b
-        bg-white
-        px-6
-        py-5
+        fixed
+        inset-0
+        z-[100]
+        flex
+        items-center
+        justify-center
+        bg-black/40
+        p-4
       "
+      onClick={onClose}
     >
 
-      <h2 className="text-2xl font-semibold">
-        {initialData
-          ? "Edit Address"
-          : "Add Address"}
-      </h2>
-
-      <p className="mt-2 text-sm text-neutral-500">
-        Save your shipping address for a faster checkout.
-      </p>
-
-    </div>
-
-    {/* Body */}
-
-    <div className="space-y-5 p-6">
-
-      <AddressLabelSelect
-        value={form.label}
-        onChange={(value) =>
-          updateField("label", value)
-        }
-      />
-
-      <div className="grid gap-5 md:grid-cols-2">
-
-        <Input
-          id="firstName"
-          label="First Name"
-          value={form.firstName}
-          error={errors.firstName}
-          onChange={(e) =>
-            updateField(
-              "firstName",
-              e.target.value
-            )
-          }
-        />
-
-        <Input
-          id="lastName"
-          label="Last Name"
-          value={form.lastName}
-          error={errors.lastName}
-          onChange={(e) =>
-            updateField(
-              "lastName",
-              e.target.value
-            )
-          }
-        />
-
-      </div>
-
-      <Input
-        id="phone"
-        label="Phone Number"
-        value={form.phone}
-        error={errors.phone}
-        onChange={(e) =>
-          updateField(
-            "phone",
-            e.target.value
-          )
-        }
-      />
-
-      <Input
-        label="Country"
-        value="Indonesia"
-        disabled
-      />
-
       <div
+        ref={modalRef}
         className="
-          grid
-          gap-5
-          md:grid-cols-3
+          max-h-[90vh]
+          w-full
+          max-w-2xl
+          overflow-y-auto
+          rounded-3xl
+          bg-white
+          shadow-xl
         "
+        onClick={(event) =>
+          event.stopPropagation()
+        }
       >
 
-        <ProvinceSelect
-          value={form.province}
-          onChange={(value) =>
-            updateField(
-              "province",
-              value
-            )
-          }
-        />
+        {/* Header */}
 
-        <CitySelect
-          province={form.province}
-          value={form.city}
-          onChange={(value) =>
-            updateField(
-              "city",
-              value
-            )
-          }
-        />
+        <div
+          className="
+            sticky
+            top-0
+            z-10
+            border-b
+            bg-white
+            px-6
+            py-5
+          "
+        >
 
-        <DistrictSelect
-  province={form.province}
-  city={form.city}
-  value={form.district}
-  error={errors.district}
-  onChange={(value) =>
-    updateField(
-      "district",
-      value
-    )
-  }
-/>
+          <h2
+            className="
+              text-2xl
+              font-semibold
+            "
+          >
+            {initialData
+              ? "Edit Address"
+              : "Add Address"}
+          </h2>
+
+          <p
+            className="
+              mt-2
+              text-sm
+              text-neutral-500
+            "
+          >
+            Save your shipping address
+            for a faster checkout.
+          </p>
+
+        </div>
+
+
+        {/* Body */}
+
+        <div
+          className="
+            space-y-5
+            p-6
+          "
+        >
+
+          <AddressLabelSelect
+            value={form.label}
+            onChange={(value) =>
+              updateField(
+                "label",
+                value
+              )
+            }
+          />
+
+
+          <div
+            className="
+              grid
+              gap-5
+              md:grid-cols-2
+            "
+          >
+
+            <Input
+              id="firstName"
+              label="First Name"
+              value={
+                form.firstName
+              }
+              error={
+                errors.firstName
+              }
+              onChange={(event) =>
+                updateField(
+                  "firstName",
+                  event.target.value
+                )
+              }
+            />
+
+            <Input
+              id="lastName"
+              label="Last Name"
+              value={
+                form.lastName
+              }
+              error={
+                errors.lastName
+              }
+              onChange={(event) =>
+                updateField(
+                  "lastName",
+                  event.target.value
+                )
+              }
+            />
+
+          </div>
+
+
+          <Input
+            id="phone"
+            label="Phone Number"
+            value={form.phone}
+            error={errors.phone}
+            onChange={(event) =>
+              updateField(
+                "phone",
+                event.target.value
+              )
+            }
+          />
+
+
+          <Input
+            label="Country"
+            value="Indonesia"
+            disabled
+          />
+
+
+          <div
+            className="
+              grid
+              gap-5
+              md:grid-cols-3
+            "
+          >
+
+            <ProvinceSelect
+              value={
+                form.province
+              }
+              onChange={(value) =>
+                updateField(
+                  "province",
+                  value
+                )
+              }
+            />
+
+            <CitySelect
+              province={
+                form.province
+              }
+              value={
+                form.city
+              }
+              onChange={(value) =>
+                updateField(
+                  "city",
+                  value
+                )
+              }
+            />
+
+            <DistrictSelect
+              province={
+                form.province
+              }
+              city={
+                form.city
+              }
+              value={
+                form.district
+              }
+              error={
+                errors.district
+              }
+              onChange={(value) =>
+                updateField(
+                  "district",
+                  value
+                )
+              }
+            />
+
+          </div>
+
+
+          <Input
+            label="Postal Code"
+            value={
+              form.postalCode
+            }
+            error={
+              errors.postalCode
+            }
+            onChange={(event) =>
+              updateField(
+                "postalCode",
+                event.target.value
+              )
+            }
+          />
+
+
+          <Input
+            label="Street Address"
+            value={
+              form.street
+            }
+            error={
+              errors.street
+            }
+            onChange={(event) =>
+              updateField(
+                "street",
+                event.target.value
+              )
+            }
+          />
+
+
+          <Input
+            label="Apartment / Suite"
+            value={
+              form.apartment ?? ""
+            }
+            onChange={(event) =>
+              updateField(
+                "apartment",
+                event.target.value
+              )
+            }
+          />
+
+        </div>
+
+
+        {/* Footer */}
+
+        <div
+          className="
+            sticky
+            bottom-0
+            z-20
+            border-t
+            bg-white
+            px-6
+            py-5
+          "
+        >
+
+          <div
+            className="
+              flex
+              flex-col
+              gap-3
+            "
+          >
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+
+
+            <Button
+              className="w-full"
+              onClick={handleSave}
+            >
+              {initialData
+                ? "Update Address"
+                : "Save Address"}
+            </Button>
+
+          </div>
+
+        </div>
 
       </div>
 
-      <Input
-        label="Postal Code"
-        value={form.postalCode}
-        error={errors.postalCode}
-        onChange={(e) =>
-          updateField(
-            "postalCode",
-            e.target.value
-          )
-        }
-      />
-
-      <Input
-        label="Street Address"
-        value={form.street}
-        error={errors.street}
-        onChange={(e) =>
-          updateField(
-            "street",
-            e.target.value
-          )
-        }
-      />
-
-      <Input
-        label="Apartment / Suite"
-        value={form.apartment ?? ""}
-        onChange={(e) =>
-          updateField(
-            "apartment",
-            e.target.value
-          )
-        }
-      />
-
     </div>
-
-
-
-    {/* Footer */}
-
-    <div
-className="
-sticky
-bottom-0
-z-20
-border-t
-bg-white
-px-6
-py-5
-"
->
-
-      <div
-className="
-flex
-flex-col
-gap-3
-"
->
-
-        <Button
-variant="outline"
-className="w-full"
-onClick={onClose}
->
-Cancel
-</Button>
-
-<Button
-className="w-full"
-onClick={handleSave}
->
-{initialData
-? "Update Address"
-: "Save Address"}
-</Button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
 
   );
 

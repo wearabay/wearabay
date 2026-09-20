@@ -61,12 +61,26 @@ export default function WishlistButton({
     }
 
 
-    setLiked(
-      isWishlisted(
-        productId,
-        user?.id
-      )
-    );
+    const timeoutId =
+      window.setTimeout(() => {
+
+        setLiked(
+          isWishlisted(
+            productId,
+            user?.id
+          )
+        );
+
+      }, 0);
+
+
+    return () => {
+
+      window.clearTimeout(
+        timeoutId
+      );
+
+    };
 
   }, [
     productId,

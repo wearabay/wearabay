@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import Image from "next/image";
 
 import ProductImage from "./ProductImage";
 import ProductThumbnail from "./ProductThumbnail";
 import GalleryNavigation from "./GalleryNavigation";
 import ProductLightbox from "./ProductLightbox";
-import Image from "next/image";
 
 
 type ProductGalleryProps = {
@@ -52,55 +58,44 @@ export default function ProductGallery({
 
 
   /*
-   * Make sure the current index remains valid
-   * when the image collection changes.
+   * Keep the selected index valid without
+   * synchronously updating state from an effect.
+   *
+   * When the image collection becomes shorter,
+   * the displayed index falls back to 0.
    */
 
-  useEffect(() => {
-
-    if (
-      validImages.length === 0
-    ) {
-      setCurrentIndex(0);
-      setLightboxOpen(false);
-      return;
-    }
-
-    if (
-      currentIndex >= validImages.length
-    ) {
-      setCurrentIndex(0);
-    }
-
-  }, [
-    validImages.length,
-    currentIndex,
-  ]);
+  const safeCurrentIndex =
+    validImages.length === 0
+      ? 0
+      : currentIndex < validImages.length
+        ? currentIndex
+        : 0;
 
 
   const activeImage =
     validImages.length > 0
-      ? validImages[currentIndex]
+      ? validImages[safeCurrentIndex]
       : null;
 
 
   const nextIndex =
     validImages.length > 0
-      ? currentIndex === validImages.length - 1
+      ? safeCurrentIndex === validImages.length - 1
         ? 0
-        : currentIndex + 1
+        : safeCurrentIndex + 1
       : 0;
 
 
   const previousIndex =
     validImages.length > 0
-      ? currentIndex === 0
+      ? safeCurrentIndex === 0
         ? validImages.length - 1
-        : currentIndex - 1
+        : safeCurrentIndex - 1
       : 0;
 
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
 
     if (
       validImages.length <= 1
@@ -110,15 +105,19 @@ export default function ProductGallery({
 
     setCurrentIndex(
       (prev) =>
-        prev === 0
+        prev >= validImages.length
           ? validImages.length - 1
-          : prev - 1
+          : prev === 0
+            ? validImages.length - 1
+            : prev - 1
     );
 
-  };
+  }, [
+    validImages.length,
+  ]);
 
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
 
     if (
       validImages.length <= 1
@@ -128,12 +127,14 @@ export default function ProductGallery({
 
     setCurrentIndex(
       (prev) =>
-        prev === validImages.length - 1
+        prev >= validImages.length - 1
           ? 0
           : prev + 1
     );
 
-  };
+  }, [
+    validImages.length,
+  ]);
 
 
   // Keyboard Navigation
@@ -177,7 +178,8 @@ export default function ProductGallery({
 
   }, [
     lightboxOpen,
-    validImages.length,
+    handleNext,
+    handlePrevious,
   ]);
 
 
@@ -385,6 +387,7 @@ export default function ProductGallery({
 
                 <button
                   key={index}
+                  type="button"
                   onClick={() =>
                     setCurrentIndex(index)
                   }
@@ -397,7 +400,7 @@ export default function ProductGallery({
                     transition-all
                     duration-300
                     ${
-                      index === currentIndex
+                      index === safeCurrentIndex
                         ? "w-8 bg-black"
                         : "w-2 bg-neutral-300"
                     }

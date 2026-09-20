@@ -5,13 +5,13 @@ import { X, Menu } from "lucide-react";
 import {
   useEffect,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 
 import { navigation } from "@/data/navigation";
 import { adminNavigation } from "./AdminNavbarMenu";
-
 
 type Props = {
   dark?: boolean;
@@ -20,6 +20,7 @@ type Props = {
   tiktok: string;
 };
 
+const emptySubscribe = () => () => {};
 
 export default function MobileMenu({
   dark = false,
@@ -27,125 +28,95 @@ export default function MobileMenu({
   instagram,
   tiktok,
 }: Props) {
-
   const pathname = usePathname();
-
 
   const [open, setOpen] =
     useState(false);
 
-
-  const [mounted, setMounted] =
-    useState(false);
-
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
   const isAdminPage =
     pathname === "/admin" ||
     pathname.startsWith("/admin/");
 
-
   const menuItems = isAdminPage
     ? adminNavigation
     : navigation;
-
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
 
   /*
    * Lock background page while menu is open.
    */
 
   useEffect(() => {
-
     if (!open) {
-
       document.body.style.overflow = "";
 
       return;
-
     }
-
 
     const previousOverflow =
       document.body.style.overflow;
 
-
     document.body.style.overflow =
       "hidden";
 
-
     return () => {
-
       document.body.style.overflow =
         previousOverflow;
-
     };
-
   }, [open]);
-
 
   /*
    * Close after navigation.
    */
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setOpen(false);
+    }, 0);
 
-    setOpen(false);
-
+    return () => {
+      window.clearTimeout(timeout);
+    };
   }, [pathname]);
-
 
   /*
    * Escape closes the drawer.
    */
 
   useEffect(() => {
-
     if (!open) {
-
       return;
-
     }
 
-
     const handleKeyDown = (
-      event: KeyboardEvent
+      event: KeyboardEvent,
     ) => {
-
       if (event.key === "Escape") {
-
         setOpen(false);
-
       }
-
     };
-
 
     window.addEventListener(
       "keydown",
-      handleKeyDown
+      handleKeyDown,
     );
 
-
     return () => {
-
       window.removeEventListener(
         "keydown",
-        handleKeyDown
+        handleKeyDown,
       );
-
     };
-
   }, [open]);
-
 
   const drawer =
     open && mounted
       ? createPortal(
-
           <div
             className="
               fixed
@@ -156,7 +127,6 @@ export default function MobileMenu({
               setOpen(false)
             }
           >
-
             {/* =================================================
                 BACKDROP
             ================================================= */}
@@ -170,7 +140,6 @@ export default function MobileMenu({
               "
               aria-hidden="true"
             />
-
 
             {/* =================================================
                 FLOATING DRAWER
@@ -206,7 +175,6 @@ export default function MobileMenu({
                 event.stopPropagation()
               }
             >
-
               {/* =================================================
                   HEADER
               ================================================= */}
@@ -224,9 +192,7 @@ export default function MobileMenu({
                   md:px-8
                 "
               >
-
                 <div>
-
                   <span
                     className="
                       text-[18px]
@@ -237,7 +203,6 @@ export default function MobileMenu({
                   >
                     {storeName.toUpperCase()}
                   </span>
-
 
                   {isAdminPage && (
                     <p
@@ -252,9 +217,7 @@ export default function MobileMenu({
                       Administration
                     </p>
                   )}
-
                 </div>
-
 
                 <button
                   type="button"
@@ -274,22 +237,15 @@ export default function MobileMenu({
                     hover:bg-neutral-100
                   "
                 >
-
                   <X
                     size={25}
                     strokeWidth={1.3}
                   />
-
                 </button>
-
               </div>
-
 
               {/* =================================================
                   MAIN CONTENT
-
-                  Only the menu area scrolls.
-                  Footer remains visually separated.
               ================================================= */}
 
               <div
@@ -300,7 +256,6 @@ export default function MobileMenu({
                   overscroll-contain
                 "
               >
-
                 <nav
                   aria-label={
                     isAdminPage
@@ -318,10 +273,8 @@ export default function MobileMenu({
                     md:py-10
                   "
                 >
-
                   {menuItems.map(
                     (item) => {
-
                       const isActive =
                         item.href ===
                         "/admin"
@@ -330,9 +283,8 @@ export default function MobileMenu({
                           : pathname ===
                               item.href ||
                             pathname.startsWith(
-                              `${item.href}/`
+                              `${item.href}/`,
                             );
-
 
                       return (
                         <Link
@@ -359,19 +311,13 @@ export default function MobileMenu({
                           {item.name}
                         </Link>
                       );
-
-                    }
+                    },
                   )}
-
                 </nav>
-
               </div>
-
 
               {/* =================================================
                   BUYER FOOTER
-                  
-                  Separated from main navigation.
               ================================================= */}
 
               {!isAdminPage && (
@@ -388,7 +334,6 @@ export default function MobileMenu({
                     md:pt-9
                   "
                 >
-
                   <p
                     className="
                       text-[9px]
@@ -400,7 +345,6 @@ export default function MobileMenu({
                     Follow Our Journey
                   </p>
 
-
                   <div
                     className="
                       mt-7
@@ -409,9 +353,7 @@ export default function MobileMenu({
                       gap-10
                     "
                   >
-
                     {instagram && (
-
                       <a
                         href={instagram}
                         target="_blank"
@@ -426,12 +368,9 @@ export default function MobileMenu({
                       >
                         Instagram
                       </a>
-
                     )}
 
-
                     {tiktok && (
-
                       <a
                         href={tiktok}
                         target="_blank"
@@ -446,19 +385,13 @@ export default function MobileMenu({
                       >
                         TikTok
                       </a>
-
                     )}
-
                   </div>
-
                 </div>
               )}
 
-
               {/* =================================================
                   ADMIN FOOTER
-
-                  Separated from main navigation.
               ================================================= */}
 
               {isAdminPage && (
@@ -475,7 +408,6 @@ export default function MobileMenu({
                     md:pt-9
                   "
                 >
-
                   <p
                     className="
                       text-[9px]
@@ -486,7 +418,6 @@ export default function MobileMenu({
                   >
                     Admin Workspace
                   </p>
-
 
                   <Link
                     href="/"
@@ -512,19 +443,13 @@ export default function MobileMenu({
                   >
                     View Storefront
                   </Link>
-
                 </div>
               )}
-
             </aside>
-
           </div>,
-
-          document.body
-
+          document.body,
         )
       : null;
-
 
   return (
     <>
@@ -550,17 +475,13 @@ export default function MobileMenu({
         aria-label="Open menu"
         aria-expanded={open}
       >
-
         <Menu
           size={24}
           strokeWidth={1.4}
         />
-
       </button>
 
-
       {drawer}
-
     </>
   );
 }

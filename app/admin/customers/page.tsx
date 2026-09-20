@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import Container from "@/components/ui/Container";
@@ -10,30 +11,20 @@ import {
 
 import CustomersTable from "./CustomersTable";
 
-
 export default async function AdminCustomersPage() {
-
   const admin =
     await getAdminUser();
 
-
   if (!admin) {
-
     redirect("/account");
-
   }
-
 
   const customers =
     await getAdminCustomers();
 
-
   return (
-
     <main>
-
       <Container className="py-24">
-
         <div className="space-y-10">
 
           {/* =================================================
@@ -41,7 +32,6 @@ export default async function AdminCustomersPage() {
           ================================================= */}
 
           <div>
-
             <p
               className="
                 text-xs
@@ -53,7 +43,6 @@ export default async function AdminCustomersPage() {
               Administration
             </p>
 
-
             <h1
               className="
                 mt-3
@@ -64,7 +53,6 @@ export default async function AdminCustomersPage() {
               Customers
             </h1>
 
-
             <p
               className="
                 mt-3
@@ -74,16 +62,13 @@ export default async function AdminCustomersPage() {
             >
               View customer accounts and order activity.
             </p>
-
           </div>
-
 
           {/* =================================================
               CUSTOMER LIST
           ================================================= */}
 
           <section>
-
             <div
               className="
                 mb-5
@@ -93,9 +78,7 @@ export default async function AdminCustomersPage() {
                 gap-6
               "
             >
-
               <div>
-
                 <p
                   className="
                     text-xs
@@ -106,7 +89,6 @@ export default async function AdminCustomersPage() {
                 >
                   Customer Directory
                 </p>
-
 
                 <p
                   className="
@@ -120,11 +102,9 @@ export default async function AdminCustomersPage() {
                     ? "customer"
                     : "customers"}
                 </p>
-
               </div>
 
-
-              <a
+              <Link
                 href="/admin/customers/export"
                 className="
                   shrink-0
@@ -143,25 +123,18 @@ export default async function AdminCustomersPage() {
                 "
               >
                 Export Customers
-              </a>
-
+              </Link>
             </div>
-
 
             <CustomersTable
               customers={
                 customers
               }
             />
-
           </section>
 
         </div>
-
       </Container>
-
     </main>
-
   );
-
 }

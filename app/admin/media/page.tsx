@@ -12,14 +12,13 @@ export default async function AdminMediaPage() {
     redirect("/login");
   }
 
-  try {
-    const media =
-      await getAdminMediaLibrary();
+  let media;
 
-    return (
-      <MediaLibrary media={media} />
-    );
+  try {
+    media = await getAdminMediaLibrary();
   } catch {
     notFound();
   }
+
+  return <MediaLibrary media={media} />;
 }

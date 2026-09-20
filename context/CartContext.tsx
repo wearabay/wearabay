@@ -11,7 +11,6 @@ import {
 
 import {
   getCart,
-  saveCart,
   loadCart,
   addToCart,
   removeCartItem,
@@ -73,6 +72,10 @@ export function CartProvider({
   } = useAuthUser();
 
 
+  const userId =
+    user?.id;
+
+
   const [
     items,
     setItems,
@@ -88,12 +91,12 @@ export function CartProvider({
 
       setItems(
         getCart(
-          user?.id
+          userId
         )
       );
 
     }, [
-      user?.id,
+      userId,
     ]);
 
 
@@ -120,7 +123,7 @@ export function CartProvider({
        * Guest
        */
 
-      if (!user) {
+      if (!userId) {
 
         const guestCart =
           getCart();
@@ -147,41 +150,41 @@ export function CartProvider({
        * Load from Supabase.
        */
 
-try {
+      try {
 
-  const remoteCart =
-    await loadCart(
-      user.id
-    );
-
-
-  if (!cancelled) {
-
-    setItems(
-      remoteCart
-    );
-
-  }
-
-} catch(error){
-
-  console.error(
-    "Failed loading cart:",
-    error
-  );
+        const remoteCart =
+          await loadCart(
+            userId
+          );
 
 
-  if (!cancelled) {
+        if (!cancelled) {
 
-    setItems(
-      getCart(
-        user.id
-      )
-    );
+          setItems(
+            remoteCart
+          );
 
-  }
+        }
 
-}
+      } catch (error) {
+
+        console.error(
+          "Failed loading cart:",
+          error
+        );
+
+
+        if (!cancelled) {
+
+          setItems(
+            getCart(
+              userId
+            )
+          );
+
+        }
+
+      }
 
     }
 
@@ -196,7 +199,7 @@ try {
     };
 
   }, [
-    user?.id,
+    userId,
     authLoading,
   ]);
 
@@ -247,7 +250,7 @@ try {
       const updated =
         await addToCart(
           item,
-          user?.id
+          userId
         );
 
 
@@ -273,13 +276,13 @@ try {
         id,
         color,
         size,
-        user?.id
+        userId
       );
 
 
       setItems(
         getCart(
-          user?.id
+          userId
         )
       );
 
@@ -307,13 +310,13 @@ try {
         color,
         size,
         quantity,
-        user?.id
+        userId
       );
 
 
       setItems(
         getCart(
-          user?.id
+          userId
         )
       );
 
@@ -328,7 +331,7 @@ try {
     async () => {
 
       await clearCartStorage(
-        user?.id
+        userId
       );
 
 

@@ -25,6 +25,55 @@ export type PaymentStatus =
   | "refunded";
 
 
+type OrderItemRow = {
+  product_id: number | string;
+  product_name: string;
+  unit_price: number | string;
+  product_image: string | null;
+  quantity: number | string;
+  color: string | null;
+  size: string | null;
+};
+
+
+type OrderRow = {
+  id: string;
+  order_number: string;
+  order_items?: OrderItemRow[] | null;
+
+  customer_email: string;
+  customer_phone: string;
+
+  first_name: string;
+  last_name: string;
+  street: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  country: string;
+
+  delivery_method: string;
+  payment_method: string;
+
+  subtotal: number | string;
+  shipping_fee: number | string | null;
+  total: number | string | null;
+
+  status: OrderStatus;
+  payment_status: PaymentStatus;
+
+  payment_proof_path: string | null;
+  payment_proof_uploaded_at: string | null;
+  payment_proof_verified_at: string | null;
+
+  created_at: string;
+
+  courier?: string | null;
+  tracking_number?: string | null;
+  shipped_at?: string | null;
+};
+
+
 export type Order = {
 
   id: string;
@@ -121,47 +170,11 @@ export type CreateOrderInput = {
 
 
 /**
- * Generate human-readable Wearabay order number.
- *
- * Example:
- *
- * WA-20260816-A7K3P
- */
-function generateOrderNumber(): string {
-
-  const date = new Date();
-
-  const year =
-    date.getFullYear();
-
-  const month =
-    String(
-      date.getMonth() + 1
-    ).padStart(2, "0");
-
-  const day =
-    String(
-      date.getDate()
-    ).padStart(2, "0");
-
-
-  const random =
-    Math.random()
-      .toString(36)
-      .substring(2, 7)
-      .toUpperCase();
-
-
-  return `WA-${year}${month}${day}-${random}`;
-}
-
-
-/**
  * Convert Supabase order item rows
  * into the application's CartItem format.
  */
 function mapOrderItems(
-  rows: any[] = []
+  rows: OrderItemRow[] = []
 ): CartItem[] {
 
   return rows.map(
@@ -198,8 +211,8 @@ function mapOrderItems(
  * into the application's Order format.
  */
 export function mapOrder(
-  row:any
-):Order {
+  row: OrderRow
+): Order {
 
   return {
 
@@ -294,6 +307,7 @@ export function mapOrder(
   };
 }
 
+
 /* =========================================================
    CREATE ORDER
 ========================================================= */
@@ -355,7 +369,7 @@ export async function createOrder(
 
   /* -------------------------------------------------------
      PREPARE ITEMS FOR RPC
-     
+
      The database resolves:
      product_id + color + size
      → product_variants.id
@@ -482,6 +496,7 @@ export async function createOrder(
 
 }
 
+
 /* =========================================================
    GET ORDERS
 ========================================================= */
@@ -542,7 +557,7 @@ export async function getOrders(): Promise<Order[]> {
 
 
   return (
-    data ?? []
+    (data ?? []) as OrderRow[]
   ).map(
     (row) =>
       mapOrder(row)
@@ -617,6 +632,8 @@ export async function getOrderById(
   }
 
 
-  return mapOrder(data);
+  return mapOrder(
+    data as OrderRow
+  );
 
 }

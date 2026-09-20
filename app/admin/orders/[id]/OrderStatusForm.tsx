@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useEffect,
   useState,
   useTransition,
 } from "react";
@@ -385,32 +384,6 @@ export default function OrderStatusForm({
 
 
   /* =======================================================
-     SYNC SERVER VALUE
-  ======================================================= */
-
-  useEffect(() => {
-
-    setCurrentOrderStatus(
-      orderStatus
-    );
-
-  }, [
-    orderStatus,
-  ]);
-
-
-  useEffect(() => {
-
-    setCurrentPaymentStatus(
-      paymentStatus
-    );
-
-  }, [
-    paymentStatus,
-  ]);
-
-
-  /* =======================================================
      TRANSITION
   ======================================================= */
 
@@ -506,19 +479,13 @@ export default function OrderStatusForm({
     ----------------------------------------------- */
 
     const confirmed =
-  window.confirm(
-    `Change order status from ${formatLabel(
-      currentOrderStatus
-    )} to ${formatLabel(
-      nextStatus
-    )}?`
-  );
-
-console.log(
-  "STATUS CHANGE REQUEST",
-  currentOrderStatus,
-  nextStatus
-);
+      window.confirm(
+        `Change order status from ${formatLabel(
+          currentOrderStatus
+        )} to ${formatLabel(
+          nextStatus
+        )}?`
+      );
 
 
     /* -----------------------------------------------
@@ -715,6 +682,7 @@ console.log(
           setMessage(
             "Payment status updated."
           );
+
 
         } catch (error) {
 

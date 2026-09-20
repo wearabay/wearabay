@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -256,7 +257,7 @@ export default function MediaLibrary({
                                   className="block h-full w-full object-contain"
                                 />
                               ) : (
-                                <img
+                                <Image
                                   src={
                                     item.publicUrl
                                   }
@@ -264,7 +265,9 @@ export default function MediaLibrary({
                                     item.altText ??
                                     item.productName
                                   }
-                                  className="block h-full w-full object-contain transition duration-200 group-hover:scale-105"
+                                  fill
+                                  sizes="80px"
+                                  className="object-contain transition duration-200 group-hover:scale-105"
                                 />
                               )}
 
@@ -368,14 +371,18 @@ export default function MediaLibrary({
                 className="max-h-[82vh] max-w-[90vw] rounded-xl object-contain"
               />
             ) : (
-              <img
-                src={selectedMedia.publicUrl}
-                alt={
-                  selectedMedia.altText ??
-                  selectedMedia.productName
-                }
-                className="max-h-[82vh] max-w-[90vw] rounded-xl object-contain"
-              />
+              <div className="relative h-[82vh] w-[90vw] max-w-[1200px]">
+                <Image
+                  src={selectedMedia.publicUrl}
+                  alt={
+                    selectedMedia.altText ??
+                    selectedMedia.productName
+                  }
+                  fill
+                  sizes="90vw"
+                  className="rounded-xl object-contain"
+                />
+              </div>
             )}
 
             <div className="mt-4 max-w-[90vw] text-center text-white">

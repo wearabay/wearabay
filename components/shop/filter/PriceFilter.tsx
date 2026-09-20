@@ -1,11 +1,8 @@
 "use client";
 
-import { useShop } from "../context/ShopContext";
-
 export default function PriceFilter() {
   return (
     <div className="space-y-4">
-
       <input
         type="range"
         min={500000}
@@ -18,7 +15,6 @@ export default function PriceFilter() {
         <span>Rp500K</span>
         <span>Rp1.5M</span>
       </div>
-
     </div>
   );
 }

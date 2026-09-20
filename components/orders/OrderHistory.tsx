@@ -129,10 +129,7 @@ export default function OrderHistory({
 
 
           {history.map(
-            (
-              item,
-              index
-            ) => (
+            (item) => (
 
               <div
                 key={item.id}

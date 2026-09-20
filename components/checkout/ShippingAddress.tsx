@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 import Input from "@/components/ui/Input";
-import Button from "@/components/ui/Button";
 
 import {
   useCheckout,
@@ -25,9 +24,7 @@ import type {
   Address as SavedAddress,
 } from "@/types/address";
 
-
 export default function ShippingAddress() {
-
   const {
     address,
     errors,
@@ -36,117 +33,148 @@ export default function ShippingAddress() {
     setErrors,
   } = useCheckout();
 
-
   const [
     savedAddresses,
     setSavedAddresses,
   ] = useState<SavedAddress[]>([]);
-
 
   const [
     selectedAddressId,
     setSelectedAddressId,
   ] = useState<string>("");
 
-
   const [
     addressFormOpen,
     setAddressFormOpen,
   ] = useState(false);
-
 
   const [
     savingAddress,
     setSavingAddress,
   ] = useState(false);
 
+  useEffect(() => {
+    let cancelled = false;
 
-  async function loadAddresses() {
+    async function loadAddresses() {
+      try {
+        const addresses =
+          await getAddresses();
 
-    try {
+        if (cancelled) {
+          return;
+        }
 
-      const addresses =
-        await getAddresses();
+        setSavedAddresses(addresses);
 
-      setSavedAddresses(addresses);
-
-      /*
-       * Jika belum ada alamat yang dipilih
-       * tetapi ada default address,
-       * gunakan default sebagai pilihan checkout.
-       */
-
-      if (!selectedAddressId) {
+        /*
+         * Jika belum ada alamat yang dipilih
+         * tetapi ada default address,
+         * gunakan default sebagai pilihan checkout.
+         */
 
         const defaultAddress =
           addresses.find(
             (item) => item.isDefault
           );
 
-        if (defaultAddress) {
-
-          setSelectedAddressId(
-            defaultAddress.id
-          );
-
-          useSavedAddress(
-            defaultAddress
-          );
-
+        if (!defaultAddress) {
+          return;
         }
 
+        setSelectedAddressId(
+          (currentId) => {
+            if (currentId) {
+              return currentId;
+            }
+
+            return defaultAddress.id;
+          }
+        );
+
+        setAddress((prev) => ({
+          ...prev,
+
+          firstName:
+            defaultAddress.firstName,
+
+          lastName:
+            defaultAddress.lastName,
+
+          country:
+            defaultAddress.country,
+
+          province:
+            defaultAddress.province,
+
+          city:
+            defaultAddress.city,
+
+          district:
+            defaultAddress.district,
+
+          postalCode:
+            defaultAddress.postalCode,
+
+          street:
+            defaultAddress.street,
+
+          apartment:
+            defaultAddress.apartment ?? "",
+        }));
+
+        setContact((prev) => ({
+          ...prev,
+
+          phone:
+            defaultAddress.phone,
+        }));
+
+        setErrors({});
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            "Failed to load checkout addresses:",
+            error
+          );
+        }
       }
-
-    } catch (error) {
-
-      console.error(
-        "Failed to load checkout addresses:",
-        error
-      );
-
     }
 
-  }
+    void loadAddresses();
 
-
-  useEffect(() => {
-
-    loadAddresses();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    setAddress,
+    setContact,
+    setErrors,
+  ]);
 
   function updateField(
     field: keyof typeof address,
     value: string
   ) {
-
     setAddress((prev) => ({
       ...prev,
       [field]: value,
     }));
 
-
     setErrors((prev) => ({
       ...prev,
       [field]: "",
     }));
-
   }
 
-
-  function useSavedAddress(
+  function applySavedAddress(
     saved: SavedAddress
   ) {
-
     setSelectedAddressId(
       saved.id
     );
 
-
     setAddress((prev) => ({
-
       ...prev,
 
       firstName:
@@ -175,31 +203,22 @@ export default function ShippingAddress() {
 
       apartment:
         saved.apartment ?? "",
-
     }));
 
-
     setContact((prev) => ({
-
       ...prev,
 
       phone:
         saved.phone,
-
     }));
 
-
     setErrors({});
-
   }
-
 
   async function handleSetDefault(
     saved: SavedAddress
   ) {
-
     try {
-
       await setDefaultAddress(
         saved.id
       );
@@ -223,29 +242,22 @@ export default function ShippingAddress() {
         );
 
       if (updated) {
-        useSavedAddress(updated);
+        applySavedAddress(updated);
       }
-
     } catch (error) {
-
       console.error(
         "Failed to set default address:",
         error
       );
-
     }
-
   }
-
 
   async function handleSaveNewAddress(
     newAddress: SavedAddress
   ) {
-
     if (savingAddress) return;
 
     try {
-
       setSavingAddress(true);
 
       /*
@@ -262,7 +274,6 @@ export default function ShippingAddress() {
           isDefault: false,
         });
 
-
       /*
        * Refresh daftar address setelah insert.
        */
@@ -274,19 +285,15 @@ export default function ShippingAddress() {
         updatedAddresses
       );
 
-
       /*
        * Alamat baru langsung digunakan
        * untuk checkout.
        */
 
-      useSavedAddress(saved);
-
+      applySavedAddress(saved);
 
       setAddressFormOpen(false);
-
     } catch (error) {
-
       console.error(
         "Failed to save checkout address:",
         error
@@ -295,20 +302,13 @@ export default function ShippingAddress() {
       window.alert(
         "Failed to save address. Please try again."
       );
-
     } finally {
-
       setSavingAddress(false);
-
     }
-
   }
 
-
   return (
-
     <>
-
       <section
         className="
           rounded-2xl
@@ -318,7 +318,6 @@ export default function ShippingAddress() {
           p-6
         "
       >
-
         <h2
           className="
             mb-6
@@ -329,11 +328,8 @@ export default function ShippingAddress() {
           Shipping Address
         </h2>
 
-
         {savedAddresses.length > 0 && (
-
           <div className="mb-8 space-y-4">
-
             <div
               className="
                 flex
@@ -342,7 +338,6 @@ export default function ShippingAddress() {
                 gap-4
               "
             >
-
               <p
                 className="
                   text-sm
@@ -352,7 +347,6 @@ export default function ShippingAddress() {
               >
                 Saved Addresses
               </p>
-
 
               <button
                 type="button"
@@ -368,21 +362,16 @@ export default function ShippingAddress() {
               >
                 + Add New Address
               </button>
-
             </div>
 
-
             <div className="grid gap-4">
-
               {savedAddresses.map(
                 (saved) => {
-
                   const selected =
                     selectedAddressId ===
                     saved.id;
 
                   return (
-
                     <div
                       key={saved.id}
                       className={`
@@ -397,11 +386,10 @@ export default function ShippingAddress() {
                         }
                       `}
                     >
-
                       <button
                         type="button"
                         onClick={() =>
-                          useSavedAddress(
+                          applySavedAddress(
                             saved
                           )
                         }
@@ -410,7 +398,6 @@ export default function ShippingAddress() {
                           text-left
                         "
                       >
-
                         <div
                           className="
                             flex
@@ -419,7 +406,6 @@ export default function ShippingAddress() {
                             gap-3
                           "
                         >
-
                           <p
                             className="
                               font-medium
@@ -428,7 +414,6 @@ export default function ShippingAddress() {
                             {saved.label}
                           </p>
 
-
                           <div
                             className="
                               flex
@@ -436,9 +421,7 @@ export default function ShippingAddress() {
                               gap-2
                             "
                           >
-
                             {selected && (
-
                               <span
                                 className="
                                   text-xs
@@ -450,12 +433,9 @@ export default function ShippingAddress() {
                               >
                                 Selected
                               </span>
-
                             )}
 
-
                             {saved.isDefault && (
-
                               <span
                                 className="
                                   text-xs
@@ -466,13 +446,9 @@ export default function ShippingAddress() {
                               >
                                 Default
                               </span>
-
                             )}
-
                           </div>
-
                         </div>
-
 
                         <p
                           className="
@@ -485,7 +461,6 @@ export default function ShippingAddress() {
                           {saved.lastName}
                         </p>
 
-
                         <p
                           className="
                             text-sm
@@ -497,7 +472,6 @@ export default function ShippingAddress() {
                           {saved.district}
                         </p>
 
-
                         <p
                           className="
                             text-sm
@@ -506,9 +480,7 @@ export default function ShippingAddress() {
                         >
                           {saved.street}
                         </p>
-
                       </button>
-
 
                       <div
                         className="
@@ -521,9 +493,7 @@ export default function ShippingAddress() {
                           pt-4
                         "
                       >
-
                         {!saved.isDefault && (
-
                           <button
                             type="button"
                             onClick={() =>
@@ -540,29 +510,18 @@ export default function ShippingAddress() {
                           >
                             Make Default
                           </button>
-
                         )}
-
                       </div>
-
                     </div>
-
                   );
-
                 }
               )}
-
             </div>
-
           </div>
-
         )}
 
-
         {savedAddresses.length === 0 && (
-
           <div className="mb-8">
-
             <button
               type="button"
               onClick={() =>
@@ -580,7 +539,6 @@ export default function ShippingAddress() {
                 hover:border-black
               "
             >
-
               <p className="font-medium">
                 + Add New Address
               </p>
@@ -595,17 +553,11 @@ export default function ShippingAddress() {
                 Add a shipping address for
                 this order.
               </p>
-
             </button>
-
           </div>
-
         )}
 
-
         <div className="space-y-5">
-
-
           <div
             className="
               grid
@@ -613,7 +565,6 @@ export default function ShippingAddress() {
               md:grid-cols-2
             "
           >
-
             <Input
               id="firstName"
               label="First Name"
@@ -627,7 +578,6 @@ export default function ShippingAddress() {
               }
             />
 
-
             <Input
               id="lastName"
               label="Last Name"
@@ -640,9 +590,7 @@ export default function ShippingAddress() {
                 )
               }
             />
-
           </div>
-
 
           <Input
             label="Company (Optional)"
@@ -655,19 +603,16 @@ export default function ShippingAddress() {
             }
           />
 
-
           <Input
             label="Country"
             value={address.country}
             readOnly
           />
 
-
           <ProvinceSelect
             value={address.province}
             error={errors.province}
             onChange={(value) => {
-
               updateField(
                 "province",
                 value
@@ -682,17 +627,14 @@ export default function ShippingAddress() {
                 "district",
                 ""
               );
-
             }}
           />
-
 
           <CitySelect
             province={address.province}
             value={address.city}
             error={errors.city}
             onChange={(value) => {
-
               updateField(
                 "city",
                 value
@@ -702,10 +644,8 @@ export default function ShippingAddress() {
                 "district",
                 ""
               );
-
             }}
           />
-
 
           <DistrictSelect
             province={address.province}
@@ -719,7 +659,6 @@ export default function ShippingAddress() {
               )
             }
           />
-
 
           <Input
             id="postalCode"
@@ -735,7 +674,6 @@ export default function ShippingAddress() {
             }
           />
 
-
           <Input
             id="street"
             label="Street Address"
@@ -750,7 +688,6 @@ export default function ShippingAddress() {
             }
           />
 
-
           <Input
             label="Apartment / Suite (Optional)"
             placeholder="Apartment, unit, floor"
@@ -762,11 +699,8 @@ export default function ShippingAddress() {
               )
             }
           />
-
         </div>
-
       </section>
-
 
       <AddressForm
         open={addressFormOpen}
@@ -775,9 +709,6 @@ export default function ShippingAddress() {
         }
         onSave={handleSaveNewAddress}
       />
-
     </>
-
   );
-
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import {
   useEffect,
   useRef,
@@ -397,11 +399,16 @@ export default function MediaUploader({
                     className="max-h-72 max-w-full rounded-xl object-contain"
                   />
                 ) : (
-                  <img
-                    src={previewUrl}
-                    alt="Media preview"
-                    className="max-h-72 max-w-full rounded-xl object-contain"
-                  />
+                  <div className="relative h-72 w-full">
+                    <Image
+                      src={previewUrl}
+                      alt="Media preview"
+                      fill
+                      unoptimized
+                      sizes="100vw"
+                      className="rounded-xl object-contain"
+                    />
+                  </div>
                 )}
               </div>
 

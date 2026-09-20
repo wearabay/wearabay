@@ -8,171 +8,128 @@ import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
-
 export default function LoginForm() {
-
-
-  const [email,setEmail] =
+  const [email, setEmail] =
     useState("");
 
-  const [password,setPassword] =
+  const [password, setPassword] =
     useState("");
 
-  const [showPassword,setShowPassword] =
+  const [showPassword, setShowPassword] =
     useState(false);
 
-  const [message,setMessage] =
+  const [message, setMessage] =
     useState("");
 
-  const [loading,setLoading] =
+  const [loading, setLoading] =
     useState(false);
-
-
-
-
 
   async function handleLogin(
-  e: React.FormEvent<HTMLFormElement>
-) {
+    e: React.FormEvent<HTMLFormElement>,
+  ) {
+    e.preventDefault();
 
-  e.preventDefault();
-
-  if (!email || !password) {
-
-    setMessage(
-      "Please enter email and password."
-    );
-
-    return;
-
-  }
-
-  setLoading(true);
-  setMessage("");
-
-  try {
-
-    const supabase =
-      createClient();
-
-
-    const {
-      data,
-      error,
-    } =
-      await supabase.auth.signInWithPassword({
-
-        email,
-        password,
-
-      });
-
-
-    if (error) {
-
+    if (!email || !password) {
       setMessage(
-        error.message
+        "Please enter email and password.",
       );
 
       return;
-
     }
 
+    setLoading(true);
+    setMessage("");
 
-    /*
-     * Login berhasil tetapi
-     * pastikan session benar-benar tersedia.
-     */
+    try {
+      const supabase =
+        createClient();
 
-    if (!data.session) {
+      const {
+        data,
+        error,
+      } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      setMessage(
-        "Login failed. Please try again."
+      if (error) {
+        setMessage(error.message);
+
+        return;
+      }
+
+      /*
+       * Login berhasil tetapi
+       * pastikan session benar-benar tersedia.
+       */
+
+      if (!data.session) {
+        setMessage(
+          "Login failed. Please try again.",
+        );
+
+        return;
+      }
+
+      /*
+       * Full navigation.
+       *
+       * Ini sengaja menggunakan window.location
+       * agar request /account dibuat ulang
+       * setelah session Supabase tersimpan.
+       */
+
+      window.location.assign(
+        "/account",
+      );
+    } catch (error) {
+      console.error(
+        "Login failed:",
+        error,
       );
 
-      return;
-
+      setMessage(
+        "Something went wrong. Please try again.",
+      );
+    } finally {
+      setLoading(false);
     }
-
-
-    /*
-     * Full navigation.
-     *
-     * Ini sengaja menggunakan window.location
-     * agar request /account dibuat ulang
-     * setelah session Supabase tersimpan.
-     */
-
-    window.location.assign(
-      "/account"
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "Login failed:",
-      error
-    );
-
-    setMessage(
-      "Something went wrong. Please try again."
-    );
-
-  } finally {
-
-    setLoading(false);
-
   }
-
-}
-
 
   return (
-
     <form
       onSubmit={handleLogin}
       className="space-y-5"
     >
-
-
-
       <Input
         label="Email Address"
         type="email"
         value={email}
-        onChange={(e)=>
+        onChange={(e) =>
           setEmail(e.target.value)
         }
       />
 
-
-
-
-
       <div className="relative">
-
-
         <Input
           label="Password"
           type={
             showPassword
-            ? "text"
-            : "password"
+              ? "text"
+              : "password"
           }
           value={password}
-          onChange={(e)=>
+          onChange={(e) =>
             setPassword(e.target.value)
           }
         />
-
-
 
         <button
           type="button"
           onClick={() =>
             setShowPassword(
-              !showPassword
+              !showPassword,
             )
           }
           className="
@@ -185,26 +142,13 @@ export default function LoginForm() {
             text-neutral-500
           "
         >
-
-          {
-            showPassword
+          {showPassword
             ? "Hide"
-            : "Show"
-          }
-
-
+            : "Show"}
         </button>
-
-
       </div>
 
-
-
-
-
       <div className="flex justify-end">
-
-
         <Link
           href="/forgot-password"
           className="
@@ -213,57 +157,30 @@ export default function LoginForm() {
             hover:text-black
           "
         >
-
           Forgot password?
-
         </Link>
-
-
       </div>
-
-
-
-
 
       <Button
         type="submit"
         className="w-full"
         disabled={loading}
       >
-
-        {
-          loading
+        {loading
           ? "Signing In..."
-          : "Login"
-        }
-
-
+          : "Login"}
       </Button>
 
-
-
-
-
-      {
-        message && (
-
-          <p
-            className="
-              text-sm
-              text-neutral-600
-            "
-          >
-
-            {message}
-
-          </p>
-
-        )
-      }
-
-
-
-
+      {message && (
+        <p
+          className="
+            text-sm
+            text-neutral-600
+          "
+        >
+          {message}
+        </p>
+      )}
 
       <p
         className="
@@ -272,12 +189,9 @@ export default function LoginForm() {
           text-neutral-500
         "
       >
-
-        Don't have an account?
-
+        Don&apos;t have an account?
 
         {" "}
-
 
         <Link
           href="/register"
@@ -286,19 +200,9 @@ export default function LoginForm() {
             underline
           "
         >
-
           Create account
-
         </Link>
-
-
       </p>
-
-
-
-
     </form>
-
   );
-
 }
