@@ -1,93 +1,36 @@
 import { redirect } from "next/navigation";
 
-import Container from "@/components/ui/Container";
-
 import { getAdminUser } from "@/lib/admin";
-
 import { getStoreSettings } from "@/lib/store-settings";
 
 import SettingsForm from "./SettingsForm";
 
-
 export default async function AdminSettingsPage() {
-
-  const admin =
-    await getAdminUser();
-
+  const admin = await getAdminUser();
 
   if (!admin) {
-
     redirect("/account");
-
   }
 
-
-  const settings =
-    await getStoreSettings();
-
+  const settings = await getStoreSettings();
 
   return (
+    <main className="min-w-0 space-y-8 pt-2 lg:pt-8">
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-400">
+          Workspace
+        </p>
 
-    <main>
+        <h1 className="mt-3 text-3xl font-light tracking-tight sm:text-4xl">
+          Settings
+        </h1>
 
-      <Container className="py-24">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-500">
+          Manage store information and configuration.
+        </p>
+      </div>
 
-        <div className="space-y-16">
-
-          {/* =================================================
-              HEADER
-          ================================================= */}
-
-          <div>
-
-            <p
-              className="
-                text-xs
-                uppercase
-                tracking-[0.3em]
-                text-neutral-500
-              "
-            >
-              Administration
-            </p>
-
-
-            <h1
-              className="
-                mt-3
-                text-4xl
-                font-light
-              "
-            >
-              Settings
-            </h1>
-
-
-            <p
-              className="
-                mt-3
-                max-w-xl
-                text-sm
-                leading-6
-                text-neutral-500
-              "
-            >
-              Manage store information and configuration.
-            </p>
-
-          </div>
-
-
-          <SettingsForm
-            initialSettings={settings}
-          />
-
-        </div>
-
-      </Container>
-
+      <SettingsForm initialSettings={settings} />
     </main>
-
   );
-
 }
