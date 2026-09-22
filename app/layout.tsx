@@ -11,6 +11,7 @@ import { CheckoutProvider } from "@/context/CheckoutContext";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import SiteChrome from "@/components/layout/SiteChrome";
 
 import { getProducts } from "@/lib/products";
 import { getStoreSettings } from "@/lib/store-settings";
@@ -109,8 +110,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
 
     twitter: {
-      card:
-        "summary_large_image",
+      card: "summary_large_image",
 
       title: siteTitle,
 
@@ -129,19 +129,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
     robots: {
       index: true,
-
       follow: true,
     },
 
     icons: {
-      icon:
-        "/favicon.ico",
-
-      shortcut:
-        "/favicon.ico",
-
-      apple:
-        "/apple-touch-icon.png",
+      icon: "/favicon.ico",
+      shortcut: "/favicon.ico",
+      apple: "/apple-touch-icon.png",
     },
   };
 }
@@ -163,15 +157,18 @@ export default async function RootLayout({
           <CheckoutProvider>
             <Toast />
 
-            <Navbar
-              products={products}
-            />
-
-            <main className="flex-1">
-              {children}
-            </main>
-
-            <Footer />
+            <SiteChrome
+              navbar={
+                <Navbar
+                  products={products}
+                />
+              }
+              footer={<Footer />}
+            >
+              <main className="flex-1">
+                {children}
+              </main>
+            </SiteChrome>
 
             <BackToTop />
           </CheckoutProvider>
