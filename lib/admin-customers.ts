@@ -1,240 +1,156 @@
 import { createClient } from "@/lib/supabase/server";
 
-
 /* =========================================================
    TYPES
 ========================================================= */
 
 export type AdminCustomer = {
   id: string;
-
   name: string;
-
   email: string;
-
   phone: string;
-
   joinedAt: string;
-
   orderCount: number;
-
   totalSpent: number;
-
   role: string;
 };
 
-
 export type AdminCustomerOrder = {
   id: string;
-
   orderNumber: string;
-
   customerEmail: string;
-
   customerPhone: string;
-
   total: number;
-
   status: string;
-
   paymentStatus: string;
-
   createdAt: string;
 };
-
 
 export type AdminCustomerDetail = AdminCustomer & {
   orders: AdminCustomerOrder[];
 };
 
-
 type ProfileRow = {
   id: string;
-
   first_name: string | null;
-
   last_name: string | null;
-
   full_name: string | null;
-
   phone: string | null;
-
   created_at: string | null;
-
   role: string | null;
 };
 
-
 type OrderCustomerRow = {
   id: string;
-
   user_id: string | null;
-
   order_number: string | null;
-
   customer_email: string | null;
-
   customer_phone: string | null;
-
   total: number | string | null;
-
   status: string | null;
-
   payment_status: string | null;
-
   created_at: string | null;
 };
-
 
 /* =========================================================
    AUTHENTICATED ADMIN
 ========================================================= */
 
 async function getAuthenticatedAdmin() {
-
-  const supabase =
-    await createClient();
-
+  const supabase = await createClient();
 
   const {
     data: {
       user,
     },
-  } =
-    await supabase.auth.getUser();
-
+  } = await supabase.auth.getUser();
 
   if (!user) {
-
     return {
       supabase,
       user: null,
       isAdmin: false,
     };
-
   }
-
 
   const {
     data: profile,
-  } =
-    await supabase
-
-      .from("profiles")
-
-      .select("role")
-
-      .eq(
-        "id",
-        user.id
-      )
-
-      .maybeSingle();
-
+  } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
 
   return {
-
     supabase,
-
     user,
-
     isAdmin:
-      profile?.role ===
-      "admin",
-
+      profile?.role === "admin",
   };
-
 }
-
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
 function getProfileName(
-  profile: ProfileRow
+  profile: ProfileRow,
 ): string {
-
   const fullName =
-    profile.full_name?.trim() ??
-    "";
-
+    profile.full_name?.trim() ?? "";
 
   if (fullName) {
     return fullName;
   }
 
-
-  const combined =
-    [
-      profile.first_name,
-      profile.last_name,
-    ]
-      .filter(
-        (
-          value
-        ) =>
-          Boolean(
-            value?.trim()
-          )
-      )
-      .join(" ")
-      .trim();
-
+  const combined = [
+    profile.first_name,
+    profile.last_name,
+  ]
+    .filter(
+      (value) =>
+        Boolean(value?.trim()),
+    )
+    .join(" ")
+    .trim();
 
   if (combined) {
     return combined;
   }
 
-
   return "Customer";
-
 }
 
-
 function mapCustomerOrder(
-  order: OrderCustomerRow
+  order: OrderCustomerRow,
 ): AdminCustomerOrder {
-
   return {
-
-    id:
-      order.id,
+    id: order.id,
 
     orderNumber:
-      order.order_number ??
-      "",
+      order.order_number ?? "",
 
     customerEmail:
-      order.customer_email?.trim() ??
-      "",
+      order.customer_email?.trim() ?? "",
 
     customerPhone:
-      order.customer_phone?.trim() ??
-      "",
+      order.customer_phone?.trim() ?? "",
 
-    total:
-      Number(
-        order.total ??
-          0
-      ),
+    total: Number(
+      order.total ?? 0,
+    ),
 
     status:
-      order.status ??
-      "pending",
+      order.status ?? "pending",
 
     paymentStatus:
       order.payment_status ??
       "pending",
 
     createdAt:
-      order.created_at ??
-      "",
-
+      order.created_at ?? "",
   };
-
 }
-
 
 /* =========================================================
    BUILD CUSTOMER
@@ -242,37 +158,27 @@ function mapCustomerOrder(
 
 function buildAdminCustomer(
   profile: ProfileRow,
-  orders: OrderCustomerRow[]
+  orders: OrderCustomerRow[],
 ): AdminCustomer {
-
   const profileOrders =
     orders.filter(
       (order) =>
-        order.user_id ===
-        profile.id
+        order.user_id === profile.id,
     );
-
 
   const sortedOrders =
     [...profileOrders].sort(
-      (
-        a,
-        b
-      ) =>
+      (a, b) =>
         new Date(
-          b.created_at ??
-            ""
+          b.created_at ?? "",
         ).getTime() -
         new Date(
-          a.created_at ??
-            ""
-        ).getTime()
+          a.created_at ?? "",
+        ).getTime(),
     );
-
 
   const latestOrder =
     sortedOrders[0];
-
 
   const totalSpent =
     profileOrders
@@ -285,31 +191,22 @@ function buildAdminCustomer(
               "delivered"
           ) &&
           order.payment_status ===
-            "paid"
+            "paid",
       )
       .reduce(
-        (
-          sum,
-          order
-        ) =>
+        (sum, order) =>
           sum +
           Number(
-            order.total ??
-              0
+            order.total ?? 0,
           ),
-        0
+        0,
       );
 
-
   return {
-
-    id:
-      profile.id,
+    id: profile.id,
 
     name:
-      getProfileName(
-        profile
-      ),
+      getProfileName(profile),
 
     email:
       latestOrder?.customer_email?.trim() ??
@@ -321,8 +218,7 @@ function buildAdminCustomer(
       "",
 
     joinedAt:
-      profile.created_at ??
-      "",
+      profile.created_at ?? "",
 
     orderCount:
       profileOrders.length,
@@ -330,13 +226,9 @@ function buildAdminCustomer(
     totalSpent,
 
     role:
-      profile.role ??
-      "customer",
-
+      profile.role ?? "customer",
   };
-
 }
-
 
 /* =========================================================
    GET ADMIN CUSTOMERS
@@ -345,7 +237,6 @@ function buildAdminCustomer(
 export async function getAdminCustomers(): Promise<
   AdminCustomer[]
 > {
-
   const {
     supabase,
     user,
@@ -353,184 +244,148 @@ export async function getAdminCustomers(): Promise<
   } =
     await getAuthenticatedAdmin();
 
-
   if (!user || !isAdmin) {
     return [];
   }
 
-
   /* -------------------------------------------------------
      GET CUSTOMER PROFILES
+
+     Admin profiles are intentionally included.
+
+     An admin account can also function as a customer.
+     The role remains "admin" and is displayed as such
+     in the customer workspace.
   ------------------------------------------------------- */
 
   const {
     data: profiles,
     error: profilesError,
-  } =
-    await supabase
-
-      .from("profiles")
-
-      .select(
-        `
-          id,
-          first_name,
-          last_name,
-          full_name,
-          phone,
-          created_at,
-          role
-        `
-      )
-
-      .eq(
-        "role",
-        "customer"
-      )
-
-      .order(
-        "created_at",
-        {
-          ascending: false,
-        }
-      );
-
+  } = await supabase
+    .from("profiles")
+    .select(
+      `
+        id,
+        first_name,
+        last_name,
+        full_name,
+        phone,
+        created_at,
+        role
+      `,
+    )
+    .order(
+      "created_at",
+      {
+        ascending: false,
+      },
+    );
 
   if (profilesError) {
-
     console.error(
       "getAdminCustomers profiles:",
-      profilesError
+      profilesError,
     );
 
     return [];
-
   }
-
 
   const customerProfiles =
     (profiles ?? []) as ProfileRow[];
 
-
   if (
-    customerProfiles.length ===
-    0
+    customerProfiles.length === 0
   ) {
-
     return [];
-
   }
-
 
   const customerIds =
     customerProfiles.map(
-      (profile) =>
-        profile.id
+      (profile) => profile.id,
     );
 
-
   /* -------------------------------------------------------
-     GET ORDERS FOR CUSTOMERS
+     GET ORDERS FOR ALL PROFILES
+
+     This includes orders belonging to admin profiles
+     because orders are matched through user_id.
   ------------------------------------------------------- */
 
   const {
     data: orders,
     error: ordersError,
-  } =
-    await supabase
-
-      .from("orders")
-
-      .select(
-        `
-          id,
-          user_id,
-          order_number,
-          customer_email,
-          customer_phone,
-          total,
-          status,
-          payment_status,
-          created_at
-        `
-      )
-
-      .in(
-        "user_id",
-        customerIds
-      );
-
+  } = await supabase
+    .from("orders")
+    .select(
+      `
+        id,
+        user_id,
+        order_number,
+        customer_email,
+        customer_phone,
+        total,
+        status,
+        payment_status,
+        created_at
+      `,
+    )
+    .in(
+      "user_id",
+      customerIds,
+    );
 
   if (ordersError) {
-
     console.error(
       "getAdminCustomers orders:",
-      ordersError
+      ordersError,
     );
 
     return customerProfiles.map(
       (profile) => ({
-
-        id:
-          profile.id,
+        id: profile.id,
 
         name:
-          getProfileName(
-            profile
-          ),
+          getProfileName(profile),
 
-        email:
-          "",
+        email: "",
 
         phone:
-          profile.phone?.trim() ??
-          "",
+          profile.phone?.trim() ?? "",
 
         joinedAt:
-          profile.created_at ??
-          "",
+          profile.created_at ?? "",
 
-        orderCount:
-          0,
+        orderCount: 0,
 
-        totalSpent:
-          0,
+        totalSpent: 0,
 
         role:
-          profile.role ??
-          "customer",
-
-      })
+          profile.role ?? "customer",
+      }),
     );
-
   }
-
 
   const customerOrders =
     (orders ?? []) as OrderCustomerRow[];
-
 
   return customerProfiles.map(
     (profile) =>
       buildAdminCustomer(
         profile,
-        customerOrders
-      )
+        customerOrders,
+      ),
   );
-
 }
-
 
 /* =========================================================
    GET ADMIN CUSTOMER DETAIL
 ========================================================= */
 
 export async function getAdminCustomerById(
-  customerId: string
+  customerId: string,
 ): Promise<
   AdminCustomerDetail | null
 > {
-
   const {
     supabase,
     user,
@@ -538,69 +393,54 @@ export async function getAdminCustomerById(
   } =
     await getAuthenticatedAdmin();
 
-
   if (!user || !isAdmin) {
     return null;
   }
 
-
   /* -------------------------------------------------------
-     GET CUSTOMER PROFILE
+     GET PROFILE
+
+     Admin profiles are intentionally allowed here because
+     an admin account can also function as a customer.
   ------------------------------------------------------- */
 
   const {
     data: profile,
     error: profileError,
-  } =
-    await supabase
-
-      .from("profiles")
-
-      .select(
-        `
-          id,
-          first_name,
-          last_name,
-          full_name,
-          phone,
-          created_at,
-          role
-        `
-      )
-
-      .eq(
-        "id",
-        customerId
-      )
-
-      .eq(
-        "role",
-        "customer"
-      )
-
-      .maybeSingle();
-
+  } = await supabase
+    .from("profiles")
+    .select(
+      `
+        id,
+        first_name,
+        last_name,
+        full_name,
+        phone,
+        created_at,
+        role
+      `,
+    )
+    .eq(
+      "id",
+      customerId,
+    )
+    .maybeSingle();
 
   if (profileError) {
-
     console.error(
       "getAdminCustomerById profile:",
-      profileError
+      profileError,
     );
 
     return null;
-
   }
-
 
   if (!profile) {
     return null;
   }
 
-
   const customerProfile =
     profile as ProfileRow;
-
 
   /* -------------------------------------------------------
      GET CUSTOMER ORDERS
@@ -609,84 +449,65 @@ export async function getAdminCustomerById(
   const {
     data: orders,
     error: ordersError,
-  } =
-    await supabase
-
-      .from("orders")
-
-      .select(
-        `
-          id,
-          user_id,
-          order_number,
-          customer_email,
-          customer_phone,
-          total,
-          status,
-          payment_status,
-          created_at
-        `
-      )
-
-      .eq(
-        "user_id",
-        customerId
-      )
-
-      .order(
-        "created_at",
-        {
-          ascending: false,
-        }
-      );
-
+  } = await supabase
+    .from("orders")
+    .select(
+      `
+        id,
+        user_id,
+        order_number,
+        customer_email,
+        customer_phone,
+        total,
+        status,
+        payment_status,
+        created_at
+      `,
+    )
+    .eq(
+      "user_id",
+      customerId,
+    )
+    .order(
+      "created_at",
+      {
+        ascending: false,
+      },
+    );
 
   if (ordersError) {
-
     console.error(
       "getAdminCustomerById orders:",
-      ordersError
+      ordersError,
     );
 
     const customer =
       buildAdminCustomer(
         customerProfile,
-        []
+        [],
       );
 
-
     return {
-
       ...customer,
-
-      orders:
-        [],
-
+      orders: [],
     };
-
   }
-
 
   const customerOrders =
     (orders ?? []) as OrderCustomerRow[];
 
-
   const customer =
     buildAdminCustomer(
       customerProfile,
-      customerOrders
+      customerOrders,
     );
 
-
   return {
-
     ...customer,
 
     orders:
       customerOrders.map(
-        mapCustomerOrder
+        mapCustomerOrder,
       ),
-
   };
-
 }
