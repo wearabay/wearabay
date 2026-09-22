@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation";
 
-import Container from "@/components/ui/Container";
-
 import { getAdminUser } from "@/lib/admin";
 import { getAdminInventory } from "@/lib/admin-inventory";
 
@@ -40,156 +38,231 @@ export default async function AdminInventoryPage() {
     );
 
   return (
-    <main>
-      <Container className="py-24">
-        <div className="space-y-10">
+    <main className="space-y-8 pt-2 lg:pt-8">
+      {/* HEADER */}
 
-          {/* HEADER */}
+      <section>
+        <p
+          className="
+            text-[10px]
+            uppercase
+            tracking-[0.3em]
+            text-neutral-400
+          "
+        >
+          Administration
+        </p>
 
-          <div>
-            <p
-              className="
-                text-xs
-                uppercase
-                tracking-[0.3em]
-                text-neutral-500
-              "
-            >
-              Administration
-            </p>
+        <h1
+          className="
+            mt-2
+            text-3xl
+            font-light
+            tracking-tight
+            sm:text-4xl
+          "
+        >
+          Inventory
+        </h1>
 
-            <h1
-              className="
-                mt-3
-                text-4xl
-                font-light
-              "
-            >
-              Inventory
-            </h1>
+        <p
+          className="
+            mt-2
+            max-w-xl
+            text-sm
+            leading-6
+            text-neutral-500
+          "
+        >
+          Monitor product stock by color
+          and size.
+        </p>
+      </section>
 
-            <p
-              className="
-                mt-3
-                text-sm
-                text-neutral-500
-              "
-            >
-              Monitor product stock by color
-              and size.
-            </p>
-          </div>
+      {/* SUMMARY */}
 
-
-          {/* SUMMARY */}
-
-          <div
+      <section
+        className="
+          grid
+          gap-4
+          sm:grid-cols-2
+          xl:grid-cols-4
+        "
+      >
+        <div
+          className="
+            rounded-2xl
+            border
+            border-stone-200
+            bg-white
+            p-5
+          "
+        >
+          <p
             className="
-              grid
-              gap-5
-              sm:grid-cols-2
-              lg:grid-cols-4
+              text-[10px]
+              uppercase
+              tracking-[0.2em]
+              text-neutral-400
             "
           >
+            Variants
+          </p>
 
-            <div
-              className="
-                rounded-2xl
-                border
-                border-stone-200
-                p-6
-              "
-            >
-              <p className="text-xs uppercase tracking-widest text-neutral-500">
-                Variants
-              </p>
+          <p
+            className="
+              mt-5
+              text-3xl
+              font-light
+              tracking-tight
+            "
+          >
+            {totalVariants}
+          </p>
 
-              <p className="mt-3 text-3xl font-light">
-                {totalVariants}
-              </p>
-
-              <p className="mt-2 text-xs text-neutral-500">
-                Total product variants
-              </p>
-            </div>
-
-
-            <div
-              className="
-                rounded-2xl
-                border
-                border-stone-200
-                p-6
-              "
-            >
-              <p className="text-xs uppercase tracking-widest text-neutral-500">
-                Units
-              </p>
-
-              <p className="mt-3 text-3xl font-light">
-                {totalUnits}
-              </p>
-
-              <p className="mt-2 text-xs text-neutral-500">
-                Current stock
-              </p>
-            </div>
-
-
-            <div
-              className="
-                rounded-2xl
-                border
-                border-stone-200
-                p-6
-              "
-            >
-              <p className="text-xs uppercase tracking-widest text-neutral-500">
-                Low Stock
-              </p>
-
-              <p className="mt-3 text-3xl font-light">
-                {lowStock}
-              </p>
-
-              <p className="mt-2 text-xs text-neutral-500">
-                1–2 units remaining
-              </p>
-            </div>
-
-
-            <div
-              className="
-                rounded-2xl
-                border
-                border-stone-200
-                p-6
-              "
-            >
-              <p className="text-xs uppercase tracking-widest text-neutral-500">
-                Out of Stock
-              </p>
-
-              <p className="mt-3 text-3xl font-light">
-                {outOfStock}
-              </p>
-
-              <p className="mt-2 text-xs text-neutral-500">
-                No units remaining
-              </p>
-            </div>
-
-          </div>
-
-
-          {/* INVENTORY */}
-
-          <InventoryTable
-            inventory={inventory}
-          />
-
+          <p
+            className="
+              mt-2
+              text-xs
+              text-neutral-500
+            "
+          >
+            Total product variants
+          </p>
         </div>
-      </Container>
+
+        <div
+          className="
+            rounded-2xl
+            border
+            border-stone-200
+            bg-white
+            p-5
+          "
+        >
+          <p
+            className="
+              text-[10px]
+              uppercase
+              tracking-[0.2em]
+              text-neutral-400
+            "
+          >
+            Units
+          </p>
+
+          <p
+            className="
+              mt-5
+              text-3xl
+              font-light
+              tracking-tight
+            "
+          >
+            {totalUnits}
+          </p>
+
+          <p
+            className="
+              mt-2
+              text-xs
+              text-neutral-500
+            "
+          >
+            Current stock
+          </p>
+        </div>
+
+        <div
+          className="
+            rounded-2xl
+            border
+            border-stone-200
+            bg-white
+            p-5
+          "
+        >
+          <p
+            className="
+              text-[10px]
+              uppercase
+              tracking-[0.2em]
+              text-neutral-400
+            "
+          >
+            Low Stock
+          </p>
+
+          <p
+            className="
+              mt-5
+              text-3xl
+              font-light
+              tracking-tight
+            "
+          >
+            {lowStock}
+          </p>
+
+          <p
+            className="
+              mt-2
+              text-xs
+              text-neutral-500
+            "
+          >
+            1–2 units remaining
+          </p>
+        </div>
+
+        <div
+          className="
+            rounded-2xl
+            border
+            border-stone-200
+            bg-white
+            p-5
+          "
+        >
+          <p
+            className="
+              text-[10px]
+              uppercase
+              tracking-[0.2em]
+              text-neutral-400
+            "
+          >
+            Out of Stock
+          </p>
+
+          <p
+            className="
+              mt-5
+              text-3xl
+              font-light
+              tracking-tight
+            "
+          >
+            {outOfStock}
+          </p>
+
+          <p
+            className="
+              mt-2
+              text-xs
+              text-neutral-500
+            "
+          >
+            No units remaining
+          </p>
+        </div>
+      </section>
+
+      {/* INVENTORY */}
+
+      <InventoryTable
+        inventory={inventory}
+      />
     </main>
   );
 }
