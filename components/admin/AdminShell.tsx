@@ -64,14 +64,6 @@ export default function AdminShell({
     useState(false);
 
   /*
-   * Close the mobile drawer whenever
-   * the route changes.
-   */
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  /*
    * Prevent the page behind the drawer
    * from scrolling while the mobile menu
    * is open.
