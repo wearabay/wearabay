@@ -1,8 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import type {
   AdminProductMedia,
@@ -17,23 +21,47 @@ import {
   updateAdminMediaAltTextAction,
 } from "./actions";
 
-type VariantFilter =
-  | "all"
-  | "general"
-  | number;
-
 type Props = {
-  product: {
-    id: number;
-    name: string;
-  };
+  productId: number;
   media: AdminProductMedia[];
   variants: AdminProductVariant[];
-  selectedVariant: VariantFilter;
+  selectedVariant: string;
 };
 
+function TypeBadge({
+  type,
+}: {
+  type: string;
+}) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-neutral-600">
+      {type}
+    </span>
+  );
+}
+
+function PrimaryBadge({
+  isPrimary,
+}: {
+  isPrimary: boolean;
+}) {
+  if (!isPrimary) {
+    return (
+      <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-neutral-400">
+        Secondary
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center rounded-full border border-neutral-900 bg-neutral-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-white">
+      Primary
+    </span>
+  );
+}
+
 export default function MediaTable({
-  product,
+  productId,
   media,
   variants,
   selectedVariant,
@@ -43,266 +71,325 @@ export default function MediaTable({
   const [search, setSearch] =
     useState("");
 
-  const [previewMedia, setPreviewMedia] =
-    useState<AdminProductMedia | null>(
-      null
-    );
+  const [
+    previewMedia,
+    setPreviewMedia,
+  ] = useState<AdminProductMedia | null>(
+    null,
+  );
 
-  const [editingId, setEditingId] =
-    useState<number | null>(null);
+  const [
+    editingId,
+    setEditingId,
+  ] = useState<number | null>(
+    null,
+  );
 
-  const [editingAltText, setEditingAltText] =
-    useState("");
+  const [
+    editingAltText,
+    setEditingAltText,
+  ] = useState("");
 
-  const [changingVariantId, setChangingVariantId] =
-    useState<number | null>(null);
+  const [
+    changingVariantId,
+    setChangingVariantId,
+  ] = useState<number | null>(
+    null,
+  );
 
-  const [changeVariantValue, setChangeVariantValue] =
-    useState<number | null>(null);
+  const [
+    changingVariantValue,
+    setChangingVariantValue,
+  ] = useState("");
 
-  const [processingId, setProcessingId] =
-    useState<number | null>(null);
+  const [
+    processingId,
+    setProcessingId,
+  ] = useState<number | null>(
+    null,
+  );
 
   const [error, setError] =
-    useState("");
+    useState<string | null>(null);
 
-  const filteredMedia = useMemo(() => {
-    let result = media;
+  const filteredMedia =
+    useMemo(() => {
+      const query =
+        search.trim().toLowerCase();
 
-    if (selectedVariant === "general") {
-      result = result.filter(
-        (item) =>
-          item.variantId === null
+      return media.filter(
+        (item) => {
+          if (
+            selectedVariant !==
+            "all"
+          ) {
+            if (
+              selectedVariant ===
+              "general"
+            ) {
+              if (
+                item.variantId !==
+                null
+              ) {
+                return false;
+              }
+            } else if (
+              item.variantId !==
+              Number(
+                selectedVariant,
+              )
+            ) {
+              return false;
+            }
+          }
+
+          if (!query) {
+            return true;
+          }
+
+          const variantText =
+            item.variant
+              ? `${item.variant.color} ${item.variant.size} ${item.variant.sku ?? ""}`
+              : "general";
+
+          return [
+            item.storagePath,
+            item.altText,
+            item.type,
+            variantText,
+          ]
+            .filter(Boolean)
+            .some((value) =>
+              String(value)
+                .toLowerCase()
+                .includes(query),
+            );
+        },
       );
-    } else if (
-      selectedVariant !== "all"
-    ) {
-      result = result.filter(
-        (item) =>
-          item.variantId ===
-          selectedVariant
-      );
-    }
-
-    const query =
-      search.trim().toLowerCase();
-
-    if (!query) {
-      return result;
-    }
-
-    return result.filter((item) => {
-      const variantText =
-        item.variant
-          ? `${item.variant.color} ${item.variant.size} ${item.variant.sku ?? ""}`
-          : "general product media";
-
-      return (
-        item.storagePath
-          .toLowerCase()
-          .includes(query) ||
-        (item.altText ?? "")
-          .toLowerCase()
-          .includes(query) ||
-        item.type
-          .toLowerCase()
-          .includes(query) ||
-        variantText
-          .toLowerCase()
-          .includes(query)
-      );
-    });
-  }, [
-    media,
-    search,
-    selectedVariant,
-  ]);
+    }, [
+      media,
+      search,
+      selectedVariant,
+    ]);
 
   useEffect(() => {
-    function handleKeyDown(
-      event: KeyboardEvent
-    ) {
+    if (!previewMedia) {
+      document.body.style.overflow =
+        "";
+      return;
+    }
+
+    document.body.style.overflow =
+      "hidden";
+
+    const handleKeyDown = (
+      event: KeyboardEvent,
+    ) => {
       if (event.key === "Escape") {
         setPreviewMedia(null);
       }
-    }
+    };
 
     window.addEventListener(
       "keydown",
-      handleKeyDown
+      handleKeyDown,
     );
 
     return () => {
+      document.body.style.overflow =
+        "";
+
       window.removeEventListener(
         "keydown",
-        handleKeyDown
+        handleKeyDown,
       );
-    };
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow =
-      previewMedia ? "hidden" : "";
-
-    return () => {
-      document.body.style.overflow = "";
     };
   }, [previewMedia]);
 
-  function startEditing(
-    item: AdminProductMedia
+  function startEdit(
+    item: AdminProductMedia,
   ) {
-    setError("");
     setEditingId(item.id);
     setEditingAltText(
-      item.altText ?? ""
+      item.altText ?? "",
     );
+    setError(null);
   }
 
-  function cancelEditing() {
+  function cancelEdit() {
     setEditingId(null);
     setEditingAltText("");
   }
 
-  function startChangingVariant(
-    item: AdminProductMedia
+  function startChangeVariant(
+    item: AdminProductMedia,
   ) {
-    setError("");
     setChangingVariantId(item.id);
-    setChangeVariantValue(
-      item.variantId
+
+    setChangingVariantValue(
+      item.variantId !== null
+        ? String(item.variantId)
+        : "general",
     );
+
+    setError(null);
   }
 
-  function cancelChangingVariant() {
+  function cancelChangeVariant() {
     setChangingVariantId(null);
-    setChangeVariantValue(null);
+    setChangingVariantValue("");
   }
 
-  async function handleSaveAltText(
-    mediaId: number
+  async function saveAltText(
+    item: AdminProductMedia,
   ) {
-    setProcessingId(mediaId);
-    setError("");
+    setProcessingId(item.id);
+    setError(null);
 
     try {
-      await updateAdminMediaAltTextAction({
-        productId: product.id,
-        mediaId,
-        altText:
-          editingAltText.trim() ||
-          null,
-      });
+      await updateAdminMediaAltTextAction(
+        {
+          productId,
+          mediaId: item.id,
+          altText:
+            editingAltText,
+        },
+      );
 
-      cancelEditing();
+      cancelEdit();
       router.refresh();
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : "Failed to update alt text."
+          : "Failed to update alt text.",
       );
     } finally {
       setProcessingId(null);
     }
   }
 
-  async function handleChangeVariant(
-    mediaId: number
+  async function changeVariant(
+    item: AdminProductMedia,
   ) {
-    setProcessingId(mediaId);
-    setError("");
-
-    try {
-      await changeAdminMediaVariantAction({
-        productId: product.id,
-        mediaId,
-        variantId:
-          changeVariantValue,
-      });
-
-      cancelChangingVariant();
-      router.refresh();
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to change media variant."
-      );
-    } finally {
-      setProcessingId(null);
-    }
-  }
-
-  async function handleSetPrimary(
-    mediaId: number
-  ) {
-    const target = media.find(
-      (item) => item.id === mediaId
-    );
+    let variantId:
+      | number
+      | null;
 
     if (
-      !target ||
-      target.isPrimary
+      changingVariantValue ===
+      "general"
     ) {
+      variantId = null;
+    } else {
+      const parsed = Number(
+        changingVariantValue,
+      );
+
+      if (
+        !Number.isInteger(
+          parsed,
+        ) ||
+        parsed <= 0
+      ) {
+        setError(
+          "Pilih variant terlebih dahulu.",
+        );
+        return;
+      }
+
+      variantId = parsed;
+    }
+
+    setProcessingId(item.id);
+    setError(null);
+
+    try {
+      await changeAdminMediaVariantAction(
+        {
+          productId,
+          mediaId: item.id,
+          variantId,
+        },
+      );
+
+      cancelChangeVariant();
+      router.refresh();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to change media variant.",
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+  async function setPrimary(
+    item: AdminProductMedia,
+  ) {
+    if (item.isPrimary) {
       return;
     }
 
-    setProcessingId(mediaId);
-    setError("");
+    setProcessingId(item.id);
+    setError(null);
 
     try {
-      await setAdminMediaPrimaryAction({
-        productId: product.id,
-        mediaId,
-      });
+      await setAdminMediaPrimaryAction(
+        {
+          productId,
+          mediaId: item.id,
+        },
+      );
 
       router.refresh();
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : "Failed to set primary media."
+          : "Failed to set primary media.",
       );
     } finally {
       setProcessingId(null);
     }
   }
 
-  async function handleReorder(
-    mediaId: number,
-    direction: "up" | "down"
+  async function reorder(
+    item: AdminProductMedia,
+    direction: "up" | "down",
   ) {
-    setProcessingId(mediaId);
-    setError("");
+    setProcessingId(item.id);
+    setError(null);
 
     try {
-      await reorderAdminMediaAction({
-        productId: product.id,
-        mediaId,
-        direction,
-      });
+      await reorderAdminMediaAction(
+        {
+          productId,
+          mediaId: item.id,
+          direction,
+        },
+      );
 
       router.refresh();
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : "Failed to reorder media."
+          : "Failed to reorder media.",
       );
     } finally {
       setProcessingId(null);
     }
   }
 
-  async function handleDelete(
-    item: AdminProductMedia
+  async function deleteMedia(
+    item: AdminProductMedia,
   ) {
     const confirmed =
       window.confirm(
-        item.isPrimary
-          ? "Media ini adalah Primary. Jika masih ada media lain pada variant ini, pilih media lain sebagai Primary terlebih dahulu. Hapus media ini?"
-          : "Hapus media ini secara permanen dari product dan Storage?"
+        "Hapus media ini? Tindakan ini tidak dapat dibatalkan.",
       );
 
     if (!confirmed) {
@@ -310,669 +397,757 @@ export default function MediaTable({
     }
 
     setProcessingId(item.id);
-    setError("");
+    setError(null);
 
     try {
-      await deleteAdminMediaAction({
-        productId: product.id,
-        mediaId: item.id,
-      });
-
-      if (
-        previewMedia?.id === item.id
-      ) {
-        setPreviewMedia(null);
-      }
-
-      if (
-        editingId === item.id
-      ) {
-        cancelEditing();
-      }
-
-      if (
-        changingVariantId ===
-        item.id
-      ) {
-        cancelChangingVariant();
-      }
+      await deleteAdminMediaAction(
+        {
+          productId,
+          mediaId: item.id,
+        },
+      );
 
       router.refresh();
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : "Failed to delete media."
+          : "Failed to delete media.",
       );
     } finally {
       setProcessingId(null);
     }
   }
 
-  return (
-    <>
-      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-neutral-500">
-          {filteredMedia.length} media
-        </p>
+  function renderAltEditor(
+    item: AdminProductMedia,
+  ) {
+    const isEditing =
+      editingId === item.id;
 
-        <div className="w-full sm:max-w-sm">
-          <input
-            type="search"
-            value={search}
-            onChange={(event) =>
-              setSearch(
-                event.target.value
-              )
+    if (!isEditing) {
+      return (
+        <div className="max-w-xs">
+          <p className="line-clamp-2 text-sm text-neutral-600">
+            {item.altText || "—"}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        <textarea
+          value={editingAltText}
+          onChange={(event) =>
+            setEditingAltText(
+              event.target.value,
+            )
+          }
+          rows={3}
+          className="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none transition focus:border-neutral-900"
+        />
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={
+              processingId ===
+              item.id
             }
-            placeholder="Search media..."
-            className="h-11 w-full rounded-full border border-neutral-200 bg-white px-5 text-sm outline-none transition placeholder:text-neutral-400 focus:border-neutral-400"
-          />
+            onClick={() =>
+              saveAltText(item)
+            }
+            className="rounded-lg bg-neutral-900 px-3 py-2 text-xs text-white disabled:opacity-50"
+          >
+            Save
+          </button>
+
+          <button
+            type="button"
+            disabled={
+              processingId ===
+              item.id
+            }
+            onClick={cancelEdit}
+            className="rounded-lg border border-stone-200 px-3 py-2 text-xs text-neutral-600 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderVariantEditor(
+    item: AdminProductMedia,
+  ) {
+    const isChanging =
+      changingVariantId ===
+      item.id;
+
+    if (!isChanging) {
+      if (!item.variant) {
+        return (
+          <span className="text-sm text-neutral-400">
+            General
+          </span>
+        );
+      }
+
+      return (
+        <div>
+          <p className="text-sm text-neutral-800">
+            {item.variant.color}
+          </p>
+
+          <p className="mt-1 text-xs text-neutral-400">
+            {item.variant.size}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        <select
+          value={
+            changingVariantValue
+          }
+          onChange={(event) =>
+            setChangingVariantValue(
+              event.target.value,
+            )
+          }
+          className="h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm outline-none focus:border-neutral-900"
+        >
+          <option value="general">
+            General Product Media
+          </option>
+
+          {variants
+            .filter(
+              (variant) =>
+                variant.status ===
+                "active",
+            )
+            .map((variant) => (
+              <option
+                key={variant.id}
+                value={String(
+                  variant.id,
+                )}
+              >
+                {variant.color} /{" "}
+                {variant.size}
+                {variant.sku
+                  ? ` · ${variant.sku}`
+                  : ""}
+              </option>
+            ))}
+        </select>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={
+              processingId ===
+              item.id
+            }
+            onClick={() =>
+              changeVariant(item)
+            }
+            className="rounded-lg bg-neutral-900 px-3 py-2 text-xs text-white disabled:opacity-50"
+          >
+            Save
+          </button>
+
+          <button
+            type="button"
+            disabled={
+              processingId ===
+              item.id
+            }
+            onClick={
+              cancelChangeVariant
+            }
+            className="rounded-lg border border-stone-200 px-3 py-2 text-xs text-neutral-600 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <section className="space-y-4">
+      <div className="rounded-2xl border border-stone-200 bg-white p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-400">
+              Product Media
+            </p>
+
+            <p className="mt-2 text-sm text-neutral-600">
+              {filteredMedia.length}{" "}
+              media ditampilkan
+            </p>
+          </div>
+
+          <div className="w-full lg:max-w-md">
+            <label
+              htmlFor="product-media-search"
+              className="text-[10px] uppercase tracking-[0.2em] text-neutral-400"
+            >
+              Search
+            </label>
+
+            <input
+              id="product-media-search"
+              type="search"
+              value={search}
+              onChange={(event) =>
+                setSearch(
+                  event.target.value,
+                )
+              }
+              placeholder="Search alt text, path, type, variant..."
+              className="mt-2 h-11 w-full rounded-xl border border-stone-200 px-4 text-sm outline-none transition placeholder:text-neutral-400 focus:border-neutral-900"
+            />
+          </div>
         </div>
       </div>
 
       {error && (
-        <div className="mb-5 flex items-start justify-between gap-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
-          <p>{error}</p>
-
-          <button
-            type="button"
-            onClick={() => setError("")}
-            className="shrink-0 text-neutral-400 hover:text-black"
-          >
-            ×
-          </button>
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+          {error}
         </div>
       )}
 
-      {filteredMedia.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-neutral-300 px-6 py-16 text-center">
-          <p className="text-sm font-medium">
-            No media found.
+      {filteredMedia.length ===
+      0 ? (
+        <section className="rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center">
+          <p className="text-sm text-neutral-600">
+            Tidak ada media yang
+            cocok.
           </p>
 
-          <p className="mt-2 text-sm text-neutral-500">
-            Try another variant or search
-            keyword.
-          </p>
-        </div>
+          {search && (
+            <button
+              type="button"
+              onClick={() =>
+                setSearch("")
+              }
+              className="mt-4 text-sm underline underline-offset-4"
+            >
+              Clear search
+            </button>
+          )}
+        </section>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1450px] border-collapse">
-              <thead>
-                <tr className="border-b border-neutral-200 text-left">
-                  <th className="px-5 py-4 text-xs font-medium uppercase tracking-[0.14em] text-neutral-400">
-                    #
-                  </th>
+        <>
+          <section className="space-y-3 lg:hidden">
+            {filteredMedia.map(
+              (item) => (
+                <article
+                  key={item.id}
+                  className="rounded-2xl border border-stone-200 bg-white p-4"
+                >
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPreviewMedia(
+                          item,
+                        )
+                      }
+                      className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-stone-100"
+                    >
+                      {item.type ===
+                        "image" &&
+                      item.publicUrl ? (
+                        <Image
+                          src={
+                            item.publicUrl
+                          }
+                          alt={
+                            item.altText ||
+                            item.storagePath
+                          }
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-[0.12em] text-neutral-400">
+                          {item.type}
+                        </div>
+                      )}
+                    </button>
 
-                  <th className="px-5 py-4 text-xs font-medium uppercase tracking-[0.14em] text-neutral-400">
-                    Preview
-                  </th>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <TypeBadge
+                          type={
+                            item.type
+                          }
+                        />
 
-                  <th className="px-5 py-4 text-xs font-medium uppercase tracking-[0.14em] text-neutral-400">
-                    Variant
-                  </th>
+                        <PrimaryBadge
+                          isPrimary={
+                            item.isPrimary
+                          }
+                        />
+                      </div>
 
-                  <th className="px-5 py-4 text-xs font-medium uppercase tracking-[0.14em] text-neutral-400">
-                    Type
-                  </th>
+                      <div className="mt-3">
+                        {renderVariantEditor(
+                          item,
+                        )}
+                      </div>
 
-                  <th className="px-5 py-4 text-xs font-medium uppercase tracking-[0.14em] text-neutral-400">
-                    Alt Text
-                  </th>
+                      <div className="mt-3">
+                        {renderAltEditor(
+                          item,
+                        )}
+                      </div>
 
-                  <th className="px-5 py-4 text-xs font-medium uppercase tracking-[0.14em] text-neutral-400">
-                    Status
-                  </th>
+                      <p className="mt-3 break-all text-xs text-neutral-400">
+                        {
+                          item.storagePath
+                        }
+                      </p>
+                    </div>
+                  </div>
 
-                  <th className="px-5 py-4 text-right text-xs font-medium uppercase tracking-[0.14em] text-neutral-400">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
+                  <div className="mt-4 flex flex-wrap gap-2 border-t border-stone-100 pt-4">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPreviewMedia(
+                          item,
+                        )
+                      }
+                      className="rounded-lg border border-stone-200 px-3 py-2 text-xs text-neutral-700"
+                    >
+                      Preview
+                    </button>
 
-              <tbody>
-                {filteredMedia.map(
-                  (item, index) => {
-                    const isProcessing =
-                      processingId ===
-                      item.id;
+                    <button
+                      type="button"
+                      disabled={
+                        processingId ===
+                        item.id
+                      }
+                      onClick={() =>
+                        reorder(
+                          item,
+                          "up",
+                        )
+                      }
+                      className="rounded-lg border border-stone-200 px-3 py-2 text-xs disabled:opacity-40"
+                    >
+                      ↑
+                    </button>
 
-                    const isEditing =
-                      editingId ===
-                      item.id;
+                    <button
+                      type="button"
+                      disabled={
+                        processingId ===
+                        item.id
+                      }
+                      onClick={() =>
+                        reorder(
+                          item,
+                          "down",
+                        )
+                      }
+                      className="rounded-lg border border-stone-200 px-3 py-2 text-xs disabled:opacity-40"
+                    >
+                      ↓
+                    </button>
 
-                    const isChangingVariant =
-                      changingVariantId ===
-                      item.id;
+                    {!item.isPrimary && (
+                      <button
+                        type="button"
+                        disabled={
+                          processingId ===
+                          item.id
+                        }
+                        onClick={() =>
+                          setPrimary(
+                            item,
+                          )
+                        }
+                        className="rounded-lg border border-stone-200 px-3 py-2 text-xs disabled:opacity-40"
+                      >
+                        Set Primary
+                      </button>
+                    )}
 
-                    return (
+                    {editingId !==
+                      item.id && (
+                      <button
+                        type="button"
+                        disabled={
+                          processingId ===
+                          item.id
+                        }
+                        onClick={() =>
+                          startEdit(
+                            item,
+                          )
+                        }
+                        className="rounded-lg border border-stone-200 px-3 py-2 text-xs disabled:opacity-40"
+                      >
+                        Edit Alt
+                      </button>
+                    )}
+
+                    {changingVariantId !==
+                      item.id && (
+                      <button
+                        type="button"
+                        disabled={
+                          processingId ===
+                          item.id
+                        }
+                        onClick={() =>
+                          startChangeVariant(
+                            item,
+                          )
+                        }
+                        className="rounded-lg border border-stone-200 px-3 py-2 text-xs disabled:opacity-40"
+                      >
+                        Change Variant
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={
+                        processingId ===
+                        item.id
+                      }
+                      onClick={() =>
+                        deleteMedia(
+                          item,
+                        )
+                      }
+                      className="rounded-lg border border-red-200 px-3 py-2 text-xs text-red-600 disabled:opacity-40"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ),
+            )}
+          </section>
+
+          <section className="hidden overflow-hidden rounded-2xl border border-stone-200 bg-white lg:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1450px] text-left text-sm">
+                <thead className="border-b border-stone-200 bg-stone-50/70">
+                  <tr>
+                    <th className="px-4 py-4 font-normal text-neutral-500">
+                      #
+                    </th>
+
+                    <th className="px-4 py-4 font-normal text-neutral-500">
+                      Preview
+                    </th>
+
+                    <th className="px-4 py-4 font-normal text-neutral-500">
+                      Variant
+                    </th>
+
+                    <th className="px-4 py-4 font-normal text-neutral-500">
+                      Type
+                    </th>
+
+                    <th className="px-4 py-4 font-normal text-neutral-500">
+                      Alt Text
+                    </th>
+
+                    <th className="px-4 py-4 font-normal text-neutral-500">
+                      Status
+                    </th>
+
+                    <th className="px-4 py-4 font-normal text-neutral-500">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-stone-100">
+                  {filteredMedia.map(
+                    (item, index) => (
                       <tr
                         key={item.id}
-                        className="border-b border-neutral-100 last:border-b-0"
+                        className="align-top"
                       >
-                        <td className="px-5 py-4 align-top text-sm text-neutral-500">
+                        <td className="px-4 py-5 text-xs text-neutral-400">
                           {index + 1}
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="px-4 py-5">
                           <button
                             type="button"
                             onClick={() =>
                               setPreviewMedia(
-                                item
+                                item,
                               )
                             }
-                            className="group relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50"
+                            className="relative h-20 w-20 overflow-hidden rounded-xl bg-stone-100"
                           >
                             {item.type ===
-                            "video" ? (
-                              <video
-                                src={
-                                  item.publicUrl
-                                }
-                                muted
-                                playsInline
-                                className="block h-full w-full object-contain"
-                              />
-                            ) : (
+                              "image" &&
+                            item.publicUrl ? (
                               <Image
                                 src={
                                   item.publicUrl
                                 }
                                 alt={
-                                  item.altText ??
-                                  product.name
+                                  item.altText ||
+                                  item.storagePath
                                 }
                                 fill
-                                sizes="112px"
-                                className="object-contain transition duration-200 group-hover:scale-105"
+                                sizes="80px"
+                                className="object-cover"
                               />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-[0.1em] text-neutral-400">
+                                {item.type}
+                              </div>
                             )}
-
-                            <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 text-xs font-medium text-white opacity-0 transition group-hover:bg-black/25 group-hover:opacity-100">
-                              Preview
-                            </span>
                           </button>
                         </td>
 
-                        <td className="px-5 py-4 align-top">
-                          {isChangingVariant ? (
-                            <div className="min-w-[260px] space-y-2">
-                              <select
-                                value={
-                                  changeVariantValue ===
-                                  null
-                                    ? "general"
-                                    : String(
-                                        changeVariantValue
-                                      )
-                                }
-                                onChange={(
-                                  event
-                                ) => {
-                                  const value =
-                                    event
-                                      .target
-                                      .value;
-
-                                  setChangeVariantValue(
-                                    value ===
-                                      "general"
-                                      ? null
-                                      : Number(
-                                          value
-                                        )
-                                  );
-                                }}
-                                disabled={
-                                  isProcessing
-                                }
-                                className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm outline-none focus:border-black disabled:bg-neutral-50"
-                              >
-                                <option value="general">
-                                  General Product Media
-                                </option>
-
-                                {variants.map(
-                                  (
-                                    variant
-                                  ) => (
-                                    <option
-                                      key={
-                                        variant.id
-                                      }
-                                      value={String(
-                                        variant.id
-                                      )}
-                                    >
-                                      {
-                                        variant.color
-                                      }{" "}
-                                      ·{" "}
-                                      {
-                                        variant.size
-                                      }
-                                      {variant.sku
-                                        ? ` · ${variant.sku}`
-                                        : ""}
-                                    </option>
-                                  )
-                                )}
-                              </select>
-
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleChangeVariant(
-                                      item.id
-                                    )
-                                  }
-                                  disabled={
-                                    isProcessing ||
-                                    changeVariantValue ===
-                                      item.variantId
-                                  }
-                                  className="rounded-full bg-black px-4 py-2 text-xs font-medium text-white hover:bg-neutral-800 disabled:opacity-40"
-                                >
-                                  {isProcessing
-                                    ? "Saving..."
-                                    : "Save"}
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={
-                                    cancelChangingVariant
-                                  }
-                                  disabled={
-                                    isProcessing
-                                  }
-                                  className="rounded-full border border-neutral-200 px-4 py-2 text-xs font-medium text-neutral-600 hover:border-neutral-400 disabled:opacity-40"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          ) : item.variant ? (
-                            <>
-                              <p className="font-medium">
-                                {
-                                  item
-                                    .variant
-                                    .color
-                                }
-                              </p>
-
-                              <p className="mt-1 text-xs text-neutral-500">
-                                {
-                                  item
-                                    .variant
-                                    .size
-                                }
-                              </p>
-
-                              {item.variant
-                                .sku && (
-                                <p className="mt-1 text-xs text-neutral-400">
-                                  {
-                                    item
-                                      .variant
-                                      .sku
-                                  }
-                                </p>
-                              )}
-
-                              {variants.length >
-                                0 && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    startChangingVariant(
-                                      item
-                                    )
-                                  }
-                                  disabled={
-                                    processingId !==
-                                    null
-                                  }
-                                  className="mt-3 text-xs font-medium text-neutral-500 hover:text-black hover:underline disabled:opacity-40"
-                                >
-                                  Change Variant
-                                </button>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-sm text-neutral-500">
-                                General Product
-                              </span>
-
-                              {variants.length >
-                                0 && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    startChangingVariant(
-                                      item
-                                    )
-                                  }
-                                  disabled={
-                                    processingId !==
-                                    null
-                                  }
-                                  className="mt-3 block text-xs font-medium text-neutral-500 hover:text-black hover:underline disabled:opacity-40"
-                                >
-                                  Change Variant
-                                </button>
-                              )}
-                            </>
+                        <td className="px-4 py-5">
+                          {renderVariantEditor(
+                            item,
                           )}
                         </td>
 
-                        <td className="px-5 py-4 align-top">
-                          <span className="rounded-full border border-neutral-200 px-3 py-1 text-xs capitalize">
-                            {item.type}
-                          </span>
-
-                          <p className="mt-3 max-w-[260px] break-all text-xs text-neutral-400">
-                            {item.storagePath}
-                          </p>
+                        <td className="px-4 py-5">
+                          <TypeBadge
+                            type={
+                              item.type
+                            }
+                          />
                         </td>
 
-                        <td className="w-[300px] px-5 py-4 align-top">
-                          {isEditing ? (
-                            <div className="space-y-2">
-                              <input
-                                type="text"
-                                value={
-                                  editingAltText
-                                }
-                                onChange={(
-                                  event
-                                ) =>
-                                  setEditingAltText(
-                                    event
-                                      .target
-                                      .value
-                                  )
-                                }
-                                disabled={
-                                  isProcessing
-                                }
-                                autoFocus
-                                className="h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm outline-none focus:border-black disabled:bg-neutral-50"
-                              />
-
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleSaveAltText(
-                                      item.id
-                                    )
-                                  }
-                                  disabled={
-                                    isProcessing
-                                  }
-                                  className="rounded-full bg-black px-4 py-2 text-xs font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
-                                >
-                                  {isProcessing
-                                    ? "Saving..."
-                                    : "Save"}
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={
-                                    cancelEditing
-                                  }
-                                  disabled={
-                                    isProcessing
-                                  }
-                                  className="rounded-full border border-neutral-200 px-4 py-2 text-xs font-medium text-neutral-600 hover:border-neutral-400 disabled:opacity-50"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div>
-                              <p className="text-sm text-neutral-700">
-                                {item.altText ||
-                                  "—"}
-                              </p>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  startEditing(
-                                    item
-                                  )
-                                }
-                                disabled={
-                                  processingId !==
-                                  null
-                                }
-                                className="mt-2 text-xs font-medium text-neutral-500 hover:text-black hover:underline disabled:opacity-40"
-                              >
-                                Edit Alt Text
-                              </button>
-                            </div>
+                        <td className="px-4 py-5">
+                          {renderAltEditor(
+                            item,
                           )}
                         </td>
 
-                        <td className="px-5 py-4 align-top">
-                          {item.isPrimary ? (
-                            <span className="inline-flex rounded-full bg-black px-3 py-1 text-xs font-medium text-white">
-                              Primary
-                            </span>
-                          ) : (
-                            <span className="text-xs text-neutral-400">
-                              Gallery
-                            </span>
-                          )}
+                        <td className="px-4 py-5">
+                          <PrimaryBadge
+                            isPrimary={
+                              item.isPrimary
+                            }
+                          />
                         </td>
 
-                        <td className="px-5 py-4 align-top">
-                          <div className="flex flex-wrap justify-end gap-2">
-                            <div className="flex gap-1">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleReorder(
-                                    item.id,
-                                    "up"
-                                  )
-                                }
-                                disabled={
-                                  index ===
-                                    0 ||
-                                  processingId !==
-                                    null
-                                }
-                                title="Move up"
-                                className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-sm hover:border-black hover:bg-neutral-50 disabled:opacity-30"
-                              >
-                                ↑
-                              </button>
+                        <td className="px-4 py-5">
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={
+                                processingId ===
+                                item.id
+                              }
+                              onClick={() =>
+                                reorder(
+                                  item,
+                                  "up",
+                                )
+                              }
+                              className="rounded-lg border border-stone-200 px-3 py-2 text-xs disabled:opacity-40"
+                            >
+                              ↑
+                            </button>
 
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleReorder(
-                                    item.id,
-                                    "down"
-                                  )
-                                }
-                                disabled={
-                                  index ===
-                                    filteredMedia.length -
-                                      1 ||
-                                  processingId !==
-                                    null
-                                }
-                                title="Move down"
-                                className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-sm hover:border-black hover:bg-neutral-50 disabled:opacity-30"
-                              >
-                                ↓
-                              </button>
-                            </div>
+                            <button
+                              type="button"
+                              disabled={
+                                processingId ===
+                                item.id
+                              }
+                              onClick={() =>
+                                reorder(
+                                  item,
+                                  "down",
+                                )
+                              }
+                              className="rounded-lg border border-stone-200 px-3 py-2 text-xs disabled:opacity-40"
+                            >
+                              ↓
+                            </button>
 
                             {!item.isPrimary && (
                               <button
                                 type="button"
+                                disabled={
+                                  processingId ===
+                                  item.id
+                                }
                                 onClick={() =>
-                                  handleSetPrimary(
-                                    item.id
+                                  setPrimary(
+                                    item,
                                   )
                                 }
-                                disabled={
-                                  processingId !==
-                                  null
-                                }
-                                className="rounded-full border border-neutral-300 px-4 py-2 text-xs font-medium hover:border-black hover:bg-neutral-50 disabled:opacity-40"
+                                className="rounded-lg border border-stone-200 px-3 py-2 text-xs disabled:opacity-40"
                               >
-                                {isProcessing
-                                  ? "Updating..."
-                                  : "Set Primary"}
+                                Set Primary
+                              </button>
+                            )}
+
+                            {editingId !==
+                              item.id && (
+                              <button
+                                type="button"
+                                disabled={
+                                  processingId ===
+                                  item.id
+                                }
+                                onClick={() =>
+                                  startEdit(
+                                    item,
+                                  )
+                                }
+                                className="rounded-lg border border-stone-200 px-3 py-2 text-xs disabled:opacity-40"
+                              >
+                                Edit Alt
+                              </button>
+                            )}
+
+                            {changingVariantId !==
+                              item.id && (
+                              <button
+                                type="button"
+                                disabled={
+                                  processingId ===
+                                  item.id
+                                }
+                                onClick={() =>
+                                  startChangeVariant(
+                                    item,
+                                  )
+                                }
+                                className="rounded-lg border border-stone-200 px-3 py-2 text-xs disabled:opacity-40"
+                              >
+                                Change Variant
                               </button>
                             )}
 
                             <button
                               type="button"
+                              disabled={
+                                processingId ===
+                                item.id
+                              }
                               onClick={() =>
-                                startEditing(
-                                  item
+                                deleteMedia(
+                                  item,
                                 )
                               }
-                              disabled={
-                                processingId !==
-                                null
-                              }
-                              className="rounded-full border border-neutral-200 px-4 py-2 text-xs font-medium text-neutral-600 hover:border-neutral-400 hover:text-black disabled:opacity-40"
+                              className="rounded-lg border border-red-200 px-3 py-2 text-xs text-red-600 disabled:opacity-40"
                             >
-                              Edit
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleDelete(
-                                  item
-                                )
-                              }
-                              disabled={
-                                processingId !==
-                                null
-                              }
-                              className="rounded-full border border-neutral-200 px-4 py-2 text-xs font-medium text-neutral-600 hover:border-neutral-400 hover:text-black disabled:opacity-40"
-                            >
-                              {isProcessing
-                                ? "Processing..."
-                                : "Delete"}
+                              Delete
                             </button>
                           </div>
                         </td>
                       </tr>
-                    );
-                  }
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
       )}
 
       {previewMedia && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 sm:p-8"
-          role="dialog"
-          aria-modal="true"
-          onMouseDown={(event) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              setPreviewMedia(null);
-            }
-          }}
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <button
             type="button"
+            aria-label="Close preview"
             onClick={() =>
               setPreviewMedia(null)
             }
-            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-black/30 text-2xl text-white hover:bg-black/50"
-            aria-label="Close preview"
-          >
-            ×
-          </button>
+            className="absolute inset-0"
+          />
 
-          <div className="flex max-h-[90vh] max-w-[94vw] flex-col items-center">
-            {previewMedia.type ===
-            "video" ? (
-              <video
-                src={
-                  previewMedia.publicUrl
+          <div className="relative z-10 max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {
+                    previewMedia.storagePath
+                  }
+                </p>
+
+                <p className="mt-1 text-xs text-neutral-400">
+                  {
+                    previewMedia.type
+                  }
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setPreviewMedia(null)
                 }
-                controls
-                autoPlay
-                className="max-h-[82vh] max-w-[90vw] rounded-xl object-contain"
-              />
-            ) : (
-              <div className="relative h-[82vh] w-[90vw] max-w-[1200px]">
-                <Image
+                aria-label="Close preview"
+                className="ml-4 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-stone-200 text-lg transition hover:border-neutral-900"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex max-h-[75vh] items-center justify-center overflow-auto bg-stone-50 p-5">
+              {previewMedia.type ===
+                "image" &&
+              previewMedia.publicUrl ? (
+                <div className="relative h-[70vh] w-full">
+                  <Image
+                    src={
+                      previewMedia.publicUrl
+                    }
+                    alt={
+                      previewMedia.altText ||
+                      previewMedia.storagePath
+                    }
+                    fill
+                    sizes="90vw"
+                    className="object-contain"
+                  />
+                </div>
+              ) : previewMedia.type ===
+                  "video" &&
+                previewMedia.publicUrl ? (
+                <video
                   src={
                     previewMedia.publicUrl
                   }
-                  alt={
-                    previewMedia.altText ??
-                    product.name
-                  }
-                  fill
-                  sizes="90vw"
-                  className="rounded-xl object-contain"
+                  controls
+                  className="max-h-[70vh] max-w-full"
                 />
-              </div>
-            )}
-
-            <div className="mt-4 max-w-[90vw] text-center text-white">
-              <p className="text-sm font-medium">
-                {product.name}
-              </p>
-
-              {previewMedia.variant && (
-                <p className="mt-1 text-sm text-white/80">
-                  {
-                    previewMedia
-                      .variant
-                      .color
-                  }{" "}
-                  ·{" "}
-                  {
-                    previewMedia
-                      .variant
-                      .size
-                  }
-                </p>
+              ) : (
+                <div className="py-20 text-sm text-neutral-400">
+                  Preview tidak tersedia
+                  untuk media ini.
+                </div>
               )}
-
-              {previewMedia.altText && (
-                <p className="mt-1 text-sm text-white/70">
-                  {previewMedia.altText}
-                </p>
-              )}
-
-              <p className="mt-1 break-all text-xs text-white/50">
-                {previewMedia.storagePath}
-              </p>
             </div>
           </div>
         </div>
       )}
-    </>
+    </section>
   );
 }
