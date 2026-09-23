@@ -53,6 +53,33 @@ function formatStatusLabel(
     );
 }
 
+function formatOrderDate(
+  value: string
+) {
+  if (!value) {
+    return "—";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  const day = String(
+    date.getUTCDate()
+  ).padStart(2, "0");
+
+  const month = String(
+    date.getUTCMonth() + 1
+  ).padStart(2, "0");
+
+  const year =
+    date.getUTCFullYear();
+
+  return `${day}/${month}/${year}`;
+}
+
 function getStatusClassName(
   status: Order["status"]
 ) {
@@ -178,9 +205,7 @@ export default function OrdersTable({
           <div className="relative w-full lg:max-w-md">
             <label
               htmlFor="order-search"
-              className="
-                sr-only
-              "
+              className="sr-only"
             >
               Search order number
             </label>
@@ -219,9 +244,7 @@ export default function OrdersTable({
           <div className="w-full lg:w-auto">
             <label
               htmlFor="order-status-filter"
-              className="
-                sr-only
-              "
+              className="sr-only"
             >
               Filter orders by status
             </label>
@@ -441,10 +464,8 @@ export default function OrdersTable({
                               text-neutral-400
                             "
                           >
-                            {new Date(
+                            {formatOrderDate(
                               order.createdAt
-                            ).toLocaleDateString(
-                              "en-GB"
                             )}
                           </span>
                         </div>
