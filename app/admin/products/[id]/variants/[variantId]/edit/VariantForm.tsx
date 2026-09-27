@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import type { AdminProductVariant } from "@/lib/admin-variants";
 
-import { updateAdminVariantAction } from "../actions";
+import { updateAdminVariantAction } from "../../actions";
 
 type Props = {
   productId: number;
@@ -35,7 +35,12 @@ export default function VariantForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+
+  function selectInputValue(
+    event: React.FocusEvent<HTMLInputElement>
+  ) {
+    event.currentTarget.select();
+  }
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -43,7 +48,6 @@ export default function VariantForm({
     event.preventDefault();
 
     setError("");
-    setSuccess(false);
 
     const parsedPrice = Number(price);
 
@@ -102,14 +106,16 @@ export default function VariantForm({
         status,
       });
 
-      setSuccess(true);
+      window.location.assign(
+        `/admin/products/${productId}/variants`
+      );
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
           : "Failed to update variant."
       );
-    } finally {
+
       setIsSubmitting(false);
     }
   }
@@ -235,23 +241,24 @@ export default function VariantForm({
               </label>
 
               <div className="relative">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-neutral-400">
-                  Rp
-                </span>
+  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-neutral-400">
+    Rp
+  </span>
 
-                <input
-                  id="price"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={price}
-                  onChange={(event) =>
-                    setPrice(event.target.value)
-                  }
-                  className="h-11 w-full rounded-xl border border-stone-200 bg-white pl-11 pr-4 text-sm text-neutral-900 outline-none transition focus:border-neutral-500"
-                  required
-                />
-              </div>
+  <input
+    id="price"
+    type="number"
+    min="0"
+    step="1"
+    value={price}
+    onFocus={selectInputValue}
+    onChange={(event) =>
+      setPrice(event.target.value)
+    }
+    className="h-11 w-full rounded-xl border border-stone-200 bg-white px-4 pl-12 text-sm text-neutral-900 outline-none transition focus:border-neutral-500"
+    required
+  />
+</div>
             </div>
 
             <div>
@@ -263,22 +270,23 @@ export default function VariantForm({
               </label>
 
               <div className="relative">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-neutral-400">
-                  Rp
-                </span>
+  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-neutral-400">
+    Rp
+  </span>
 
-                <input
-                  id="compareAtPrice"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={compareAtPrice}
-                  onChange={(event) =>
-                    setCompareAtPrice(event.target.value)
-                  }
-                  className="h-11 w-full rounded-xl border border-stone-200 bg-white pl-11 pr-4 text-sm text-neutral-900 outline-none transition focus:border-neutral-500"
-                />
-              </div>
+  <input
+    id="compareAtPrice"
+    type="number"
+    min="0"
+    step="1"
+    value={compareAtPrice}
+    onFocus={selectInputValue}
+    onChange={(event) =>
+      setCompareAtPrice(event.target.value)
+    }
+    className="h-11 w-full rounded-xl border border-stone-200 bg-white px-4 pl-12 text-sm text-neutral-900 outline-none transition focus:border-neutral-500"
+  />
+</div>
 
               <p className="mt-2 text-xs text-neutral-400">
                 Optional reference price.
@@ -299,6 +307,7 @@ export default function VariantForm({
                 min="0"
                 step="1"
                 value={stock}
+                onFocus={selectInputValue}
                 onChange={(event) =>
                   setStock(event.target.value)
                 }
@@ -334,22 +343,13 @@ export default function VariantForm({
         </div>
       </section>
 
-      {/* Feedback */}
+      {/* Error */}
       {error && (
         <div
           role="alert"
           className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-neutral-700"
         >
           {error}
-        </div>
-      )}
-
-      {success && (
-        <div
-          role="status"
-          className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-neutral-700"
-        >
-          Variant updated successfully.
         </div>
       )}
 
@@ -360,7 +360,7 @@ export default function VariantForm({
             href={`/admin/products/${productId}/variants`}
             className="inline-flex h-11 items-center justify-center rounded-full border border-stone-200 bg-white px-6 text-xs font-medium text-neutral-700 transition hover:border-neutral-400 hover:text-neutral-900"
           >
-            Back to Variants
+            Cancel
           </Link>
 
           <button
