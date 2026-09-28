@@ -33,7 +33,9 @@ function SectionHeader({
 }) {
   return (
     <div className="mb-6">
-      <h2 className="text-base font-medium text-neutral-900">{title}</h2>
+      <h2 className="text-base font-medium text-neutral-900">
+        {title}
+      </h2>
 
       <p className="mt-1 max-w-2xl text-sm leading-6 text-neutral-500">
         {description}
@@ -49,7 +51,9 @@ export default function ProductEditForm({
   const [slug, setSlug] = useState(product.slug);
   const [category, setCategory] = useState(product.category);
   const [badge, setBadge] = useState(product.badge ?? "");
-  const [description, setDescription] = useState(product.description);
+  const [description, setDescription] = useState(
+    product.description
+  );
 
   const [features, setFeatures] = useState(
     product.features.join("\n")
@@ -67,13 +71,18 @@ export default function ProductEditForm({
           ]
     );
 
-  const [sizeGuide, setSizeGuide] = useState(product.sizeGuide);
+  const [sizeGuide, setSizeGuide] = useState(
+    product.sizeGuide
+  );
+
   const [shippingReturns, setShippingReturns] = useState(
     product.shippingReturns
   );
+
   const [careInstructions, setCareInstructions] = useState(
     product.careInstructions
   );
+
   const [craftsmanship, setCraftsmanship] = useState(
     product.craftsmanship
   );
@@ -84,7 +93,6 @@ export default function ProductEditForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   function updateSpecification(
     index: number,
@@ -136,7 +144,6 @@ export default function ProductEditForm({
     event.preventDefault();
 
     setError("");
-    setSuccess(false);
 
     const trimmedName = name.trim();
     const trimmedSlug = slug.trim();
@@ -185,14 +192,14 @@ export default function ProductEditForm({
         status,
       });
 
-      setSuccess(true);
+      window.location.assign("/admin/products");
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
           : "Failed to update product."
       );
-    } finally {
+
       setIsSubmitting(false);
     }
   }
@@ -617,15 +624,6 @@ export default function ProductEditForm({
           className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-neutral-700"
         >
           {error}
-        </div>
-      )}
-
-      {success && !error && (
-        <div
-          role="status"
-          className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-neutral-700"
-        >
-          Product updated successfully.
         </div>
       )}
 
