@@ -32,11 +32,31 @@ function statusLabel(status: AdminProductVariant["status"]) {
 }
 
 function statusClass(status: AdminProductVariant["status"]) {
-  if (status === "active") {
-    return "bg-neutral-100 text-neutral-900";
-  }
+  switch (status) {
+    case "active":
+      return "border-green-200 bg-green-50 text-green-700";
 
-  return "bg-neutral-50 text-neutral-400";
+    case "inactive":
+      return "border-stone-200 bg-stone-100 text-neutral-500";
+
+    default:
+      return "border-stone-200 bg-stone-50 text-neutral-600";
+  }
+}
+
+function statusDotClass(
+  status: AdminProductVariant["status"]
+) {
+  switch (status) {
+    case "active":
+      return "bg-green-500";
+
+    case "inactive":
+      return "bg-neutral-400";
+
+    default:
+      return "bg-neutral-400";
+  }
 }
 
 function stockClass(stock: number) {
@@ -126,8 +146,13 @@ export default function VariantTable({
           <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-400">
             Variants
           </p>
+
           <p className="mt-3 text-2xl font-medium tracking-tight">
             {variants.length}
+          </p>
+
+          <p className="mt-1 text-xs text-neutral-400">
+            Total product variants
           </p>
         </div>
 
@@ -135,8 +160,13 @@ export default function VariantTable({
           <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-400">
             Active
           </p>
+
           <p className="mt-3 text-2xl font-medium tracking-tight">
             {activeCount}
+          </p>
+
+          <p className="mt-1 text-xs text-neutral-400">
+            Currently available
           </p>
         </div>
 
@@ -144,8 +174,13 @@ export default function VariantTable({
           <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-400">
             Inactive
           </p>
+
           <p className="mt-3 text-2xl font-medium tracking-tight">
             {inactiveCount}
+          </p>
+
+          <p className="mt-1 text-xs text-neutral-400">
+            Currently unavailable
           </p>
         </div>
 
@@ -153,15 +188,33 @@ export default function VariantTable({
           <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-400">
             Total Stock
           </p>
+
           <p className="mt-3 text-2xl font-medium tracking-tight">
             {totalStock}
+          </p>
+
+          <p className="mt-1 text-xs text-neutral-400">
+            Across all variants
           </p>
         </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mb-5 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-neutral-700">
+        <div
+          role="alert"
+          className="
+            mb-5
+            rounded-2xl
+            border
+            border-red-200
+            bg-red-50
+            px-4
+            py-3
+            text-sm
+            text-red-700
+          "
+        >
           {error}
         </div>
       )}
@@ -170,10 +223,7 @@ export default function VariantTable({
       <div className="mb-5 rounded-2xl border border-stone-200 bg-white p-4 sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="w-full lg:max-w-md">
-            <label
-              htmlFor="variant-search"
-              className="sr-only"
-            >
+            <label htmlFor="variant-search" className="sr-only">
               Search variants
             </label>
 
@@ -211,9 +261,36 @@ export default function VariantTable({
             ))}
           </div>
         </div>
+
+        <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-4">
+          <p className="text-xs text-neutral-400">
+            Showing{" "}
+            <span className="font-medium text-neutral-600">
+              {filteredVariants.length}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium text-neutral-600">
+              {variants.length}
+            </span>{" "}
+            variants
+          </p>
+
+          {(search || status !== "all") && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setStatus("all");
+              }}
+              className="text-xs font-medium text-neutral-500 transition hover:text-neutral-900"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Mobile / Tablet Cards */}
+      {/* Mobile */}
       <div className="space-y-3 lg:hidden">
         {filteredVariants.map((variant) => {
           const isDeleting = deletingId === variant.id;
@@ -243,19 +320,28 @@ export default function VariantTable({
                 </div>
 
                 <span
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-medium ${statusClass(
-                    variant.status
-                  )}`}
+                  className={[
+                    "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[9px] uppercase tracking-[0.12em]",
+                    statusClass(variant.status),
+                  ].join(" ")}
                 >
+                  <span
+                    className={[
+                      "h-1.5 w-1.5 rounded-full",
+                      statusDotClass(variant.status),
+                    ].join(" ")}
+                  />
+
                   {statusLabel(variant.status)}
                 </span>
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3 border-t border-stone-100 pt-4 sm:grid-cols-4">
+              <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-5 border-t border-stone-100 pt-4 sm:grid-cols-4">
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.15em] text-neutral-400">
                     Price
                   </p>
+
                   <p className="mt-1 text-sm text-neutral-700">
                     {formatPrice(variant.price)}
                   </p>
@@ -265,6 +351,7 @@ export default function VariantTable({
                   <p className="text-[10px] uppercase tracking-[0.15em] text-neutral-400">
                     Compare
                   </p>
+
                   <p className="mt-1 text-sm text-neutral-500">
                     {variant.compareAtPrice !== null
                       ? formatPrice(variant.compareAtPrice)
@@ -276,6 +363,7 @@ export default function VariantTable({
                   <p className="text-[10px] uppercase tracking-[0.15em] text-neutral-400">
                     Stock
                   </p>
+
                   <p
                     className={`mt-1 text-sm font-medium ${stockClass(
                       variant.stock
@@ -289,16 +377,17 @@ export default function VariantTable({
                   <p className="text-[10px] uppercase tracking-[0.15em] text-neutral-400">
                     ID
                   </p>
+
                   <p className="mt-1 text-sm text-neutral-500">
                     #{variant.id}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 flex gap-2 border-t border-stone-100 pt-4">
+              <div className="mt-5 grid grid-cols-2 gap-2 border-t border-stone-100 pt-4">
                 <Link
                   href={`/admin/products/${product.id}/variants/${variant.id}`}
-                  className="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-stone-200 px-4 text-xs font-medium text-neutral-700 transition hover:border-neutral-400 hover:text-neutral-900"
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-stone-200 px-4 text-xs font-medium text-neutral-700 transition hover:border-neutral-400 hover:text-neutral-900"
                 >
                   Edit
                 </Link>
@@ -307,7 +396,7 @@ export default function VariantTable({
                   type="button"
                   disabled={isDeleting}
                   onClick={() => handleDelete(variant)}
-                  className="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-stone-200 px-4 text-xs font-medium text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-stone-200 px-4 text-xs font-medium text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isDeleting ? "Deleting..." : "Delete"}
                 </button>
@@ -329,7 +418,7 @@ export default function VariantTable({
         )}
       </div>
 
-      {/* Desktop Table */}
+      {/* Desktop */}
       <div className="hidden overflow-hidden rounded-2xl border border-stone-200 bg-white lg:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1050px] border-collapse text-left">
@@ -412,10 +501,18 @@ export default function VariantTable({
 
                     <td className="px-5 py-5 text-center">
                       <span
-                        className={`inline-flex rounded-full px-3 py-1.5 text-[10px] font-medium ${statusClass(
-                          variant.status
-                        )}`}
+                        className={[
+                          "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[9px] uppercase tracking-[0.12em]",
+                          statusClass(variant.status),
+                        ].join(" ")}
                       >
+                        <span
+                          className={[
+                            "h-1.5 w-1.5 rounded-full",
+                            statusDotClass(variant.status),
+                          ].join(" ")}
+                        />
+
                         {statusLabel(variant.status)}
                       </span>
                     </td>
@@ -424,7 +521,7 @@ export default function VariantTable({
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/admin/products/${product.id}/variants/${variant.id}`}
-                          className="inline-flex rounded-full border border-stone-200 px-4 py-2 text-xs font-medium text-neutral-700 transition hover:border-neutral-400 hover:text-neutral-900"
+                          className="inline-flex rounded-xl border border-stone-200 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-600 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white"
                         >
                           Edit
                         </Link>
@@ -433,7 +530,7 @@ export default function VariantTable({
                           type="button"
                           disabled={isDeleting}
                           onClick={() => handleDelete(variant)}
-                          className="inline-flex rounded-full border border-stone-200 px-4 py-2 text-xs font-medium text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="inline-flex rounded-xl border border-stone-200 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {isDeleting ? "Deleting..." : "Delete"}
                         </button>
@@ -473,21 +570,6 @@ export default function VariantTable({
             variants
           </p>
         </div>
-      </div>
-
-      {/* Mobile result count */}
-      <div className="mt-4 lg:hidden">
-        <p className="text-xs text-neutral-400">
-          Showing{" "}
-          <span className="font-medium text-neutral-600">
-            {filteredVariants.length}
-          </span>{" "}
-          of{" "}
-          <span className="font-medium text-neutral-600">
-            {variants.length}
-          </span>{" "}
-          variants
-        </p>
       </div>
     </div>
   );
