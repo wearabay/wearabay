@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
+import { isAdminRole } from "@/lib/admin";
+
 
 /* =========================================================
    TYPES
@@ -224,14 +226,11 @@ export async function getAdminReviews(
       .maybeSingle();
 
 
-  if (
-    profile?.role !==
-    "admin"
-  ) {
-
-    return [];
-
-  }
+if (
+  !isAdminRole(profile?.role)
+) {
+  return [];
+}
 
 
   let query =
@@ -365,19 +364,15 @@ export async function getAdminReviewStats() {
 
 
   if (
-    profile?.role !==
-    "admin"
-  ) {
-
-    return {
-      total: 0,
-      pending: 0,
-      approved: 0,
-      rejected: 0,
-    };
-
-  }
-
+  !isAdminRole(profile?.role)
+) {
+  return {
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+  };
+}
 
   const {
     data,

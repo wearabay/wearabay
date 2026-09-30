@@ -88,6 +88,7 @@ export async function updateSession(
     "/account/profile",
     "/account/addresses",
     "/account/orders",
+    "/admin",
   ];
 
 
@@ -102,15 +103,8 @@ export async function updateSession(
 
 
   /*
-   * getClaims() returns:
-   *
-   * {
-   *   claims,
-   *   header,
-   *   signature
-   * }
-   *
-   * or null.
+   * Unauthenticated users cannot access
+   * protected account or admin routes.
    */
 
   if (
@@ -124,6 +118,64 @@ export async function updateSession(
         request.url
       )
     );
+
+  }
+
+
+  /*
+   * Admin Workspace guard.
+   *
+   * The proxy checks the user's profile role
+   * before the Admin page is allowed to render.
+   *
+   * Customer accounts are redirected to /account
+   * before AdminShell can be displayed.
+   */
+
+  const isAdminRoute =
+    pathname === "/admin" ||
+    pathname.startsWith(
+      "/admin/"
+    );
+
+
+  if (
+    isAdminRoute &&
+    claimsData?.claims
+  ) {
+
+    const {
+      data: profile,
+      error: profileError,
+    } =
+      await supabase
+        .from("profiles")
+        .select("role")
+        .eq(
+          "id",
+          claimsData.claims.sub
+        )
+        .maybeSingle();
+
+
+    const isAdmin =
+      !profileError &&
+      (
+        profile?.role === "admin" ||
+        profile?.role === "super_admin"
+      );
+
+
+    if (!isAdmin) {
+
+      return NextResponse.redirect(
+        new URL(
+          "/account",
+          request.url
+        )
+      );
+
+    }
 
   }
 

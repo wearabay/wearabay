@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { getAdminUser } from "@/lib/admin";
+import {
+  getAdminUser,
+  isSuperAdminRole,
+} from "@/lib/admin";
 import { getAdminCustomerById } from "@/lib/admin-customers";
+
+import RoleManagement from "./RoleManagement";
 
 type Props = {
   params: Promise<{
@@ -21,7 +26,9 @@ function formatDate(value: string) {
     return "—";
   }
 
-  const day = String(date.getUTCDate()).padStart(2, "0");
+  const day = String(
+    date.getUTCDate(),
+  ).padStart(2, "0");
 
   const months = [
     "Jan",
@@ -38,19 +45,25 @@ function formatDate(value: string) {
     "Des",
   ];
 
-  const month = months[date.getUTCMonth()];
-  const year = date.getUTCFullYear();
+  const month =
+    months[date.getUTCMonth()];
+
+  const year =
+    date.getUTCFullYear();
 
   return `${day} ${month} ${year}`;
 }
 
 function formatPrice(value: number) {
-  const amount = Math.round(Number(value) || 0);
-
-  const formatted = String(amount).replace(
-    /\B(?=(\d{3})+(?!\d))/g,
-    ".",
+  const amount = Math.round(
+    Number(value) || 0,
   );
+
+  const formatted =
+    String(amount).replace(
+      /\B(?=(\d{3})+(?!\d))/g,
+      ".",
+    );
 
   return `Rp ${formatted}`;
 }
@@ -58,10 +71,16 @@ function formatPrice(value: number) {
 function formatStatus(value: string) {
   return value
     .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replace(
+      /\b\w/g,
+      (letter) =>
+        letter.toUpperCase(),
+    );
 }
 
-function orderStatusClass(status: string) {
+function orderStatusClass(
+  status: string,
+) {
   switch (status) {
     case "delivered":
       return "border-green-200 bg-green-50 text-green-700";
@@ -79,7 +98,9 @@ function orderStatusClass(status: string) {
   }
 }
 
-function paymentStatusClass(status: string) {
+function paymentStatusClass(
+  status: string,
+) {
   switch (status) {
     case "paid":
       return "border-green-200 bg-green-50 text-green-700";
@@ -96,24 +117,48 @@ function paymentStatusClass(status: string) {
   }
 }
 
+function roleLabel(
+  role: string,
+) {
+  switch (role) {
+    case "super_admin":
+      return "Admin Utama";
+
+    case "admin":
+      return "Admin 2";
+
+    default:
+      return "Customer";
+  }
+}
+
 export default async function AdminCustomerDetailPage({
   params,
 }: Props) {
-  const admin = await getAdminUser();
+  const admin =
+    await getAdminUser();
 
   if (!admin) {
     redirect("/account");
   }
 
-  const { id } = await params;
+  const { id } =
+    await params;
 
-  const customer = await getAdminCustomerById(id);
+  const customer =
+    await getAdminCustomerById(id);
 
   if (!customer) {
     notFound();
   }
 
-  const latestOrder = customer.orders[0] ?? null;
+  const latestOrder =
+    customer.orders[0] ?? null;
+
+  const canManageRole =
+    isSuperAdminRole(
+      admin.role,
+    );
 
   return (
     <main className="min-w-0 pb-10">
@@ -146,7 +191,9 @@ export default async function AdminCustomerDetailPage({
               </h1>
 
               <span className="inline-flex shrink-0 items-center rounded-full border border-stone-200 bg-stone-50 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-neutral-600">
-                {customer.role}
+                {roleLabel(
+                  customer.role,
+                )}
               </span>
             </div>
 
@@ -193,7 +240,8 @@ export default async function AdminCustomerDetailPage({
             </p>
 
             <p className="mt-2.5 break-all text-sm text-neutral-600">
-              {customer.email || "No email available"}
+              {customer.email ||
+                "No email available"}
             </p>
           </div>
 
@@ -203,7 +251,8 @@ export default async function AdminCustomerDetailPage({
             </p>
 
             <p className="mt-2.5 truncate text-sm text-neutral-600">
-              {customer.phone || "—"}
+              {customer.phone ||
+                "—"}
             </p>
           </div>
 
@@ -213,7 +262,9 @@ export default async function AdminCustomerDetailPage({
             </p>
 
             <p className="mt-2.5 text-sm text-neutral-600">
-              {formatDate(customer.joinedAt)}
+              {formatDate(
+                customer.joinedAt,
+              )}
             </p>
           </div>
         </div>
@@ -233,7 +284,9 @@ export default async function AdminCustomerDetailPage({
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-stone-200 bg-white p-5">
-            <p className="text-xs text-neutral-500">Total Orders</p>
+            <p className="text-xs text-neutral-500">
+              Total Orders
+            </p>
 
             <p className="mt-2 text-2xl font-light">
               {customer.orderCount}
@@ -245,10 +298,14 @@ export default async function AdminCustomerDetailPage({
           </div>
 
           <div className="rounded-2xl border border-stone-200 bg-white p-5">
-            <p className="text-xs text-neutral-500">Total Spent</p>
+            <p className="text-xs text-neutral-500">
+              Total Spent
+            </p>
 
             <p className="mt-2 text-2xl font-light">
-              {formatPrice(customer.totalSpent)}
+              {formatPrice(
+                customer.totalSpent,
+              )}
             </p>
 
             <p className="mt-2 text-xs text-neutral-400">
@@ -257,17 +314,22 @@ export default async function AdminCustomerDetailPage({
           </div>
 
           <div className="rounded-2xl border border-stone-200 bg-white p-5">
-            <p className="text-xs text-neutral-500">Last Order</p>
+            <p className="text-xs text-neutral-500">
+              Last Order
+            </p>
 
             <p className="mt-2 truncate text-sm font-medium text-neutral-900">
               {latestOrder
-                ? latestOrder.orderNumber || "Order"
+                ? latestOrder.orderNumber ||
+                  "Order"
                 : "No orders"}
             </p>
 
             {latestOrder ? (
               <p className="mt-2 text-xs text-neutral-400">
-                {formatDate(latestOrder.createdAt)}
+                {formatDate(
+                  latestOrder.createdAt,
+                )}
               </p>
             ) : (
               <p className="mt-2 text-xs text-neutral-400">
@@ -277,6 +339,21 @@ export default async function AdminCustomerDetailPage({
           </div>
         </div>
       </section>
+
+      {/* ROLE MANAGEMENT */}
+      <RoleManagement
+        customerId={customer.id}
+        currentRole={
+          customer.role ===
+            "super_admin" ||
+          customer.role === "admin"
+            ? customer.role
+            : "customer"
+        }
+        canManageRole={
+          canManageRole
+        }
+      />
 
       {/* ORDER HISTORY */}
       <section className="mt-8">
@@ -288,12 +365,16 @@ export default async function AdminCustomerDetailPage({
 
             <p className="mt-2 text-sm text-neutral-500">
               {customer.orders.length}{" "}
-              {customer.orders.length === 1 ? "order" : "orders"}
+              {customer.orders.length ===
+              1
+                ? "order"
+                : "orders"}
             </p>
           </div>
         </div>
 
-        {customer.orders.length === 0 ? (
+        {customer.orders.length ===
+        0 ? (
           <div className="rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center">
             <p className="text-sm text-neutral-500">
               This customer has no orders yet.
@@ -303,55 +384,70 @@ export default async function AdminCustomerDetailPage({
           <div className="min-w-0 overflow-hidden rounded-2xl border border-stone-200 bg-white">
             {/* MOBILE / TABLET */}
             <div className="divide-y divide-stone-200 lg:hidden">
-              {customer.orders.map((order) => (
-                <Link
-                  key={order.id}
-                  href={`/admin/orders/${order.id}`}
-                  className="block transition-colors hover:bg-neutral-50"
-                >
-                  <article className="p-5 sm:p-6">
-                    <div className="flex min-w-0 items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-neutral-900">
-                          {order.orderNumber || "Order"}
-                        </p>
+              {customer.orders.map(
+                (order) => (
+                  <Link
+                    key={order.id}
+                    href={`/admin/orders/${order.id}`}
+                    className="block transition-colors hover:bg-neutral-50"
+                  >
+                    <article className="p-5 sm:p-6">
+                      <div className="flex min-w-0 items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-neutral-900">
+                            {order.orderNumber ||
+                              "Order"}
+                          </p>
 
-                        <p className="mt-1 text-xs text-neutral-500">
-                          {formatDate(order.createdAt)}
+                          <p className="mt-1 text-xs text-neutral-500">
+                            {formatDate(
+                              order.createdAt,
+                            )}
+                          </p>
+                        </div>
+
+                        <p className="shrink-0 text-sm font-medium text-neutral-900">
+                          {formatPrice(
+                            order.total,
+                          )}
                         </p>
                       </div>
 
-                      <p className="shrink-0 text-sm font-medium text-neutral-900">
-                        {formatPrice(order.total)}
+                      <div className="mt-5 flex flex-wrap items-center gap-2">
+                        <span
+                          className={[
+                            "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]",
+                            orderStatusClass(
+                              order.status,
+                            ),
+                          ].join(" ")}
+                        >
+                          {formatStatus(
+                            order.status,
+                          )}
+                        </span>
+
+                        <span
+                          className={[
+                            "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]",
+                            paymentStatusClass(
+                              order.paymentStatus,
+                            ),
+                          ].join(" ")}
+                        >
+                          {formatStatus(
+                            order.paymentStatus,
+                          )}
+                        </span>
+                      </div>
+
+                      <p className="mt-5 text-xs text-neutral-400">
+                        View order →
                       </p>
-                    </div>
-
-                    <div className="mt-5 flex flex-wrap items-center gap-2">
-                      <span
-                        className={[
-                          "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]",
-                          orderStatusClass(order.status),
-                        ].join(" ")}
-                      >
-                        {formatStatus(order.status)}
-                      </span>
-
-                      <span
-                        className={[
-                          "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]",
-                          paymentStatusClass(order.paymentStatus),
-                        ].join(" ")}
-                      >
-                        {formatStatus(order.paymentStatus)}
-                      </span>
-                    </div>
-
-                    <p className="mt-5 text-xs text-neutral-400">
-                      View order →
-                    </p>
-                  </article>
-                </Link>
-              ))}
+                    </article>
+                  </Link>
+                ),
+              )}
             </div>
 
             {/* DESKTOP */}
@@ -382,71 +478,86 @@ export default async function AdminCustomerDetailPage({
                 </thead>
 
                 <tbody className="divide-y divide-stone-100">
-                  {customer.orders.map((order) => (
-                    <tr
-                      key={order.id}
-                      className="transition-colors hover:bg-neutral-50"
-                    >
-                      <td className="px-5 py-5">
-                        <Link
-                          href={`/admin/orders/${order.id}`}
-                          className="block font-medium text-neutral-900 hover:underline"
-                        >
-                          {order.orderNumber || "Order"}
-                        </Link>
-                      </td>
-
-                      <td className="px-5 py-5 text-sm text-neutral-600">
-                        <Link
-                          href={`/admin/orders/${order.id}`}
-                          className="block"
-                        >
-                          {formatDate(order.createdAt)}
-                        </Link>
-                      </td>
-
-                      <td className="px-5 py-5">
-                        <Link
-                          href={`/admin/orders/${order.id}`}
-                          className="block w-fit"
-                        >
-                          <span
-                            className={[
-                              "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]",
-                              orderStatusClass(order.status),
-                            ].join(" ")}
+                  {customer.orders.map(
+                    (order) => (
+                      <tr
+                        key={order.id}
+                        className="transition-colors hover:bg-neutral-50"
+                      >
+                        <td className="px-5 py-5">
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="block font-medium text-neutral-900 hover:underline"
                           >
-                            {formatStatus(order.status)}
-                          </span>
-                        </Link>
-                      </td>
+                            {order.orderNumber ||
+                              "Order"}
+                          </Link>
+                        </td>
 
-                      <td className="px-5 py-5">
-                        <Link
-                          href={`/admin/orders/${order.id}`}
-                          className="block w-fit"
-                        >
-                          <span
-                            className={[
-                              "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]",
-                              paymentStatusClass(order.paymentStatus),
-                            ].join(" ")}
+                        <td className="px-5 py-5 text-sm text-neutral-600">
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="block"
                           >
-                            {formatStatus(order.paymentStatus)}
-                          </span>
-                        </Link>
-                      </td>
+                            {formatDate(
+                              order.createdAt,
+                            )}
+                          </Link>
+                        </td>
 
-                      <td className="px-5 py-5 text-right text-sm text-neutral-900">
-                        <Link
-                          href={`/admin/orders/${order.id}`}
-                          className="block"
-                        >
-                          {formatPrice(order.total)}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="px-5 py-5">
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="block w-fit"
+                          >
+                            <span
+                              className={[
+                                "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]",
+                                orderStatusClass(
+                                  order.status,
+                                ),
+                              ].join(" ")}
+                            >
+                              {formatStatus(
+                                order.status,
+                              )}
+                            </span>
+                          </Link>
+                        </td>
+
+                        <td className="px-5 py-5">
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="block w-fit"
+                          >
+                            <span
+                              className={[
+                                "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]",
+                                paymentStatusClass(
+                                  order.paymentStatus,
+                                ),
+                              ].join(" ")}
+                            >
+                              {formatStatus(
+                                order.paymentStatus,
+                              )}
+                            </span>
+                          </Link>
+                        </td>
+
+                        <td className="px-5 py-5 text-right text-sm text-neutral-900">
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="block"
+                          >
+                            {formatPrice(
+                              order.total,
+                            )}
+                          </Link>
+                        </td>
+                      </tr>
+                    ),
+                  )}
                 </tbody>
               </table>
             </div>

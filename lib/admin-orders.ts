@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole } from "@/lib/admin";
 
 import type {
   Order,
@@ -295,8 +296,7 @@ async function getAuthenticatedAdmin() {
     user,
 
     isAdmin:
-      profile?.role ===
-      "admin",
+  isAdminRole(profile?.role),
 
   };
 

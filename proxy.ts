@@ -22,6 +22,7 @@ export const config = {
 
   matcher: [
     "/account/:path*",
+    "/admin/:path*",
   ],
 
 };
