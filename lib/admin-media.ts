@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole } from "@/lib/admin";
 
 export const MEDIA_BUCKET =
   "wearabay-media";
@@ -108,7 +109,8 @@ async function assertAdmin() {
 
   if (
     error ||
-    profile?.role !== "admin"
+    !profile ||
+    !isAdminRole(profile.role)
   ) {
     throw new Error(
       "Unauthorized"

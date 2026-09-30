@@ -1,5 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
 
+export type AdminRole =
+  | "admin"
+  | "super_admin";
+
+export function isAdminRole(
+  role: string | null | undefined,
+): role is AdminRole {
+  return (
+    role === "admin" ||
+    role === "super_admin"
+  );
+}
+
+export function isSuperAdminRole(
+  role: string | null | undefined,
+): boolean {
+  return role === "super_admin";
+}
+
 export async function getAdminUser() {
   const supabase = await createClient();
 
@@ -27,7 +46,7 @@ export async function getAdminUser() {
     return null;
   }
 
-  if (profile.role !== "admin") {
+  if (!isAdminRole(profile.role)) {
     return null;
   }
 

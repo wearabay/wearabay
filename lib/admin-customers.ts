@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole } from "@/lib/admin";
 
 /* =========================================================
    TYPES
@@ -85,7 +86,7 @@ async function getAuthenticatedAdmin() {
     supabase,
     user,
     isAdmin:
-      profile?.role === "admin",
+      isAdminRole(profile?.role),
   };
 }
 

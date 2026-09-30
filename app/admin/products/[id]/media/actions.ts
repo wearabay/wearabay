@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { isAdminRole } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/server";
 
 import type { AdminMediaType } from "@/lib/admin-media";
@@ -65,7 +66,8 @@ async function assertAdmin() {
 
   if (
     error ||
-    profile?.role !== "admin"
+    !profile ||
+    !isAdminRole(profile.role)
   ) {
     throw new Error("Unauthorized");
   }

@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 
+import {
+  isAdminRole,
+} from "@/lib/admin";
+
 export type AdminProductStatus =
   | "draft"
   | "published"
@@ -230,7 +234,7 @@ async function assertAdmin() {
   if (
     profileError ||
     !profile ||
-    profile.role !== "admin"
+    !isAdminRole(profile.role)
   ) {
     throw new Error("Unauthorized");
   }

@@ -2,25 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 
+import { isAdminRole } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/server";
-
 
 type ActionResult = {
   success: boolean;
   message: string;
 };
 
-
 export async function updateReviewStatusAction(
   reviewId: number,
   status: "approved" | "rejected"
 ): Promise<ActionResult> {
-
   try {
-
     const supabase =
       await createClient();
-
 
     /* =====================================================
        AUTH
@@ -33,16 +29,12 @@ export async function updateReviewStatusAction(
     } =
       await supabase.auth.getUser();
 
-
     if (!user) {
-
       return {
         success: false,
         message: "Unauthorized.",
       };
-
     }
-
 
     /* =====================================================
        ADMIN CHECK
@@ -53,33 +45,21 @@ export async function updateReviewStatusAction(
       error: profileError,
     } =
       await supabase
-
         .from("profiles")
-
-        .select(
-          "role"
-        )
-
-        .eq(
-          "id",
-          user.id
-        )
-
+        .select("role")
+        .eq("id", user.id)
         .maybeSingle();
-
 
     if (
       profileError ||
-      profile?.role !== "admin"
+      !profile ||
+      !isAdminRole(profile.role)
     ) {
-
       return {
         success: false,
         message: "Unauthorized.",
       };
-
     }
-
 
     /* =====================================================
        VALIDATION
@@ -91,14 +71,11 @@ export async function updateReviewStatusAction(
       ) ||
       reviewId <= 0
     ) {
-
       return {
         success: false,
         message: "Invalid review.",
       };
-
     }
-
 
     /* =====================================================
        UPDATE
@@ -109,32 +86,17 @@ export async function updateReviewStatusAction(
       error,
     } =
       await supabase
-
         .from("reviews")
-
         .update({
-
           status,
-
           updated_at:
             new Date().toISOString(),
-
         })
-
-        .eq(
-          "id",
-          reviewId
-        )
-
-        .select(
-          "id, status"
-        )
-
+        .eq("id", reviewId)
+        .select("id, status")
         .maybeSingle();
 
-
     if (error) {
-
       console.error(
         "updateReviewStatusAction:",
         error
@@ -145,19 +107,14 @@ export async function updateReviewStatusAction(
         message:
           `Failed to update review: ${error.message}`,
       };
-
     }
 
-
     if (!data) {
-
       return {
         success: false,
         message: "Review not found.",
       };
-
     }
-
 
     /* =====================================================
        REVALIDATE
@@ -171,7 +128,6 @@ export async function updateReviewStatusAction(
       "/admin"
     );
 
-
     return {
       success: true,
       message:
@@ -179,26 +135,18 @@ export async function updateReviewStatusAction(
           ? "Review approved."
           : "Review rejected.",
     };
-
   } catch (error) {
-
     console.error(
       "Review moderation failed:",
       error
     );
 
-
     return {
-
       success: false,
-
       message:
         error instanceof Error
           ? error.message
           : "Failed to update review.",
-
     };
-
   }
-
 }
