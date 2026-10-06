@@ -43,8 +43,8 @@ export default function ProductInfo({
   const sizes =
     product.sizes ?? [];
 
-  const stock =
-    product.stock ?? 0;
+  const variants =
+    product.variants ?? [];
 
 
   const [
@@ -86,24 +86,139 @@ export default function ProductInfo({
 
 
   /*
+   * Selected variant
+   */
+
+  const selectedVariant =
+    variants.find(
+      (variant) =>
+        variant.color === selectedColor &&
+        variant.size === selectedSize
+    ) ?? null;
+
+
+  const selectedVariantStock =
+    selectedVariant?.stock ?? 0;
+
+
+  const selectedVariantPrice =
+    selectedVariant?.price ??
+    product.price;
+
+
+  /*
    * Purchasable state
    */
 
   const hasActiveVariant =
-    colors.length > 0 &&
-    sizes.length > 0;
+    variants.length > 0;
+
+  const hasSelectedVariant =
+    selectedVariant !== null;
 
   const hasStock =
-    stock > 0;
-
-  const hasValidSelection =
-    selectedColor.trim().length > 0 &&
-    selectedSize.trim().length > 0;
+    selectedVariantStock > 0;
 
   const canAddToCart =
     hasActiveVariant &&
-    hasStock &&
-    hasValidSelection;
+    hasSelectedVariant &&
+    hasStock;
+
+
+  /*
+   * Color change
+   */
+
+  const handleColorChange =
+    (color: string) => {
+
+      setSelectedColor(
+        color
+      );
+
+
+      const currentCombinationExists =
+        variants.some(
+          (variant) =>
+            variant.color === color &&
+            variant.size === selectedSize
+        );
+
+
+      if (
+        currentCombinationExists
+      ) {
+
+        return;
+
+      }
+
+
+      const firstAvailableVariant =
+        variants.find(
+          (variant) =>
+            variant.color === color &&
+            variant.stock > 0
+        );
+
+
+      const firstVariantForColor =
+        variants.find(
+          (variant) =>
+            variant.color === color
+        );
+
+
+      const nextVariant =
+        firstAvailableVariant ??
+        firstVariantForColor;
+
+
+      if (
+        nextVariant
+      ) {
+
+        setSelectedSize(
+          nextVariant.size
+        );
+
+      } else {
+
+        setSelectedSize("");
+
+      }
+
+    };
+
+
+  /*
+   * Size change
+   */
+
+  const handleSizeChange =
+    (size: string) => {
+
+      const combinationExists =
+        variants.some(
+          (variant) =>
+            variant.color === selectedColor &&
+            variant.size === size
+        );
+
+
+      if (
+        combinationExists
+      ) {
+
+        setSelectedSize(
+          size
+        );
+
+        return;
+
+      }
+
+    };
 
 
   /*
@@ -113,7 +228,8 @@ export default function ProductInfo({
   const increaseQuantity = () => {
 
     if (
-      quantity < stock
+      quantity <
+      selectedVariantStock
     ) {
 
       setQuantity(
@@ -149,15 +265,11 @@ export default function ProductInfo({
   const handleAddToCart =
     async () => {
 
-      /*
-       * Never allow cart insertion when
-       * there is no active variant.
-       */
-
       if (
         !canAddToCart ||
         adding ||
-        authLoading
+        authLoading ||
+        !selectedVariant
       ) {
 
         return;
@@ -174,11 +286,11 @@ export default function ProductInfo({
           {
             id: product.id,
             name: product.name,
-            price: product.price,
+            price: selectedVariant.price,
             image: product.image,
             quantity,
-            color: selectedColor,
-            size: selectedSize,
+            color: selectedVariant.color,
+            size: selectedVariant.size,
           },
           user?.id
         );
@@ -311,7 +423,7 @@ export default function ProductInfo({
         "
       >
         {formatPrice(
-          product.price
+          selectedVariantPrice
         )}
       </p>
 
@@ -378,7 +490,7 @@ export default function ProductInfo({
         }
 
         onColorChange={
-          setSelectedColor
+          handleColorChange
         }
 
         selectedSize={
@@ -386,7 +498,7 @@ export default function ProductInfo({
         }
 
         onSizeChange={
-          setSelectedSize
+          handleSizeChange
         }
 
         quantity={
@@ -421,7 +533,7 @@ export default function ProductInfo({
         }
 
         price={
-          product.price
+          selectedVariantPrice
         }
 
         onAddToCart={

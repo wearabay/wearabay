@@ -15,71 +15,112 @@ const COLOR_MAP: Record<string, string> = {
   "Soft Pink": "#F4D7D7",
 };
 
+
 type ColorSelectorProps = {
   colors: string[];
   selected: string;
+  available: Set<string>;
   onChange: (color: string) => void;
 };
+
 
 export default function ColorSelector({
   colors,
   selected,
+  available,
   onChange,
 }: ColorSelectorProps) {
+
   return (
+
     <div className="mt-10">
 
       <p className="mb-5 text-xs uppercase tracking-[0.35em] text-neutral-500">
         Color
       </p>
 
+
       <div className="space-y-4">
 
-        {colors.map((color) => {
+        {colors.map(
+          (color) => {
 
-          const hex = COLOR_MAP[color] ?? "#999999";
+            const hex =
+              COLOR_MAP[color] ??
+              "#999999";
 
-          return (
+            const isAvailable =
+              available.has(
+                color
+              );
 
-            <button
-              key={color}
-              type="button"
-              onClick={() => onChange(color)}
-              className="flex items-center gap-4"
-            >
+            const isSelected =
+              selected === color;
 
-              <span
-                className={`flex h-6 w-6 items-center justify-center rounded-full transition ${
-                  selected === color
-                    ? "ring-2 ring-black ring-offset-2"
-                    : ""
+
+            return (
+
+              <button
+                key={color}
+                type="button"
+                disabled={
+                  !isAvailable
+                }
+                onClick={() =>
+                  onChange(color)
+                }
+                aria-disabled={
+                  !isAvailable
+                }
+                className={`flex items-center gap-4 transition ${
+                  !isAvailable
+                    ? "cursor-not-allowed opacity-35"
+                    : "cursor-pointer"
                 }`}
               >
+
                 <span
-                  className="h-5 w-5 rounded-full border border-neutral-300"
-                  style={{
-                    backgroundColor: hex,
-                  }}
-                />
-              </span>
+                  className={`flex h-6 w-6 items-center justify-center rounded-full transition ${
+                    isSelected &&
+                    isAvailable
+                      ? "ring-2 ring-black ring-offset-2"
+                      : ""
+                  }`}
+                >
 
-              <span
-                className={`transition ${
-                  selected === color
-                    ? "font-medium text-black"
-                    : "text-neutral-500"
-                }`}
-              >
-                {color}
-              </span>
+                  <span
+                    className="h-5 w-5 rounded-full border border-neutral-300"
+                    style={{
+                      backgroundColor:
+                        hex,
+                    }}
+                  />
 
-            </button>
+                </span>
 
-          );
-        })}
+
+                <span
+                  className={`transition ${
+                    isSelected &&
+                    isAvailable
+                      ? "font-medium text-black"
+                      : "text-neutral-500"
+                  }`}
+                >
+                  {color}
+                </span>
+
+              </button>
+
+            );
+
+          }
+        )}
 
       </div>
 
     </div>
+
   );
+
 }

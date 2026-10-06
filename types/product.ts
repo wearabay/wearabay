@@ -1,3 +1,17 @@
+export interface ProductVariant {
+  id: number;
+  sku: string | null;
+
+  color: string;
+  size: string;
+
+  price: number;
+  compareAtPrice: number | null;
+
+  stock: number;
+}
+
+
 export interface Product {
   id: number;
 
@@ -30,4 +44,6 @@ export interface Product {
   sizes: string[];
 
   stock: number;
+
+  variants: ProductVariant[];
 }

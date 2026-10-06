@@ -1,7 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { getMediaUrl } from "@/lib/media";
 
-import type { Product } from "@/types/product";
+import type {
+  Product,
+  ProductVariant,
+} from "@/types/product";
 
 
 type ProductRow = {
@@ -69,7 +72,7 @@ function mapProduct(
 
   /*
    * Active variants are the variants currently available
-   * for storefront color, size, and stock logic.
+   * for storefront color, size, price, and stock logic.
    */
 
   const variants = row.product_variants
@@ -80,6 +83,49 @@ function mapProduct(
     .sort(
       (a, b) =>
         a.id - b.id
+    );
+
+
+  /*
+   * Expose the active variants to the storefront.
+   *
+   * This becomes the source of truth for valid
+   * color + size combinations.
+   */
+
+  const productVariants: ProductVariant[] =
+    variants.map(
+      (variant) => ({
+        id:
+          variant.id,
+
+        sku:
+          variant.sku,
+
+        color:
+          variant.color,
+
+        size:
+          variant.size,
+
+        price:
+          toNumber(
+            variant.price
+          ),
+
+        compareAtPrice:
+          variant.compare_at_price === null
+            ? null
+            : toNumber(
+                variant.compare_at_price
+              ),
+
+        stock:
+          Math.max(
+            0,
+            variant.stock
+          ),
+      })
     );
 
 
@@ -262,6 +308,9 @@ function mapProduct(
     sizes,
 
     stock,
+
+    variants:
+      productVariants,
 
   };
 }

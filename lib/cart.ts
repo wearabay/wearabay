@@ -11,6 +11,23 @@ export type CartItem = {
   quantity: number;
   color?: string;
   size?: string;
+
+  /*
+   * Current stock for the selected variant.
+   *
+   * This is cached locally for cart UI purposes.
+   * The database remains the source of truth at checkout.
+   */
+  stock?: number;
+};
+
+
+type VariantStockRow = {
+  product_id: number;
+  color: string;
+  size: string;
+  stock: number;
+  status: "active" | "inactive";
 };
 
 
@@ -87,6 +104,277 @@ function saveLocalCart(
 
 
 /* =========================================================
+   STOCK
+========================================================= */
+
+function getVariantKey(
+  productId: number,
+  color?: string,
+  size?: string
+) {
+
+  return [
+    productId,
+    color ?? "",
+    size ?? "",
+  ].join("::");
+
+}
+
+
+async function getVariantStock(
+  productId: number,
+  color?: string,
+  size?: string
+): Promise<number | undefined> {
+
+  /*
+   * Products without a color/size variant are not
+   * stock-limited by this helper.
+   */
+
+  if (
+    !color ||
+    !size
+  ) {
+
+    return undefined;
+
+  }
+
+
+  const supabase =
+    createClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase
+      .from("product_variants")
+      .select(
+        `
+        product_id,
+        color,
+        size,
+        stock,
+        status
+        `
+      )
+      .eq(
+        "product_id",
+        productId
+      )
+      .eq(
+        "color",
+        color
+      )
+      .eq(
+        "size",
+        size
+      )
+      .eq(
+        "status",
+        "active"
+      )
+      .maybeSingle();
+
+
+  if (error) {
+
+    console.error(
+      "Failed to load variant stock:",
+      error
+    );
+
+    return undefined;
+
+  }
+
+
+  if (!data) {
+
+    return 0;
+
+  }
+
+
+  return Math.max(
+    0,
+    Number(
+      data.stock
+    )
+  );
+
+}
+
+
+async function hydrateCartStock(
+  cart: CartItem[]
+): Promise<CartItem[]> {
+
+  const variantItems =
+    cart.filter(
+      (item) =>
+        Boolean(
+          item.color &&
+          item.size
+        )
+    );
+
+
+  if (
+    variantItems.length === 0
+  ) {
+
+    return cart;
+
+  }
+
+
+  const productIds = [
+    ...new Set(
+      variantItems.map(
+        (item) =>
+          item.id
+      )
+    ),
+  ];
+
+
+  const supabase =
+    createClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase
+      .from("product_variants")
+      .select(
+        `
+        product_id,
+        color,
+        size,
+        stock,
+        status
+        `
+      )
+      .in(
+        "product_id",
+        productIds
+      )
+      .eq(
+        "status",
+        "active"
+      );
+
+
+  if (error) {
+
+    console.error(
+      "Failed to load cart variant stock:",
+      error
+    );
+
+    return cart;
+
+  }
+
+
+  const stockMap =
+    new Map<string, number>();
+
+
+  (
+    (data ?? []) as VariantStockRow[]
+  ).forEach(
+    (variant) => {
+
+      stockMap.set(
+        getVariantKey(
+          Number(
+            variant.product_id
+          ),
+          variant.color,
+          variant.size
+        ),
+        Math.max(
+          0,
+          Number(
+            variant.stock
+          )
+        )
+      );
+
+    }
+  );
+
+
+  return cart.map(
+    (item) => {
+
+      if (
+        !item.color ||
+        !item.size
+      ) {
+
+        return item;
+
+      }
+
+
+      const key =
+        getVariantKey(
+          item.id,
+          item.color,
+          item.size
+        );
+
+
+      const stock =
+        stockMap.get(
+          key
+        );
+
+
+      if (
+        stock === undefined
+      ) {
+
+        return {
+          ...item,
+          stock: 0,
+        };
+
+      }
+
+
+      return {
+        ...item,
+        stock,
+        quantity:
+          Math.min(
+            Math.max(
+              1,
+              item.quantity
+            ),
+            Math.max(
+              1,
+              stock
+            )
+          ),
+      };
+
+    }
+  );
+
+}
+
+
+/* =========================================================
    GET CART
 ========================================================= */
 
@@ -154,29 +442,31 @@ export async function loadCart(
 
   if (error) {
 
-  console.error(
-    "Failed to load cart:",
-    {
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-      code: error.code,
-    }
-  );
+    console.error(
+      "Failed to load cart:",
+      {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      }
+    );
 
 
-  /*
-   * JWT may temporarily be invalid
-   * because the current auth session
-   * needs to be refreshed.
-   *
-   * Keep the local cart instead of
-   * destroying the user's cart UI.
-   */
+    /*
+     * JWT may temporarily be invalid
+     * because the current auth session
+     * needs to be refreshed.
+     *
+     * Keep the local cart instead of
+     * destroying the user's cart UI.
+     */
 
-  return getLocalCart(userId);
+    return getLocalCart(
+      userId
+    );
 
-}
+  }
 
 
   const cart: CartItem[] =
@@ -209,8 +499,19 @@ export async function loadCart(
     );
 
 
+  /*
+   * Refresh stock from the current
+   * active product variants.
+   */
+
+  const hydratedCart =
+    await hydrateCartStock(
+      cart
+    );
+
+
   saveLocalCart(
-    cart,
+    hydratedCart,
     userId
   );
 
@@ -228,7 +529,7 @@ export async function loadCart(
   }
 
 
-  return cart;
+  return hydratedCart;
 
 }
 
@@ -426,7 +727,7 @@ export async function saveCart(
     ) {
 
       const {
-        data: candidates,
+        data: candidates
       } =
         await supabase
           .from("cart_items")
@@ -601,20 +902,92 @@ export async function addToCart(
     );
 
 
+  /*
+   * Read the current stock before
+   * changing the cart quantity.
+   */
+
+  const currentStock =
+    await getVariantStock(
+      item.id,
+      item.color,
+      item.size
+    );
+
+
+  const requestedQuantity =
+    existingIndex >= 0
+      ? cart[
+          existingIndex
+        ].quantity +
+        item.quantity
+      : item.quantity;
+
+
+  /*
+   * If this is a variant item, never allow
+   * the cart quantity to exceed current stock.
+   */
+
+  const finalQuantity =
+    currentStock === undefined
+      ? Math.max(
+          1,
+          requestedQuantity
+        )
+      : Math.min(
+          Math.max(
+            1,
+            requestedQuantity
+          ),
+          currentStock
+        );
+
+
+  /*
+   * Do not add a variant that has no
+   * stock remaining.
+   */
+
+  if (
+    currentStock !== undefined &&
+    currentStock <= 0
+  ) {
+
+    return cart;
+
+  }
+
+
   if (
     existingIndex >= 0
   ) {
 
     cart[
       existingIndex
-    ].quantity +=
-      item.quantity;
+    ] = {
+      ...cart[
+        existingIndex
+      ],
+
+      quantity:
+        finalQuantity,
+
+      stock:
+        currentStock,
+    };
 
   } else {
 
-    cart.push(
-      item
-    );
+    cart.push({
+      ...item,
+
+      quantity:
+        finalQuantity,
+
+      stock:
+        currentStock,
+    });
 
   }
 
@@ -871,6 +1244,34 @@ export async function updateCartQuantity(
     );
 
 
+  /*
+   * Refresh the current stock for this
+   * exact variant before updating.
+   */
+
+  const currentStock =
+    await getVariantStock(
+      id,
+      color,
+      size
+    );
+
+
+  const safeQuantity =
+    currentStock === undefined
+      ? Math.max(
+          1,
+          quantity
+        )
+      : Math.min(
+          Math.max(
+            1,
+            quantity
+          ),
+          currentStock
+        );
+
+
   const updated =
     cart.map(
       (item) => {
@@ -885,10 +1286,10 @@ export async function updateCartQuantity(
             ...item,
 
             quantity:
-              Math.max(
-                1,
-                quantity
-              ),
+              safeQuantity,
+
+            stock:
+              currentStock,
           };
 
         }
