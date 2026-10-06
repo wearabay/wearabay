@@ -23,6 +23,22 @@ export interface Product {
   image: string;
   images: string[];
 
+  /*
+   * Product media grouped by variant color.
+   *
+   * Example:
+   *
+   * {
+   *   White: ["...", "..."],
+   *   Pink: ["...", "..."],
+   *   Black: ["...", "..."]
+   * }
+   */
+  mediaByColor: Record<
+    string,
+    string[]
+  >;
+
   category: string;
   badge?: string;
 

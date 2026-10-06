@@ -24,11 +24,15 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 
 type ProductInfoProps = {
   product: Product;
+  selectedColor: string;
+  onColorChange: (color: string) => void;
 };
 
 
 export default function ProductInfo({
   product,
+  selectedColor,
+  onColorChange,
 }: ProductInfoProps) {
 
   const {
@@ -36,23 +40,11 @@ export default function ProductInfo({
     loading: authLoading,
   } = useAuthUser();
 
-
-  const colors =
-    product.colors ?? [];
-
   const sizes =
     product.sizes ?? [];
 
   const variants =
     product.variants ?? [];
-
-
-  const [
-    selectedColor,
-    setSelectedColor,
-  ] = useState(
-    colors[0] ?? ""
-  );
 
 
   const [
@@ -132,7 +124,7 @@ export default function ProductInfo({
   const handleColorChange =
     (color: string) => {
 
-      setSelectedColor(
+      onColorChange(
         color
       );
 
@@ -148,6 +140,8 @@ export default function ProductInfo({
       if (
         currentCombinationExists
       ) {
+
+        setQuantity(1);
 
         return;
 
@@ -188,6 +182,9 @@ export default function ProductInfo({
 
       }
 
+
+      setQuantity(1);
+
     };
 
 
@@ -213,6 +210,8 @@ export default function ProductInfo({
         setSelectedSize(
           size
         );
+
+        setQuantity(1);
 
         return;
 

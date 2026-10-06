@@ -45,6 +45,7 @@ type ProductVariantRow = {
 type ProductMediaRow = {
   id: number;
   product_id: number;
+  variant_id: number | null;
   type: "image" | "video";
   storage_path: string;
   alt_text: string | null;
@@ -130,7 +131,8 @@ function mapProduct(
 
 
   /*
-   * Media is independent from variant status.
+   * Media is sorted once so the same ordering is
+   * preserved for product images and color galleries.
    */
 
   const media = row.product_media
@@ -140,12 +142,15 @@ function mapProduct(
     );
 
 
-  const images = media
-    .filter(
+  const imageMedia =
+    media.filter(
       (item) =>
         item.type === "image"
-    )
-    .map(
+    );
+
+
+  const images =
+    imageMedia.map(
       (item) =>
         getMediaUrl(
           item.storage_path
@@ -153,15 +158,98 @@ function mapProduct(
     );
 
 
+  /*
+   * Product-level primary image.
+   *
+   * This remains the fallback image when a selected
+   * color does not have its own media.
+   */
+
   const primaryMedia =
-    media.find(
+    imageMedia.find(
       (item) =>
         item.is_primary
     ) ??
-    media.find(
-      (item) =>
-        item.type === "image"
-    );
+    imageMedia[0];
+
+
+  /*
+   * Map variant ID -> color.
+   *
+   * Media is connected to a variant through variant_id.
+   * Multiple size variants can share the same color,
+   * so all variants of the same color point to the
+   * same storefront media group.
+   */
+
+  const variantColorById =
+    new Map<number, string>();
+
+
+  variants.forEach(
+    (variant) => {
+
+      variantColorById.set(
+        variant.id,
+        variant.color
+      );
+
+    }
+  );
+
+
+  /*
+   * Build color-specific image galleries.
+   *
+   * Only active variants participate in storefront
+   * color galleries. Media without variant_id remains
+   * available through the product-level fallback.
+   */
+
+  const mediaByColor:
+    Record<string, string[]> = {};
+
+
+  imageMedia.forEach(
+    (item) => {
+
+      if (
+        item.variant_id === null
+      ) {
+        return;
+      }
+
+
+      const color =
+        variantColorById.get(
+          item.variant_id
+        );
+
+
+      if (!color) {
+        return;
+      }
+
+
+      const image =
+        getMediaUrl(
+          item.storage_path
+        );
+
+
+      if (
+        !mediaByColor[color]
+      ) {
+        mediaByColor[color] = [];
+      }
+
+
+      mediaByColor[color].push(
+        image
+      );
+
+    }
+  );
 
 
   /*
@@ -276,6 +364,8 @@ function mapProduct(
 
     images,
 
+    mediaByColor,
+
     category:
       row.category ?? "",
 
@@ -358,6 +448,7 @@ export async function getProducts():
           product_media (
             id,
             product_id,
+            variant_id,
             type,
             storage_path,
             alt_text,
@@ -444,6 +535,7 @@ export async function getProductBySlug(
           product_media (
             id,
             product_id,
+            variant_id,
             type,
             storage_path,
             alt_text,
@@ -480,4 +572,5 @@ export async function getProductBySlug(
   return mapProduct(
     data as unknown as ProductData
   );
+
 }
