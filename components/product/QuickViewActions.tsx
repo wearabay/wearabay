@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useMemo,
   useState,
 } from "react";
 
@@ -40,20 +41,104 @@ export default function QuickViewActions({
   } = useAuthUser();
 
 
+  const variants = useMemo(
+    () => product.variants ?? [],
+    [product.variants]
+  );
+
+
+  const hasVariants =
+    variants.length > 0;
+
+
+  const availableColors = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          variants
+            .filter(
+              (variant) =>
+                variant.stock > 0
+            )
+            .map(
+              (variant) =>
+                variant.color
+            )
+        )
+      ),
+    [variants]
+  );
+
+
   const [
     color,
     setColor,
   ] = useState(
-    product.colors?.[0] ?? ""
+    availableColors[0] ??
+    product.colors?.[0] ??
+    ""
   );
+
+
+  const availableSizes = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          variants
+            .filter(
+              (variant) =>
+                variant.color === color &&
+                variant.stock > 0
+            )
+            .map(
+              (variant) =>
+                variant.size
+            )
+        )
+      ),
+    [variants, color]
+  );
+
+
+  const initialSize =
+    availableSizes[0] ??
+    product.sizes?.[0] ??
+    "";
 
 
   const [
     size,
     setSize,
   ] = useState(
-    product.sizes?.[0] ?? ""
+    initialSize
   );
+
+
+  const selectedVariant = useMemo(
+    () =>
+      variants.find(
+        (variant) =>
+          variant.color === color &&
+          variant.size === size
+      ) ?? null,
+    [variants, color, size]
+  );
+
+
+  const selectedVariantStock =
+    selectedVariant?.stock ?? 0;
+
+
+  const selectedVariantPrice =
+    selectedVariant?.price ??
+    product.price;
+
+
+  const hasValidVariant =
+    Boolean(
+      selectedVariant &&
+      selectedVariantStock > 0
+    );
 
 
   const [
@@ -68,9 +153,85 @@ export default function QuickViewActions({
   ] = useState(false);
 
 
-  /*
-   * Add To Bag
-   */
+  const handleColorChange = (
+    nextColor: string
+  ) => {
+
+    setColor(
+      nextColor
+    );
+
+
+    const nextAvailableSizes =
+      Array.from(
+        new Set(
+          variants
+            .filter(
+              (variant) =>
+                variant.color ===
+                  nextColor &&
+                variant.stock > 0
+            )
+            .map(
+              (variant) =>
+                variant.size
+            )
+        )
+      );
+
+
+    const nextSize =
+      nextAvailableSizes.includes(
+        size
+      )
+        ? size
+        : nextAvailableSizes[0] ??
+          "";
+
+
+    setSize(
+      nextSize
+    );
+
+    setQty(1);
+
+  };
+
+
+  const handleSizeChange = (
+    nextSize: string
+  ) => {
+
+    setSize(
+      nextSize
+    );
+
+    setQty(1);
+
+  };
+
+
+  const handleIncreaseQuantity =
+    () => {
+
+      if (
+        !hasVariants ||
+        !selectedVariant
+      ) {
+        return;
+      }
+
+
+      setQty(
+        (currentQty) =>
+          Math.min(
+            currentQty + 1,
+            selectedVariantStock
+          )
+      );
+
+    };
+
 
   const handleAddToCart =
     async (
@@ -82,17 +243,11 @@ export default function QuickViewActions({
       e.stopPropagation();
 
 
-      /*
-       * Wait until auth state is known.
-       *
-       * This prevents a logged-in user from
-       * accidentally writing to guest cart
-       * while Supabase session is still loading.
-       */
-
       if (
         authLoading ||
-        adding
+        adding ||
+        !selectedVariant ||
+        selectedVariantStock <= 0
       ) {
 
         return;
@@ -109,11 +264,17 @@ export default function QuickViewActions({
           {
             id: product.id,
             name: product.name,
-            price: product.price,
+            price:
+              selectedVariant.price,
             image: product.image,
-            quantity: qty,
-            color,
-            size,
+            quantity: Math.min(
+              qty,
+              selectedVariantStock
+            ),
+            color:
+              selectedVariant.color,
+            size:
+              selectedVariant.size,
           },
           user?.id
         );
@@ -178,43 +339,60 @@ export default function QuickViewActions({
           >
 
             {product.colors.map(
-              (item) => (
+              (item) => {
 
-                <button
+                const isAvailable =
+                  availableColors.includes(
+                    item
+                  );
 
-                  type="button"
 
-                  key={item}
+                return (
 
-                  onClick={() =>
-                    setColor(
-                      item
-                    )
-                  }
+                  <button
 
-                  className={`
-                    rounded-full
-                    border
-                    px-5
-                    py-2
-                    text-sm
-                    text-neutral-400
-                    transition
+                    type="button"
 
-                    ${
-                      color === item
-                        ? "border-black bg-black text-white"
-                        : "border-stone-300 hover:border-black"
+                    key={item}
+
+                    disabled={
+                      hasVariants &&
+                      !isAvailable
                     }
-                  `}
 
-                >
+                    onClick={() =>
+                      handleColorChange(
+                        item
+                      )
+                    }
 
-                  {item}
+                    className={`
+                      rounded-full
+                      border
+                      px-5
+                      py-2
+                      text-sm
+                      transition
 
-                </button>
+                      ${
+                        color === item
+                          ? "border-black bg-black text-white"
+                          : isAvailable ||
+                              !hasVariants
+                            ? "border-stone-300 text-neutral-700 hover:border-black"
+                            : "cursor-not-allowed border-stone-200 text-neutral-300 opacity-50"
+                      }
+                    `}
 
-              )
+                  >
+
+                    {item}
+
+                  </button>
+
+                );
+
+              }
             )}
 
           </div>
@@ -252,45 +430,105 @@ export default function QuickViewActions({
           >
 
             {product.sizes.map(
-              (item) => (
+              (item) => {
 
-                <button
+                const isAvailable =
+                  !hasVariants ||
+                  availableSizes.includes(
+                    item
+                  );
 
-                  type="button"
 
-                  key={item}
+                return (
 
-                  onClick={() =>
-                    setSize(
-                      item
-                    )
-                  }
+                  <button
 
-                  className={`
-                    h-11
-                    min-w-[48px]
-                    rounded-full
-                    border
-                    px-4
-                    transition
+                    type="button"
 
-                    ${
-                      size === item
-                        ? "border-black bg-black text-white"
-                        : "border-stone-300 hover:border-black"
+                    key={item}
+
+                    disabled={
+                      hasVariants &&
+                      !isAvailable
                     }
-                  `}
 
-                >
+                    onClick={() =>
+                      handleSizeChange(
+                        item
+                      )
+                    }
 
-                  {item}
+                    className={`
+                      h-11
+                      min-w-[48px]
+                      rounded-full
+                      border
+                      px-4
+                      transition
 
-                </button>
+                      ${
+                        size === item
+                          ? "border-black bg-black text-white"
+                          : isAvailable
+                            ? "border-stone-300 text-neutral-700 hover:border-black"
+                            : "cursor-not-allowed border-stone-200 text-neutral-300 opacity-50"
+                      }
+                    `}
 
-              )
+                  >
+
+                    {item}
+
+                  </button>
+
+                );
+
+              }
             )}
 
           </div>
+
+        </div>
+
+      )}
+
+
+      {/* Selected Variant */}
+
+      {hasVariants && (
+
+        <div
+          className="
+            -mt-3
+            flex
+            items-center
+            justify-between
+            text-xs
+          "
+        >
+
+          <span
+            className="
+              uppercase
+              tracking-[0.18em]
+              text-neutral-400
+            "
+          >
+            Price
+          </span>
+
+          <span
+            className="
+              font-medium
+              text-neutral-900
+            "
+          >
+
+            {selectedVariant
+              ? `Rp${selectedVariantPrice.toLocaleString("id-ID")}`
+              : "Select an available option"}
+
+          </span>
 
         </div>
 
@@ -330,10 +568,17 @@ export default function QuickViewActions({
             type="button"
 
             onClick={() =>
-              qty > 1 &&
               setQty(
-                qty - 1
+                (currentQty) =>
+                  Math.max(
+                    1,
+                    currentQty - 1
+                  )
               )
+            }
+
+            disabled={
+              qty <= 1
             }
 
             className="
@@ -342,6 +587,8 @@ export default function QuickViewActions({
               text-neutral-700
               transition
               hover:bg-stone-100
+              disabled:cursor-not-allowed
+              disabled:opacity-40
             "
 
           >
@@ -364,9 +611,15 @@ export default function QuickViewActions({
 
             type="button"
 
-            onClick={() =>
-              setQty(
-                qty + 1
+            onClick={
+              handleIncreaseQuantity
+            }
+
+            disabled={
+              hasVariants &&
+              (
+                !selectedVariant ||
+                qty >= selectedVariantStock
               )
             }
 
@@ -376,6 +629,8 @@ export default function QuickViewActions({
               text-neutral-700
               transition
               hover:bg-stone-100
+              disabled:cursor-not-allowed
+              disabled:opacity-40
             "
 
           >
@@ -383,6 +638,25 @@ export default function QuickViewActions({
           </button>
 
         </div>
+
+
+        {hasVariants && (
+
+          <p
+            className="
+              mt-3
+              text-xs
+              text-neutral-400
+            "
+          >
+
+            {selectedVariant
+              ? `${selectedVariantStock} available`
+              : "Select an available color and size"}
+
+          </p>
+
+        )}
 
       </div>
 
@@ -408,7 +682,9 @@ export default function QuickViewActions({
 
           disabled={
             adding ||
-            authLoading
+            authLoading ||
+            (hasVariants &&
+              !hasValidVariant)
           }
 
           className="
@@ -422,7 +698,7 @@ export default function QuickViewActions({
             text-white
             transition
             hover:bg-neutral-900
-            disabled:cursor-wait
+            disabled:cursor-not-allowed
             disabled:opacity-60
           "
 
@@ -433,7 +709,10 @@ export default function QuickViewActions({
               ? "Loading..."
               : adding
                 ? "Adding..."
-                : "Add To Bag"
+                : hasVariants &&
+                    !hasValidVariant
+                  ? "Select Option"
+                  : "Add To Bag"
           }
 
         </button>
