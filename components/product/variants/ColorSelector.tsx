@@ -13,6 +13,7 @@ const COLOR_MAP: Record<string, string> = {
   Sage: "#9CAF88",
   "Dusty Rose": "#C98F94",
   "Soft Pink": "#F4D7D7",
+  Pink: "#E7A6B2",
 };
 
 

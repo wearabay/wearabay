@@ -310,8 +310,16 @@ export default function ProductGallery({
 
       <div
         className="
+          sticky
+          top-24
           hidden
+          max-h-[calc(100vh-7rem)]
+          self-start
+          overflow-y-auto
           lg:block
+          scrollbar-thin
+          scrollbar-track-transparent
+          scrollbar-thumb-neutral-300
         "
       >
 
