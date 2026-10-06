@@ -99,6 +99,21 @@ export default function ProductInfo({
 
 
   /*
+   * Selected color image
+   *
+   * Cart items keep the first image belonging to the
+   * selected color. Product-level image remains the
+   * fallback when that color has no dedicated media.
+   */
+
+  const selectedColorImage =
+    product.mediaByColor?.[
+      selectedColor
+    ]?.[0] ??
+    product.image;
+
+
+  /*
    * Purchasable state
    */
 
@@ -286,7 +301,13 @@ export default function ProductInfo({
             id: product.id,
             name: product.name,
             price: selectedVariant.price,
-            image: product.image,
+
+            /*
+             * Store the image belonging to the
+             * selected color in the cart item.
+             */
+            image: selectedColorImage,
+
             quantity,
             color: selectedVariant.color,
             size: selectedVariant.size,

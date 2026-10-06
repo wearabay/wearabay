@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/client";
 
+import { getMediaUrl } from "@/lib/media";
+
 
 export type CartItem = {
   id: number;
@@ -28,6 +30,23 @@ type VariantStockRow = {
   size: string;
   stock: number;
   status: "active" | "inactive";
+};
+
+
+type VariantMediaRow = {
+  id: number;
+  product_id: number;
+  color: string;
+  size: string;
+  status: "active" | "inactive";
+};
+
+
+type ProductMediaRow = {
+  variant_id: number | null;
+  type: "image" | "video";
+  storage_path: string;
+  sort_order: number;
 };
 
 
@@ -375,6 +394,418 @@ async function hydrateCartStock(
 
 
 /* =========================================================
+   MEDIA
+========================================================= */
+
+/*
+ * Refresh cart thumbnails from the exact active variant.
+ *
+ * Existing cart records may still contain the old product-level
+ * image. This hydration makes the cart image follow:
+ *
+ * product + color + size
+ *       ↓
+ * active product variant
+ *       ↓
+ * variant media
+ *
+ * If exact variant media is unavailable, media from another
+ * active variant with the same color is used as fallback.
+ * If no variant media exists, the existing cart image remains.
+ */
+
+async function hydrateCartMedia(
+  cart: CartItem[]
+): Promise<CartItem[]> {
+
+  const variantItems =
+    cart.filter(
+      (item) =>
+        Boolean(
+          item.color &&
+          item.size
+        )
+    );
+
+
+  if (
+    variantItems.length === 0
+  ) {
+
+    return cart;
+
+  }
+
+
+  const productIds = [
+    ...new Set(
+      variantItems.map(
+        (item) =>
+          item.id
+      )
+    ),
+  ];
+
+
+  const supabase =
+    createClient();
+
+
+  /*
+   * Load active variants so cart color + size can resolve
+   * to the exact variant ID used by product_media.
+   */
+
+  const {
+    data: variantsData,
+    error: variantsError,
+  } =
+    await supabase
+      .from("product_variants")
+      .select(
+        `
+        id,
+        product_id,
+        color,
+        size,
+        status
+        `
+      )
+      .in(
+        "product_id",
+        productIds
+      )
+      .eq(
+        "status",
+        "active"
+      );
+
+
+  if (
+    variantsError
+  ) {
+
+    console.error(
+      "Failed to load cart variant media mapping:",
+      variantsError
+    );
+
+    return cart;
+
+  }
+
+
+  const variants =
+    (variantsData ?? []) as VariantMediaRow[];
+
+
+  if (
+    variants.length === 0
+  ) {
+
+    return cart;
+
+  }
+
+
+  const variantByKey =
+    new Map<string, VariantMediaRow>();
+
+
+  const variantIdsByColor =
+    new Map<string, number[]>();
+
+
+  variants.forEach(
+    (variant) => {
+
+      variantByKey.set(
+        getVariantKey(
+          Number(
+            variant.product_id
+          ),
+          variant.color,
+          variant.size
+        ),
+        variant
+      );
+
+
+      const colorKey =
+        getVariantKey(
+          Number(
+            variant.product_id
+          ),
+          variant.color
+        );
+
+
+      const existing =
+        variantIdsByColor.get(
+          colorKey
+        ) ?? [];
+
+
+      existing.push(
+        Number(
+          variant.id
+        )
+      );
+
+
+      variantIdsByColor.set(
+        colorKey,
+        existing
+      );
+
+    }
+  );
+
+
+  const variantIds = [
+    ...new Set(
+      variants.map(
+        (variant) =>
+          Number(
+            variant.id
+          )
+      )
+    ),
+  ];
+
+
+  const {
+    data: mediaData,
+    error: mediaError,
+  } =
+    await supabase
+      .from("product_media")
+      .select(
+        `
+        variant_id,
+        type,
+        storage_path,
+        sort_order
+        `
+      )
+      .in(
+        "variant_id",
+        variantIds
+      )
+      .eq(
+        "type",
+        "image"
+      )
+      .order(
+        "sort_order",
+        {
+          ascending: true,
+        }
+      );
+
+
+  if (
+    mediaError
+  ) {
+
+    console.error(
+      "Failed to load cart variant media:",
+      mediaError
+    );
+
+    return cart;
+
+  }
+
+
+  const media =
+    (mediaData ?? []) as ProductMediaRow[];
+
+
+  /*
+   * First image for each exact variant.
+   */
+
+  const imageByVariantId =
+    new Map<number, string>();
+
+
+  media.forEach(
+    (item) => {
+
+      if (
+        item.variant_id === null
+      ) {
+
+        return;
+
+      }
+
+
+      const variantId =
+        Number(
+          item.variant_id
+        );
+
+
+      if (
+        imageByVariantId.has(
+          variantId
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      imageByVariantId.set(
+        variantId,
+        getMediaUrl(
+          item.storage_path
+        )
+      );
+
+    }
+  );
+
+
+  /*
+   * Color fallback:
+   *
+   * If the exact size variant has no media, use the first
+   * available media belonging to another active variant
+   * of the same product + color.
+   */
+
+  const imageByColor =
+    new Map<string, string>();
+
+
+  variantIdsByColor.forEach(
+    (
+      ids,
+      colorKey
+    ) => {
+
+      for (
+        const variantId
+        of ids
+      ) {
+
+        const image =
+          imageByVariantId.get(
+            variantId
+          );
+
+
+        if (
+          image
+        ) {
+
+          imageByColor.set(
+            colorKey,
+            image
+          );
+
+          break;
+
+        }
+
+      }
+
+    }
+  );
+
+
+  /*
+   * Apply media to cart items.
+   */
+
+  return cart.map(
+    (item) => {
+
+      if (
+        !item.color ||
+        !item.size
+      ) {
+
+        return item;
+
+      }
+
+
+      const variant =
+        variantByKey.get(
+          getVariantKey(
+            item.id,
+            item.color,
+            item.size
+          )
+        );
+
+
+      if (
+        !variant
+      ) {
+
+        return item;
+
+      }
+
+
+      const exactImage =
+        imageByVariantId.get(
+          Number(
+            variant.id
+          )
+        );
+
+
+      if (
+        exactImage
+      ) {
+
+        return {
+          ...item,
+          image:
+            exactImage,
+        };
+
+      }
+
+
+      const colorImage =
+        imageByColor.get(
+          getVariantKey(
+            item.id,
+            item.color
+          )
+        );
+
+
+      if (
+        colorImage
+      ) {
+
+        return {
+          ...item,
+          image:
+            colorImage,
+        };
+
+      }
+
+
+      return item;
+
+    }
+  );
+
+}
+
+
+/* =========================================================
    GET CART
 ========================================================= */
 
@@ -504,9 +935,20 @@ export async function loadCart(
    * active product variants.
    */
 
-  const hydratedCart =
+  const stockHydratedCart =
     await hydrateCartStock(
       cart
+    );
+
+
+  /*
+   * Refresh thumbnails from the current
+   * variant media.
+   */
+
+  const hydratedCart =
+    await hydrateCartMedia(
+      stockHydratedCart
     );
 
 
@@ -975,6 +1417,17 @@ export async function addToCart(
 
       stock:
         currentStock,
+
+      /*
+       * Keep the latest variant-aware
+       * thumbnail when the same cart item
+       * is added again.
+       */
+      image:
+        item.image ||
+        cart[
+          existingIndex
+        ].image,
     };
 
   } else {
