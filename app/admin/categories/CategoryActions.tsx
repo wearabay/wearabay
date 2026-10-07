@@ -1,18 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import {
-  useState,
-} from "react";
+import { useState } from "react";
 
 import {
   deleteAdminCategoryAction,
   toggleAdminCategoryAction,
 } from "./actions";
 
-import type {
-  AdminCategory,
-} from "@/lib/admin-categories";
+import type { AdminCategory } from "@/lib/admin-categories";
 
 type Props = {
   category: AdminCategory;
@@ -23,8 +19,7 @@ export default function CategoryActions({
   category,
   mobile = false,
 }: Props) {
-  const [pending, setPending] =
-    useState(false);
+  const [pending, setPending] = useState(false);
 
   async function handleToggle() {
     setPending(true);
@@ -40,10 +35,9 @@ export default function CategoryActions({
   }
 
   async function handleDelete() {
-    const confirmed =
-      window.confirm(
-        `Delete "${category.name}"? This can only be done if no products are assigned to this category.`,
-      );
+    const confirmed = window.confirm(
+      `Delete "${category.name}"? This can only be done if no products are assigned to this category.`,
+    );
 
     if (!confirmed) {
       return;
@@ -52,9 +46,7 @@ export default function CategoryActions({
     setPending(true);
 
     try {
-      await deleteAdminCategoryAction(
-        category.id,
-      );
+      await deleteAdminCategoryAction(category.id);
     } finally {
       setPending(false);
     }

@@ -5,13 +5,22 @@ import QuickViewModal from "../product/QuickViewModal";
 
 import type { Product } from "@/types/product";
 
+import { getProductBadgesForProducts } from "@/lib/product-badge-service";
+
 type Props = {
   products: Product[];
 };
 
-export default function FeaturedProducts({
+export default async function FeaturedProducts({
   products,
 }: Props) {
+  const badgeMap =
+    await getProductBadgesForProducts(
+      products.map(
+        (product) => product.id,
+      ),
+    );
+
   return (
     <>
       <section className="bg-white py-16 lg:py-32">
@@ -46,6 +55,11 @@ export default function FeaturedProducts({
               <ProductCard
                 key={product.id}
                 product={product}
+                badges={
+                  badgeMap.get(
+                    product.id,
+                  ) ?? []
+                }
               />
             ))}
           </div>

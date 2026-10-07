@@ -9,6 +9,7 @@ import {
 import StickyAddToBag from "./StickyAddToBag";
 
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
 
 import { formatPrice } from "@/lib/currency";
 
@@ -21,20 +22,19 @@ import { addToCart } from "@/lib/cart";
 
 import { useAuthUser } from "@/hooks/useAuthUser";
 
-
 type ProductInfoProps = {
   product: Product;
+  badges: ProductBadge[];
   selectedColor: string;
   onColorChange: (color: string) => void;
 };
 
-
 export default function ProductInfo({
   product,
+  badges,
   selectedColor,
   onColorChange,
 }: ProductInfoProps) {
-
   const {
     user,
     loading: authLoading,
@@ -46,36 +46,30 @@ export default function ProductInfo({
   const variants =
     product.variants ?? [];
 
-
   const [
     selectedSize,
     setSelectedSize,
   ] = useState(
-    sizes[0] ?? ""
+    sizes[0] ?? "",
   );
-
 
   const [
     quantity,
     setQuantity,
   ] = useState(1);
 
-
   const addToBagRef =
     useRef<HTMLButtonElement>(null);
-
 
   const [
     showSticky,
     setShowSticky,
   ] = useState(false);
 
-
   const [
     adding,
     setAdding,
   ] = useState(false);
-
 
   /*
    * Selected variant
@@ -85,25 +79,18 @@ export default function ProductInfo({
     variants.find(
       (variant) =>
         variant.color === selectedColor &&
-        variant.size === selectedSize
+        variant.size === selectedSize,
     ) ?? null;
-
 
   const selectedVariantStock =
     selectedVariant?.stock ?? 0;
-
 
   const selectedVariantPrice =
     selectedVariant?.price ??
     product.price;
 
-
   /*
    * Selected color image
-   *
-   * Cart items keep the first image belonging to the
-   * selected color. Product-level image remains the
-   * fallback when that color has no dedicated media.
    */
 
   const selectedColorImage =
@@ -111,7 +98,6 @@ export default function ProductInfo({
       selectedColor
     ]?.[0] ??
     product.image;
-
 
   /*
    * Purchasable state
@@ -131,77 +117,55 @@ export default function ProductInfo({
     hasSelectedVariant &&
     hasStock;
 
-
   /*
    * Color change
    */
 
   const handleColorChange =
     (color: string) => {
-
-      onColorChange(
-        color
-      );
-
+      onColorChange(color);
 
       const currentCombinationExists =
         variants.some(
           (variant) =>
             variant.color === color &&
-            variant.size === selectedSize
+            variant.size === selectedSize,
         );
-
 
       if (
         currentCombinationExists
       ) {
-
         setQuantity(1);
-
         return;
-
       }
-
 
       const firstAvailableVariant =
         variants.find(
           (variant) =>
             variant.color === color &&
-            variant.stock > 0
+            variant.stock > 0,
         );
-
 
       const firstVariantForColor =
         variants.find(
           (variant) =>
-            variant.color === color
+            variant.color === color,
         );
-
 
       const nextVariant =
         firstAvailableVariant ??
         firstVariantForColor;
 
-
-      if (
-        nextVariant
-      ) {
-
+      if (nextVariant) {
         setSelectedSize(
-          nextVariant.size
+          nextVariant.size,
         );
-
       } else {
-
         setSelectedSize("");
-
       }
 
-
       setQuantity(1);
-
     };
-
 
   /*
    * Size change
@@ -209,68 +173,45 @@ export default function ProductInfo({
 
   const handleSizeChange =
     (size: string) => {
-
       const combinationExists =
         variants.some(
           (variant) =>
             variant.color === selectedColor &&
-            variant.size === size
+            variant.size === size,
         );
-
 
       if (
         combinationExists
       ) {
-
-        setSelectedSize(
-          size
-        );
-
+        setSelectedSize(size);
         setQuantity(1);
-
-        return;
-
       }
-
     };
-
 
   /*
    * Quantity
    */
 
   const increaseQuantity = () => {
-
     if (
       quantity <
       selectedVariantStock
     ) {
-
       setQuantity(
         (prev) =>
-          prev + 1
+          prev + 1,
       );
-
     }
-
   };
-
 
   const decreaseQuantity = () => {
-
-    if (
-      quantity > 1
-    ) {
-
+    if (quantity > 1) {
       setQuantity(
         (prev) =>
-          prev - 1
+          prev - 1,
       );
-
     }
-
   };
-
 
   /*
    * Add To Bag
@@ -278,116 +219,84 @@ export default function ProductInfo({
 
   const handleAddToCart =
     async () => {
-
       if (
         !canAddToCart ||
         adding ||
         authLoading ||
         !selectedVariant
       ) {
-
         return;
-
       }
-
 
       setAdding(true);
 
-
       try {
-
         await addToCart(
           {
             id: product.id,
             name: product.name,
-            price: selectedVariant.price,
-
-            /*
-             * Store the image belonging to the
-             * selected color in the cart item.
-             */
-            image: selectedColorImage,
-
+            price:
+              selectedVariant.price,
+            image:
+              selectedColorImage,
             quantity,
-            color: selectedVariant.color,
-            size: selectedVariant.size,
+            color:
+              selectedVariant.color,
+            size:
+              selectedVariant.size,
           },
-          user?.id
+          user?.id,
         );
-
 
         window.dispatchEvent(
           new Event(
-            "cart-open"
-          )
+            "cart-open",
+          ),
         );
-
-      } catch (
-        error
-      ) {
-
+      } catch (error) {
         console.error(
           "Failed to add product to cart:",
-          error
+          error,
         );
-
       } finally {
-
         setAdding(false);
-
       }
-
     };
-
 
   /*
    * Sticky Add To Bag
    */
 
   useEffect(() => {
-
     if (
       !addToBagRef.current
     ) {
-
       return;
-
     }
-
 
     const observer =
       new IntersectionObserver(
         ([entry]) => {
-
           setShowSticky(
-            !entry.isIntersecting
+            !entry.isIntersecting,
           );
-
         },
         {
           threshold: 0.1,
-        }
+        },
       );
 
-
     observer.observe(
-      addToBagRef.current
+      addToBagRef.current,
     );
 
-
     return () => {
-
       observer.disconnect();
-
     };
-
   }, []);
 
-
   return (
-
     <div>
-
       {/* Category */}
 
       <p
@@ -401,25 +310,30 @@ export default function ProductInfo({
         {product.category}
       </p>
 
+      {/* Automatic Badges */}
 
-      {/* Badge */}
-
-      {product.badge && (
-
+      {badges.length > 0 && (
         <div
           className="
             mt-4
+            flex
+            flex-wrap
+            gap-2
           "
         >
-
-          <Badge>
-            {product.badge}
-          </Badge>
-
+          {badges
+            .slice(0, 2)
+            .map((badge) => (
+              <Badge
+                key={
+                  badge.type
+                }
+              >
+                {badge.label}
+              </Badge>
+            ))}
         </div>
-
       )}
-
 
       {/* Title */}
 
@@ -433,7 +347,6 @@ export default function ProductInfo({
         {product.name}
       </h1>
 
-
       {/* Price */}
 
       <p
@@ -443,17 +356,15 @@ export default function ProductInfo({
         "
       >
         {formatPrice(
-          selectedVariantPrice
+          selectedVariantPrice,
         )}
       </p>
-
 
       <Divider
         className="
           my-10
         "
       />
-
 
       {/* Description */}
 
@@ -466,7 +377,6 @@ export default function ProductInfo({
         {product.description}
       </p>
 
-
       {/* Features */}
 
       <div
@@ -477,99 +387,73 @@ export default function ProductInfo({
           text-neutral-600
         "
       >
-
         {product.features.map(
           (feature) => (
-
             <p
               key={feature}
             >
               ✓ {feature}
             </p>
-
-          )
+          ),
         )}
-
       </div>
-
 
       {/* Variant */}
 
       <ProductVariant
-
         addToBagRef={
           addToBagRef
         }
-
         product={
           product
         }
-
         selectedColor={
           selectedColor
         }
-
         onColorChange={
           handleColorChange
         }
-
         selectedSize={
           selectedSize
         }
-
         onSizeChange={
           handleSizeChange
         }
-
         quantity={
           quantity
         }
-
         onIncrease={
           increaseQuantity
         }
-
         onDecrease={
           decreaseQuantity
         }
-
         onAddToCart={
           handleAddToCart
         }
-
       />
-
 
       {/* Sticky Add To Bag */}
 
       <StickyAddToBag
-
         visible={
           showSticky
         }
-
         name={
           product.name
         }
-
         price={
           selectedVariantPrice
         }
-
         onAddToCart={
           handleAddToCart
         }
-
         disabled={
           !canAddToCart ||
           adding ||
           authLoading
         }
-
       />
-
     </div>
-
   );
-
 }

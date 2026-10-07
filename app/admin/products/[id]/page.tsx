@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { getAdminUser } from "@/lib/admin";
+import {
+  getAdminUser,
+  getSuperAdminUser,
+} from "@/lib/admin";
+import { getAdminCategories } from "@/lib/admin-categories";
 import { getAdminProductById } from "@/lib/admin-products";
 
 import ProductEditForm from "./ProductEditForm";
@@ -32,22 +36,40 @@ export default async function AdminProductEditPage({
     redirect("/login");
   }
 
+  const superAdmin =
+    await getSuperAdminUser();
+
   const { id } = await params;
   const productId = Number(id);
 
-  if (!Number.isInteger(productId) || productId <= 0) {
+  if (
+    !Number.isInteger(productId) ||
+    productId <= 0
+  ) {
     notFound();
   }
 
-  const product = await getAdminProductById(productId);
+  const product =
+    await getAdminProductById(productId);
 
   if (!product) {
     notFound();
   }
 
+  const categories =
+    await getAdminCategories();
+
+  const availableCategories =
+    categories.filter(
+      (category) =>
+        category.isActive ||
+        category.id === product.categoryId
+    );
+
   return (
     <main className="pb-10">
       {/* Header */}
+
       <div className="mb-8">
         <div className="mb-5 flex flex-wrap items-center gap-2 text-xs text-neutral-400">
           <Link
@@ -78,7 +100,9 @@ export default async function AdminProductEditPage({
               <span
                 className={[
                   "inline-flex rounded-full px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em]",
-                  getStatusClasses(product.status),
+                  getStatusClasses(
+                    product.status
+                  ),
                 ].join(" ")}
               >
                 {product.status}
@@ -86,8 +110,9 @@ export default async function AdminProductEditPage({
             </div>
 
             <p className="mt-2 max-w-2xl text-sm text-neutral-500">
-              Edit the product information and manage its connected
-              variants and media.
+              Edit the product information and
+              manage its connected variants and
+              media.
             </p>
           </div>
 
@@ -110,6 +135,7 @@ export default async function AdminProductEditPage({
       </div>
 
       {/* Product Summary */}
+
       <section className="mb-8 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-stone-200 bg-white px-5 py-4">
           <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-400">
@@ -148,7 +174,13 @@ export default async function AdminProductEditPage({
         </Link>
       </section>
 
-      <ProductEditForm product={product} />
+      <ProductEditForm
+        product={product}
+        categories={availableCategories}
+        isSuperAdmin={Boolean(
+          superAdmin
+        )}
+      />
     </main>
   );
 }

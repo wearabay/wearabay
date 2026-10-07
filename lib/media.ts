@@ -10,6 +10,7 @@ export const MEDIA_BUCKET = "wearabay-media";
  */
 export const MEDIA_FOLDERS: Record<string, string> = {
   products: "products",
+  categories: "categories",
 };
 
 export type MediaFolder = string;

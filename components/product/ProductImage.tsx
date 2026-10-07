@@ -3,45 +3,41 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import Badge from "../ui/Badge";
 import WishlistButton from "@/components/ui/WishlistButton";
 
 import { openQuickView } from "@/lib/quick-view";
 
 import type { Product } from "@/types/product";
-
+import type { ProductBadge } from "@/lib/product-badges";
 
 type Props = {
   product: Product;
+  badges?: ProductBadge[];
 };
-
 
 export default function ProductImage({
   product,
+  badges = [],
 }: Props) {
-
   const router = useRouter();
 
+  const visibleBadges = badges.slice(0, 2);
 
   const primaryImage =
     [product.images?.[0], product.image].find(
       (src) =>
         typeof src === "string" &&
-        src.trim().length > 0
+        src.trim().length > 0,
     ) ?? null;
-
 
   const secondaryImage =
     [product.images?.[1], primaryImage].find(
       (src) =>
         typeof src === "string" &&
-        src.trim().length > 0
+        src.trim().length > 0,
     ) ?? null;
 
-
-
   return (
-
     <div
       onClick={() =>
         router.push(`/shop/${product.slug}`)
@@ -59,29 +55,44 @@ export default function ProductImage({
         hover:shadow-xl
       "
     >
+      {/* Automatic Badges */}
 
-
-      {/* Badge */}
-
-      {product.badge && (
-
+      {visibleBadges.length > 0 && (
         <div
           className="
             absolute
             left-4
             top-4
             z-20
+            flex
+            flex-wrap
+            gap-2
           "
         >
-          <Badge>
-            {product.badge}
-          </Badge>
+          {visibleBadges.map((badge) => (
+            <span
+              key={badge.type}
+              className="
+                rounded-full
+                border
+                border-white/70
+                bg-white/90
+                px-3
+                py-1.5
+                text-[10px]
+                font-medium
+                uppercase
+                tracking-[0.12em]
+                text-neutral-700
+                shadow-sm
+                backdrop-blur-sm
+              "
+            >
+              {badge.label}
+            </span>
+          ))}
         </div>
-
       )}
-
-
-
 
       {/* Wishlist */}
 
@@ -96,21 +107,14 @@ export default function ProductImage({
           e.stopPropagation()
         }
       >
-
         <WishlistButton
           productId={product.id}
         />
-
       </div>
-
-
-
-
 
       {/* Main Image */}
 
       {primaryImage ? (
-
         <Image
           src={primaryImage}
           alt={product.name}
@@ -130,9 +134,7 @@ export default function ProductImage({
             group-hover:brightness-95
           "
         />
-
       ) : (
-
         <div
           className="
             absolute
@@ -143,7 +145,6 @@ export default function ProductImage({
             bg-[#ECE8E2]
           "
         >
-
           <span
             className="
               text-[10px]
@@ -154,19 +155,12 @@ export default function ProductImage({
           >
             NO IMAGE
           </span>
-
         </div>
-
       )}
-
-
-
-
 
       {/* Hover Image */}
 
       {secondaryImage && (
-
         <Image
           src={secondaryImage}
           alt={product.name}
@@ -187,12 +181,7 @@ export default function ProductImage({
             group-hover:opacity-100
           "
         />
-
       )}
-
-
-
-
 
       {/* Gradient */}
 
@@ -213,23 +202,14 @@ export default function ProductImage({
         "
       />
 
-
-
-
-
-
-
       {/* Quick View */}
 
       <button
         onClick={(e) => {
-
           e.preventDefault();
-
           e.stopPropagation();
 
           openQuickView(product);
-
         }}
         className="
           absolute
@@ -258,14 +238,8 @@ export default function ProductImage({
           group-hover:opacity-100
         "
       >
-
         QUICK VIEW
-
       </button>
-
-
-
     </div>
-
   );
 }

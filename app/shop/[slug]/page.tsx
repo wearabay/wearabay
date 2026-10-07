@@ -4,6 +4,7 @@ import ReviewList from "@/components/product/reviews/ReviewList";
 
 import { getProducts } from "@/lib/products";
 import { getProductReviews } from "@/lib/reviews";
+import { getProductBadgesForProduct } from "@/lib/product-badge-service";
 
 import Container from "@/components/ui/Container";
 
@@ -14,70 +15,66 @@ import RelatedProducts from "@/components/product/RelatedProducts";
 import ProductTracker from "@/components/product/ProductTracker";
 import RecentlyViewed from "@/components/cart/RecentlyViewed";
 
-
 type Props = {
   params: Promise<{
     slug: string;
   }>;
 };
 
-
 export default async function ProductDetail({
   params,
 }: Props) {
-
   const {
     slug,
   } = await params;
 
-
   const products =
     await getProducts();
-
 
   const product =
     products.find(
       (item) =>
-        item.slug === slug
+        item.slug === slug,
     );
-
 
   if (!product) {
     notFound();
   }
 
-
-  const reviews =
-    await getProductReviews(
-      product.id
-    );
-
+  const [
+    reviews,
+    badges,
+  ] = await Promise.all([
+    getProductReviews(
+      product.id,
+    ),
+    getProductBadgesForProduct(
+      product.id,
+    ),
+  ]);
 
   return (
-
     <>
-
       <ProductTracker
         slug={
           product.slug
         }
       />
 
-
       <main
         className="
           py-24
         "
       >
-
         <Container>
-
           <ProductDetailInteractive
             product={
               product
             }
+            badges={
+              badges
+            }
           />
-
 
           {/* Product Details */}
 
@@ -89,18 +86,14 @@ export default async function ProductDetail({
               lg:grid-cols-2
             "
           >
-
             <div />
 
-
             <div>
-
               <ProductDetails
                 product={
                   product
                 }
               />
-
 
               <ReviewList
                 productId={
@@ -110,11 +103,8 @@ export default async function ProductDetail({
                   reviews
                 }
               />
-
             </div>
-
           </div>
-
 
           {/* Recently Viewed */}
 
@@ -127,7 +117,6 @@ export default async function ProductDetail({
             }
           />
 
-
           {/* Related Products */}
 
           <RelatedProducts
@@ -135,13 +124,8 @@ export default async function ProductDetail({
               product.slug
             }
           />
-
         </Container>
-
       </main>
-
     </>
-
   );
-
 }

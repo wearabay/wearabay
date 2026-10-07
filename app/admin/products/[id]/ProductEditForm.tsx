@@ -3,12 +3,17 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import type {
+  AdminCategory,
+} from "@/lib/admin-categories";
 import type { AdminProduct } from "@/lib/admin-products";
 
 import { updateAdminProductAction } from "../actions";
 
 type Props = {
   product: AdminProduct;
+  categories: AdminCategory[];
+  isSuperAdmin: boolean;
 };
 
 type Specification = {
@@ -16,10 +21,17 @@ type Specification = {
   value: string;
 };
 
-type ProductStatus = "draft" | "published" | "archived";
+type ProductStatus =
+  | "draft"
+  | "published"
+  | "archived";
+
+type FulfillmentType =
+  | "ready_stock"
+  | "pre_order";
 
 const inputClass =
-  "h-11 w-full rounded-xl border border-stone-200 bg-white px-4 text-sm text-neutral-900 outline-none transition placeholder:text-neutral-300 focus:border-neutral-500";
+  "h-11 w-full rounded-xl border border-stone-200 bg-white px-4 text-sm text-neutral-900 outline-none transition placeholder:text-neutral-300 focus:border-neutral-500 disabled:cursor-not-allowed disabled:bg-stone-50 disabled:text-neutral-500";
 
 const textareaClass =
   "w-full resize-y rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none transition placeholder:text-neutral-300 focus:border-neutral-500";
@@ -46,14 +58,34 @@ function SectionHeader({
 
 export default function ProductEditForm({
   product,
+  categories,
+  isSuperAdmin,
 }: Props) {
   const [name, setName] = useState(product.name);
   const [slug, setSlug] = useState(product.slug);
-  const [category, setCategory] = useState(product.category);
-  const [badge, setBadge] = useState(product.badge ?? "");
-  const [description, setDescription] = useState(
-    product.description
+
+  const [categoryId, setCategoryId] = useState(
+    product.categoryId
+      ? String(product.categoryId)
+      : ""
   );
+
+  const [badge, setBadge] = useState(
+    product.badge ?? ""
+  );
+
+  const [description, setDescription] =
+    useState(product.description);
+
+  const [fulfillmentType, setFulfillmentType] =
+    useState<FulfillmentType>(
+      product.fulfillmentType
+    );
+
+  const [preorderReadyDate, setPreorderReadyDate] =
+    useState(
+      product.preorderReadyDate ?? ""
+    );
 
   const [features, setFeatures] = useState(
     product.features.join("\n")
@@ -75,23 +107,21 @@ export default function ProductEditForm({
     product.sizeGuide
   );
 
-  const [shippingReturns, setShippingReturns] = useState(
-    product.shippingReturns
-  );
+  const [shippingReturns, setShippingReturns] =
+    useState(product.shippingReturns);
 
-  const [careInstructions, setCareInstructions] = useState(
-    product.careInstructions
-  );
+  const [careInstructions, setCareInstructions] =
+    useState(product.careInstructions);
 
-  const [craftsmanship, setCraftsmanship] = useState(
-    product.craftsmanship
-  );
+  const [craftsmanship, setCraftsmanship] =
+    useState(product.craftsmanship);
 
-  const [status, setStatus] = useState<ProductStatus>(
-    product.status
-  );
+  const [status, setStatus] =
+    useState<ProductStatus>(product.status);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
   const [error, setError] = useState("");
 
   function updateSpecification(
@@ -133,9 +163,24 @@ export default function ProductEditForm({
       }
 
       return current.filter(
-        (_, itemIndex) => itemIndex !== index
+        (_, itemIndex) =>
+          itemIndex !== index
       );
     });
+  }
+
+  function handleFulfillmentChange(
+    value: FulfillmentType
+  ) {
+    if (!isSuperAdmin) {
+      return;
+    }
+
+    setFulfillmentType(value);
+
+    if (value === "ready_stock") {
+      setPreorderReadyDate("");
+    }
   }
 
   async function handleSubmit(
@@ -158,6 +203,21 @@ export default function ProductEditForm({
       return;
     }
 
+    if (!categoryId) {
+      setError("Product category is required.");
+      return;
+    }
+
+    if (
+      fulfillmentType === "pre_order" &&
+      !preorderReadyDate
+    ) {
+      setError(
+        "Please select the estimated ready-to-ship date for this pre-order product."
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -166,33 +226,49 @@ export default function ProductEditForm({
         .map((item) => item.trim())
         .filter(Boolean);
 
-      const cleanedSpecifications = specifications
-        .map((item) => ({
-          label: item.label.trim(),
-          value: item.value.trim(),
-        }))
-        .filter(
-          (item) =>
-            item.label !== "" &&
-            item.value !== ""
-        );
+      const cleanedSpecifications =
+        specifications
+          .map((item) => ({
+            label: item.label.trim(),
+            value: item.value.trim(),
+          }))
+          .filter(
+            (item) =>
+              item.label !== "" &&
+              item.value !== ""
+          );
 
-      await updateAdminProductAction(product.id, {
-        name: trimmedName,
-        slug: trimmedSlug,
-        category: category.trim(),
-        badge: badge.trim() || null,
-        description: description.trim(),
-        features: cleanedFeatures,
-        specifications: cleanedSpecifications,
-        sizeGuide: sizeGuide.trim(),
-        shippingReturns: shippingReturns.trim(),
-        careInstructions: careInstructions.trim(),
-        craftsmanship: craftsmanship.trim(),
-        status,
-      });
+      await updateAdminProductAction(
+        product.id,
+        {
+          name: trimmedName,
+          slug: trimmedSlug,
+          categoryId: Number(categoryId),
+          badge: badge.trim() || null,
+          description: description.trim(),
+          features: cleanedFeatures,
+          specifications:
+            cleanedSpecifications,
+          sizeGuide: sizeGuide.trim(),
+          shippingReturns:
+            shippingReturns.trim(),
+          careInstructions:
+            careInstructions.trim(),
+          craftsmanship:
+            craftsmanship.trim(),
+          status,
+          fulfillmentType,
+          preorderReadyDate:
+            fulfillmentType ===
+            "pre_order"
+              ? preorderReadyDate
+              : null,
+        }
+      );
 
-      window.location.assign("/admin/products");
+      window.location.assign(
+        "/admin/products"
+      );
     } catch (error) {
       setError(
         error instanceof Error
@@ -210,6 +286,7 @@ export default function ProductEditForm({
       className="space-y-5"
     >
       {/* Basic Information */}
+
       <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
         <SectionHeader
           title="Basic Information"
@@ -270,16 +347,44 @@ export default function ProductEditForm({
                 Category
               </label>
 
-              <input
+              <select
                 id="category"
-                type="text"
-                value={category}
+                value={categoryId}
                 onChange={(event) =>
-                  setCategory(event.target.value)
+                  setCategoryId(
+                    event.target.value
+                  )
                 }
-                placeholder="Abaya"
                 className={inputClass}
-              />
+                required
+              >
+                <option value="">
+                  Select category
+                </option>
+
+                {categories.map(
+                  (category) => (
+                    <option
+                      key={category.id}
+                      value={category.id}
+                    >
+                      {category.name}
+                      {!category.isActive
+                        ? " (Inactive)"
+                        : ""}
+                    </option>
+                  )
+                )}
+              </select>
+
+              <Link
+                href="/admin/categories/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex text-xs font-medium text-neutral-500 underline decoration-stone-300 underline-offset-4 transition hover:text-neutral-900"
+              >
+                + Add Category ↗
+              </Link>
             </div>
 
             <div>
@@ -295,7 +400,9 @@ export default function ProductEditForm({
                 type="text"
                 value={badge}
                 onChange={(event) =>
-                  setBadge(event.target.value)
+                  setBadge(
+                    event.target.value
+                  )
                 }
                 placeholder="NEW"
                 className={inputClass}
@@ -315,7 +422,9 @@ export default function ProductEditForm({
               id="description"
               value={description}
               onChange={(event) =>
-                setDescription(event.target.value)
+                setDescription(
+                  event.target.value
+                )
               }
               rows={7}
               className={textareaClass}
@@ -324,7 +433,103 @@ export default function ProductEditForm({
         </div>
       </section>
 
+      {/* Fulfillment */}
+
+      <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
+        <SectionHeader
+          title="Fulfillment"
+          description="Choose how this product will be fulfilled. Pre-order products can be purchased and paid for before the estimated ready-to-ship date."
+        />
+
+        <div className="space-y-5">
+          <div>
+            <label
+              htmlFor="fulfillmentType"
+              className="mb-2 block text-sm font-medium"
+            >
+              Fulfillment Method
+            </label>
+
+            <select
+              id="fulfillmentType"
+              value={fulfillmentType}
+              onChange={(event) =>
+                handleFulfillmentChange(
+                  event.target
+                    .value as FulfillmentType
+                )
+              }
+              disabled={!isSuperAdmin}
+              className={inputClass}
+            >
+              <option value="ready_stock">
+                Ready to Ship
+              </option>
+
+              <option value="pre_order">
+                Pre-Order
+              </option>
+            </select>
+
+            {!isSuperAdmin && (
+              <p className="mt-2 text-xs leading-5 text-neutral-400">
+                Fulfillment settings can only
+                be changed by a Super Admin.
+              </p>
+            )}
+          </div>
+
+          {fulfillmentType ===
+            "pre_order" && (
+            <div className="max-w-md">
+              <label
+                htmlFor="preorderReadyDate"
+                className="mb-2 block text-sm font-medium"
+              >
+                Estimated Ready-to-Ship Date
+              </label>
+
+              <input
+                id="preorderReadyDate"
+                type="date"
+                value={
+                  preorderReadyDate
+                }
+                onChange={(event) =>
+                  setPreorderReadyDate(
+                    event.target.value
+                  )
+                }
+                disabled={!isSuperAdmin}
+                min={
+                  new Date()
+                    .toISOString()
+                    .slice(0, 10)
+                }
+                className={inputClass}
+                required
+              />
+
+              <p className="mt-2 text-xs leading-5 text-neutral-400">
+                Customers can purchase and
+                pay for this product before
+                the ready-to-ship date.
+              </p>
+
+              {!isSuperAdmin && (
+                <p className="mt-2 rounded-xl bg-stone-50 px-3 py-2 text-xs leading-5 text-neutral-500">
+                  The current pre-order schedule
+                  can be viewed here, but only a
+                  Super Admin can change it.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Features */}
+
       <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
         <SectionHeader
           title="Features"
@@ -345,6 +550,7 @@ export default function ProductEditForm({
       </section>
 
       {/* Specifications */}
+
       <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <SectionHeader
@@ -371,7 +577,9 @@ export default function ProductEditForm({
                 <div className="grid gap-3 sm:grid-cols-[1fr_1.5fr_auto]">
                   <input
                     type="text"
-                    value={specification.label}
+                    value={
+                      specification.label
+                    }
                     onChange={(event) =>
                       updateSpecification(
                         index,
@@ -386,7 +594,9 @@ export default function ProductEditForm({
 
                   <input
                     type="text"
-                    value={specification.value}
+                    value={
+                      specification.value
+                    }
                     onChange={(event) =>
                       updateSpecification(
                         index,
@@ -402,7 +612,9 @@ export default function ProductEditForm({
                   <button
                     type="button"
                     onClick={() =>
-                      removeSpecification(index)
+                      removeSpecification(
+                        index
+                      )
                     }
                     className="h-11 rounded-xl border border-stone-200 px-4 text-xs font-medium text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-900"
                   >
@@ -416,6 +628,7 @@ export default function ProductEditForm({
       </section>
 
       {/* Product Detail Content */}
+
       <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
         <SectionHeader
           title="Product Detail Content"
@@ -435,7 +648,9 @@ export default function ProductEditForm({
               id="sizeGuide"
               value={sizeGuide}
               onChange={(event) =>
-                setSizeGuide(event.target.value)
+                setSizeGuide(
+                  event.target.value
+                )
               }
               rows={5}
               placeholder="Available in All Size. Please contact us for detailed measurements."
@@ -516,6 +731,7 @@ export default function ProductEditForm({
       </section>
 
       {/* Publishing */}
+
       <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
         <SectionHeader
           title="Publishing"
@@ -536,15 +752,20 @@ export default function ProductEditForm({
               value={status}
               onChange={(event) =>
                 setStatus(
-                  event.target.value as ProductStatus
+                  event.target
+                    .value as ProductStatus
                 )
               }
               className="h-11 w-full rounded-xl border border-stone-200 bg-white px-4 text-sm outline-none transition focus:border-neutral-500"
             >
-              <option value="draft">Draft</option>
+              <option value="draft">
+                Draft
+              </option>
+
               <option value="published">
                 Published
               </option>
+
               <option value="archived">
                 Archived
               </option>
@@ -552,14 +773,17 @@ export default function ProductEditForm({
           </div>
 
           <div className="rounded-xl bg-stone-50 px-4 py-3 text-xs leading-5 text-neutral-500">
-            Draft products can be prepared before publishing. Archived
-            products remain in the admin workspace but are no longer
-            treated as published storefront content.
+            Draft products can be prepared
+            before publishing. Archived products
+            remain in the admin workspace but are
+            no longer treated as published
+            storefront content.
           </div>
         </div>
       </section>
 
       {/* Product Resources */}
+
       <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
         <SectionHeader
           title="Product Resources"
@@ -579,7 +803,8 @@ export default function ProductEditForm({
 
                 <p className="mt-1 text-xs text-neutral-500">
                   {product.variantCount}{" "}
-                  {product.variantCount === 1
+                  {product.variantCount ===
+                  1
                     ? "variant"
                     : "variants"}
                 </p>
@@ -603,7 +828,8 @@ export default function ProductEditForm({
 
                 <p className="mt-1 text-xs text-neutral-500">
                   {product.mediaCount}{" "}
-                  {product.mediaCount === 1
+                  {product.mediaCount ===
+                  1
                     ? "media item"
                     : "media items"}
                 </p>
@@ -618,6 +844,7 @@ export default function ProductEditForm({
       </section>
 
       {/* Feedback */}
+
       {error && (
         <div
           role="alert"
@@ -628,6 +855,7 @@ export default function ProductEditForm({
       )}
 
       {/* Actions */}
+
       <div className="sticky bottom-0 z-20 -mx-4 border-t border-stone-200 bg-[#FAF9F7]/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:px-0 lg:py-2">
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Link

@@ -28,27 +28,17 @@ import {
 
 
 type NavbarIconsProps = {
-
   dark?: boolean;
-
   onCartClick: () => void;
-
   onSearchClick: () => void;
-
 };
 
 
 export default function NavbarIcons({
-
   dark = false,
-
   onCartClick,
-
   onSearchClick,
-
 }: NavbarIconsProps) {
-
-
   const {
     user,
     loading: authLoading,
@@ -68,26 +58,18 @@ export default function NavbarIcons({
 
 
   /*
-   * Load wishlist and cart
-   * whenever authentication changes.
+   * Load wishlist and cart whenever
+   * authentication changes.
    */
 
   useEffect(() => {
-
-    if (
-      authLoading
-    ) {
-
+    if (authLoading) {
       return;
-
     }
-
 
     let cancelled = false;
 
-
     async function loadData() {
-
       const userId =
         user?.id;
 
@@ -97,54 +79,38 @@ export default function NavbarIcons({
        */
 
       if (!userId) {
-
-        if (
-          cancelled
-        ) {
-
+        if (cancelled) {
           return;
-
         }
-
 
         setWishlistCount(
           getWishlistCount()
         );
 
-
         setCartCount(
           getCartCount()
         );
 
-
         return;
-
       }
 
 
       /*
        * USER
        *
-       * Load wishlist from Supabase
-       * first so a new device/browser
-       * receives the user's saved wishlist.
+       * Load authenticated wishlist
+       * from Supabase first.
        */
 
       try {
-
         await loadWishlist(
           userId
         );
-
-      } catch (
-        error
-      ) {
-
+      } catch (error) {
         console.error(
           "Failed to load wishlist for navbar:",
           error
         );
-
       }
 
 
@@ -153,12 +119,8 @@ export default function NavbarIcons({
        * from updating the current user.
        */
 
-      if (
-        cancelled
-      ) {
-
+      if (cancelled) {
         return;
-
       }
 
 
@@ -168,25 +130,18 @@ export default function NavbarIcons({
         )
       );
 
-
       setCartCount(
         getCartCount(
           userId
         )
       );
-
     }
-
 
     loadData();
 
-
     return () => {
-
       cancelled = true;
-
     };
-
   }, [
     user?.id,
     authLoading,
@@ -198,39 +153,29 @@ export default function NavbarIcons({
    */
 
   useEffect(() => {
-
-    if (
-      authLoading
-    ) {
-
+    if (authLoading) {
       return;
-
     }
-
 
     const userId =
       user?.id;
 
 
     const updateWishlist = () => {
-
       setWishlistCount(
         getWishlistCount(
           userId
         )
       );
-
     };
 
 
     const updateCart = () => {
-
       setCartCount(
         getCartCount(
           userId
         )
       );
-
     };
 
 
@@ -239,7 +184,6 @@ export default function NavbarIcons({
       updateWishlist
     );
 
-
     window.addEventListener(
       "cart-updated",
       updateCart
@@ -247,20 +191,16 @@ export default function NavbarIcons({
 
 
     return () => {
-
       window.removeEventListener(
         "wishlist-updated",
         updateWishlist
       );
 
-
       window.removeEventListener(
         "cart-updated",
         updateCart
       );
-
     };
-
   }, [
     user?.id,
     authLoading,
@@ -272,23 +212,18 @@ export default function NavbarIcons({
    */
 
   const iconClass = `
-
     transition-all
     duration-300
-
     hover:opacity-60
-
     ${
       dark
         ? "text-neutral-900"
         : "text-white"
     }
-
   `;
 
 
   return (
-
     <div
       className="
         flex
@@ -296,62 +231,42 @@ export default function NavbarIcons({
         gap-6
       "
     >
-
-
       {/* SEARCH */}
 
       <button
-
         type="button"
-
         onClick={
           onSearchClick
         }
-
         aria-label="Search"
-
         className={
           iconClass
         }
-
       >
-
         <Search
           size={22}
           strokeWidth={1.8}
         />
-
       </button>
 
 
       {/* WISHLIST */}
 
       <Link
-
         href="/wishlist"
-
         className={`
           relative
           ${iconClass}
         `}
-
         aria-label="Wishlist"
-
       >
-
         <Heart
-
           size={22}
-
           strokeWidth={1.8}
-
         />
 
-
         {wishlistCount > 0 && (
-
           <span
-
             className="
               absolute
               -right-3
@@ -367,50 +282,33 @@ export default function NavbarIcons({
               font-semibold
               text-white
             "
-
           >
-
             {wishlistCount}
-
           </span>
-
         )}
-
       </Link>
 
 
       {/* BAG */}
 
       <button
-
         type="button"
-
         onClick={
           onCartClick
         }
-
         className={`
           relative
           ${iconClass}
         `}
-
         aria-label="Shopping Bag"
-
       >
-
         <ShoppingBag
-
           size={22}
-
           strokeWidth={1.8}
-
         />
 
-
         {cartCount > 0 && (
-
           <span
-
             className="
               absolute
               -right-3
@@ -426,20 +324,11 @@ export default function NavbarIcons({
               font-semibold
               text-white
             "
-
           >
-
             {cartCount}
-
           </span>
-
         )}
-
       </button>
-
-
     </div>
-
   );
-
 }

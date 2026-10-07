@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
 import {
+  getSuperAdminUser,
   isAdminRole,
 } from "@/lib/admin";
 
@@ -8,6 +9,10 @@ export type AdminProductStatus =
   | "draft"
   | "published"
   | "archived";
+
+export type AdminProductFulfillmentType =
+  | "ready_stock"
+  | "pre_order";
 
 export type AdminProductSpecification = {
   label: string;
@@ -19,7 +24,10 @@ export type AdminProduct = {
   slug: string;
   name: string;
   description: string;
+
+  categoryId: number | null;
   category: string;
+
   badge: string | null;
   features: string[];
   specifications: AdminProductSpecification[];
@@ -30,6 +38,10 @@ export type AdminProduct = {
   craftsmanship: string;
 
   status: AdminProductStatus;
+
+  fulfillmentType: AdminProductFulfillmentType;
+  preorderReadyDate: string | null;
+
   variantCount: number;
   mediaCount: number;
   createdAt: string;
@@ -40,7 +52,10 @@ export type CreateAdminProductInput = {
   name: string;
   slug: string;
   description?: string;
+
+  categoryId?: number;
   category?: string;
+
   badge?: string | null;
   features?: string[];
   specifications?: AdminProductSpecification[];
@@ -51,6 +66,9 @@ export type CreateAdminProductInput = {
   craftsmanship?: string;
 
   status?: AdminProductStatus;
+
+  fulfillmentType?: AdminProductFulfillmentType;
+  preorderReadyDate?: string | null;
 };
 
 export type UpdateAdminProductInput =
@@ -61,9 +79,13 @@ type ProductRow = {
   slug: string;
   name: string;
   description: string | null;
+
+  category_id: number | null;
   category: string | null;
+
   badge: string | null;
   features: string[] | null;
+
   specifications:
     | AdminProductSpecification[]
     | null;
@@ -74,6 +96,10 @@ type ProductRow = {
   craftsmanship: string | null;
 
   status: AdminProductStatus;
+
+  fulfillment_type: AdminProductFulfillmentType;
+  preorder_ready_date: string | null;
+
   created_at: string;
   updated_at: string;
 
@@ -84,6 +110,17 @@ type ProductRow = {
   product_media?: Array<{
     id: number;
   }>;
+};
+
+type CategoryRow = {
+  id: number;
+  name: string;
+  is_active: boolean;
+};
+
+type ExistingProductFulfillment = {
+  fulfillment_type: AdminProductFulfillmentType;
+  preorder_ready_date: string | null;
 };
 
 function normalizeString(value: unknown) {
@@ -155,6 +192,82 @@ function normalizeSpecifications(
     );
 }
 
+function requireCategoryId(
+  value: number | undefined
+): number {
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value <= 0
+  ) {
+    throw new Error(
+      "Product category is required"
+    );
+  }
+
+  return value;
+}
+
+function normalizeFulfillmentType(
+  value: unknown
+): AdminProductFulfillmentType {
+  if (value === "pre_order") {
+    return "pre_order";
+  }
+
+  return "ready_stock";
+}
+
+function normalizePreorderReadyDate(
+  value: unknown
+): string | null {
+  const normalized =
+    normalizeString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      normalized
+    )
+  ) {
+    throw new Error(
+      "Pre-order ready date must use YYYY-MM-DD format."
+    );
+  }
+
+  const parsedDate = new Date(
+    `${normalized}T00:00:00Z`
+  );
+
+  if (
+    Number.isNaN(
+      parsedDate.getTime()
+    )
+  ) {
+    throw new Error(
+      "Invalid pre-order ready date."
+    );
+  }
+
+  const normalizedDate =
+    parsedDate
+      .toISOString()
+      .slice(0, 10);
+
+  if (
+    normalizedDate !== normalized
+  ) {
+    throw new Error(
+      "Invalid pre-order ready date."
+    );
+  }
+
+  return normalized;
+}
+
 function mapAdminProduct(
   row: ProductRow
 ): AdminProduct {
@@ -164,8 +277,13 @@ function mapAdminProduct(
     name: row.name,
     description:
       row.description ?? "",
+
+    categoryId:
+      row.category_id ?? null,
+
     category:
       row.category ?? "",
+
     badge:
       row.badge ?? null,
 
@@ -189,7 +307,14 @@ function mapAdminProduct(
     craftsmanship:
       row.craftsmanship ?? "",
 
-    status: row.status,
+    status:
+      row.status,
+
+    fulfillmentType:
+      row.fulfillment_type,
+
+    preorderReadyDate:
+      row.preorder_ready_date ?? null,
 
     variantCount:
       row.product_variants?.length ?? 0,
@@ -242,11 +367,23 @@ async function assertAdmin() {
   return supabase;
 }
 
+async function assertSuperAdmin() {
+  const supabase =
+    await getSuperAdminUser();
+
+  if (!supabase) {
+    throw new Error("Unauthorized");
+  }
+
+  return supabase;
+}
+
 const productSelect = `
   id,
   slug,
   name,
   description,
+  category_id,
   category,
   badge,
   features,
@@ -256,6 +393,8 @@ const productSelect = `
   care_instructions,
   craftsmanship,
   status,
+  fulfillment_type,
+  preorder_ready_date,
   created_at,
   updated_at,
   product_variants (
@@ -265,6 +404,115 @@ const productSelect = `
     id
   )
 `;
+
+async function getCategoryForProduct(
+  supabase: Awaited<
+    ReturnType<typeof createClient>
+  >,
+  categoryId: number,
+  options?: {
+    allowInactive?: boolean;
+  }
+): Promise<CategoryRow> {
+  const {
+    data,
+    error,
+  } =
+    await supabase
+      .from("categories")
+      .select(
+        "id, name, is_active"
+      )
+      .eq("id", categoryId)
+      .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Failed to validate category: ${error.message}`
+    );
+  }
+
+  if (!data) {
+    throw new Error(
+      "Selected category does not exist."
+    );
+  }
+
+  if (
+    !options?.allowInactive &&
+    !data.is_active
+  ) {
+    throw new Error(
+      "Selected category is inactive. Please choose an active category."
+    );
+  }
+
+  return data as CategoryRow;
+}
+
+async function getExistingProductFulfillment(
+  supabase: Awaited<
+    ReturnType<typeof createClient>
+  >,
+  id: number
+): Promise<ExistingProductFulfillment> {
+  const {
+    data,
+    error,
+  } =
+    await supabase
+      .from("products")
+      .select(
+        "fulfillment_type, preorder_ready_date"
+      )
+      .eq("id", id)
+      .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Failed to load product fulfillment: ${error.message}`
+    );
+  }
+
+  if (!data) {
+    throw new Error(
+      "Product not found."
+    );
+  }
+
+  return {
+    fulfillment_type:
+      data.fulfillment_type as AdminProductFulfillmentType,
+    preorder_ready_date:
+      data.preorder_ready_date ?? null,
+  };
+}
+
+async function validateFulfillment(
+  fulfillmentType: AdminProductFulfillmentType,
+  preorderReadyDate: string | null
+) {
+  if (
+    fulfillmentType ===
+    "ready_stock"
+  ) {
+    return {
+      fulfillmentType,
+      preorderReadyDate: null,
+    };
+  }
+
+  if (!preorderReadyDate) {
+    throw new Error(
+      "Pre-order ready date is required."
+    );
+  }
+
+  return {
+    fulfillmentType,
+    preorderReadyDate,
+  };
+}
 
 export async function getAdminProducts(): Promise<
   AdminProduct[]
@@ -371,6 +619,40 @@ export async function createAdminProduct(
     );
   }
 
+  const categoryId =
+    requireCategoryId(
+      input.categoryId
+    );
+
+  const category =
+    await getCategoryForProduct(
+      supabase,
+      categoryId
+    );
+
+  const fulfillmentType =
+    normalizeFulfillmentType(
+      input.fulfillmentType
+    );
+
+  const preorderReadyDate =
+    normalizePreorderReadyDate(
+      input.preorderReadyDate
+    );
+
+  const fulfillment =
+    await validateFulfillment(
+      fulfillmentType,
+      preorderReadyDate
+    );
+
+  if (
+    fulfillment.fulfillmentType ===
+    "pre_order"
+  ) {
+    await assertSuperAdmin();
+  }
+
   const {
     data,
     error,
@@ -386,10 +668,11 @@ export async function createAdminProduct(
             input.description
           ),
 
+        category_id:
+          category.id,
+
         category:
-          normalizeString(
-            input.category
-          ),
+          category.name,
 
         badge:
           normalizeNullableString(
@@ -428,6 +711,12 @@ export async function createAdminProduct(
 
         status:
           input.status ?? "draft",
+
+        fulfillment_type:
+          fulfillment.fulfillmentType,
+
+        preorder_ready_date:
+          fulfillment.preorderReadyDate,
       })
       .select(productSelect)
       .single();
@@ -441,6 +730,51 @@ export async function createAdminProduct(
     throw new Error(
       `Failed to create product: ${error.message}`
     );
+  }
+
+  if (
+    fulfillment.fulfillmentType ===
+      "pre_order" &&
+    fulfillment.preorderReadyDate
+  ) {
+    const {
+      data: {
+        user,
+      },
+    } =
+      await supabase.auth.getUser();
+
+    const {
+      error:
+        historyError,
+    } =
+      await supabase
+        .from(
+          "product_preorder_history"
+        )
+        .insert({
+          product_id:
+            data.id,
+          previous_ready_date:
+            null,
+          new_ready_date:
+            fulfillment.preorderReadyDate,
+          reason:
+            "Initial pre-order schedule",
+          changed_by:
+            user?.id ?? null,
+        });
+
+    if (historyError) {
+      console.error(
+        "createAdminProduct history:",
+        historyError
+      );
+
+      throw new Error(
+        `Product created, but failed to record pre-order history: ${historyError.message}`
+      );
+    }
   }
 
   return mapAdminProduct(
@@ -505,12 +839,44 @@ export async function updateAdminProduct(
   }
 
   if (
-    input.category !== undefined
+    input.categoryId !== undefined
   ) {
-    payload.category =
-      normalizeString(
-        input.category
+    const categoryId =
+      requireCategoryId(
+        input.categoryId
       );
+
+    const existingProduct =
+      await supabase
+        .from("products")
+        .select("category_id")
+        .eq("id", id)
+        .maybeSingle();
+
+    if (existingProduct.error) {
+      throw new Error(
+        `Failed to load product category: ${existingProduct.error.message}`
+      );
+    }
+
+    const allowInactive =
+      existingProduct.data?.category_id ===
+      categoryId;
+
+    const category =
+      await getCategoryForProduct(
+        supabase,
+        categoryId,
+        {
+          allowInactive,
+        }
+      );
+
+    payload.category_id =
+      category.id;
+
+    payload.category =
+      category.name;
   }
 
   if (input.badge !== undefined) {
@@ -577,8 +943,77 @@ export async function updateAdminProduct(
       input.status;
   }
 
+  let fulfillmentChanged = false;
+  let previousReadyDate: string | null =
+    null;
+  let nextReadyDate: string | null =
+    null;
+
   if (
-    Object.keys(payload).length === 0
+    input.fulfillmentType !==
+      undefined ||
+    input.preorderReadyDate !==
+      undefined
+  ) {
+    const existingFulfillment =
+      await getExistingProductFulfillment(
+        supabase,
+        id
+      );
+
+    const nextFulfillmentType =
+      input.fulfillmentType !==
+      undefined
+        ? normalizeFulfillmentType(
+            input.fulfillmentType
+          )
+        : existingFulfillment.fulfillment_type;
+
+    const nextPreorderReadyDate =
+      input.preorderReadyDate !==
+      undefined
+        ? normalizePreorderReadyDate(
+            input.preorderReadyDate
+          )
+        : existingFulfillment.preorder_ready_date;
+
+    const fulfillment =
+      await validateFulfillment(
+        nextFulfillmentType,
+        nextPreorderReadyDate
+      );
+
+    if (
+      fulfillment.fulfillmentType !==
+        existingFulfillment.fulfillment_type ||
+      fulfillment.preorderReadyDate !==
+        existingFulfillment.preorder_ready_date
+    ) {
+      fulfillmentChanged = true;
+
+      previousReadyDate =
+        existingFulfillment.preorder_ready_date;
+
+      nextReadyDate =
+        fulfillment.preorderReadyDate;
+    }
+
+    if (
+      fulfillmentChanged
+    ) {
+      await assertSuperAdmin();
+    }
+
+    payload.fulfillment_type =
+      fulfillment.fulfillmentType;
+
+    payload.preorder_ready_date =
+      fulfillment.preorderReadyDate;
+  }
+
+  if (
+    Object.keys(payload).length ===
+    0
   ) {
     throw new Error(
       "No product changes provided"
@@ -605,6 +1040,49 @@ export async function updateAdminProduct(
     throw new Error(
       `Failed to update product: ${error.message}`
     );
+  }
+
+  if (
+    fulfillmentChanged &&
+    nextReadyDate
+  ) {
+    const {
+      data: {
+        user,
+      },
+    } =
+      await supabase.auth.getUser();
+
+    const {
+      error:
+        historyError,
+    } =
+      await supabase
+        .from(
+          "product_preorder_history"
+        )
+        .insert({
+          product_id: id,
+          previous_ready_date:
+            previousReadyDate,
+          new_ready_date:
+            nextReadyDate,
+          reason:
+            "Pre-order schedule updated",
+          changed_by:
+            user?.id ?? null,
+        });
+
+    if (historyError) {
+      console.error(
+        "updateAdminProduct history:",
+        historyError
+      );
+
+      throw new Error(
+        `Product updated, but failed to record pre-order history: ${historyError.message}`
+      );
+    }
   }
 
   return mapAdminProduct(

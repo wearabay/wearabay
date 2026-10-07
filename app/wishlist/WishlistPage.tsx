@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
 
 import ProductCard from "@/components/product/ProductCard";
 import EmptyWishlist from "@/components/wishlist/EmptyWishlist";
@@ -27,11 +28,16 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 
 type WishlistPageProps = {
   products: Product[];
+  badgesByProduct: Record<
+    number,
+    ProductBadge[]
+  >;
 };
 
 
 export default function WishlistPage({
   products,
+  badgesByProduct,
 }: WishlistPageProps) {
 
   const {
@@ -547,6 +553,9 @@ export default function WishlistPage({
                 <ProductCard
                   key={product.id}
                   product={product}
+                  badges={
+                    badgesByProduct[product.id] ?? []
+                  }
                 />
 
               )

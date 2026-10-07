@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import type { AdminCategory } from "@/lib/admin-categories";
+
 import { createAdminProductAction } from "../actions";
 
 type Specification = {
@@ -10,13 +12,33 @@ type Specification = {
   value: string;
 };
 
-export default function ProductForm() {
+type ProductStatus = "draft" | "published";
+
+type FulfillmentType =
+  | "ready_stock"
+  | "pre_order";
+
+type Props = {
+  categories: AdminCategory[];
+  isSuperAdmin: boolean;
+};
+
+export default function ProductForm({
+  categories,
+  isSuperAdmin,
+}: Props) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const [category, setCategory] =
+  const [categoryId, setCategoryId] =
     useState("");
   const [badge, setBadge] = useState("");
   const [description, setDescription] =
+    useState("");
+
+  const [fulfillmentType, setFulfillmentType] =
+    useState<FulfillmentType>("ready_stock");
+
+  const [preorderReadyDate, setPreorderReadyDate] =
     useState("");
 
   const [features, setFeatures] = useState(
@@ -43,16 +65,15 @@ export default function ProductForm() {
   const [craftsmanship, setCraftsmanship] =
     useState("");
 
-  const [status, setStatus] = useState<
-    "draft" | "published"
-  >("draft");
+  const [status, setStatus] = useState<ProductStatus>(
+    "draft"
+  );
 
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
   const [error, setError] =
     useState("");
-
 
   function generateSlug(value: string) {
     return value
@@ -61,7 +82,6 @@ export default function ProductForm() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
   }
-
 
   function handleNameChange(
     value: string
@@ -72,7 +92,6 @@ export default function ProductForm() {
       setSlug(generateSlug(value));
     }
   }
-
 
   function updateSpecification(
     index: number,
@@ -91,7 +110,6 @@ export default function ProductForm() {
     );
   }
 
-
   function addSpecification() {
     setSpecifications((current) => [
       ...current,
@@ -101,7 +119,6 @@ export default function ProductForm() {
       },
     ]);
   }
-
 
   function removeSpecification(
     index: number
@@ -123,6 +140,22 @@ export default function ProductForm() {
     });
   }
 
+  function handleFulfillmentChange(
+    value: FulfillmentType
+  ) {
+    if (
+      value === "pre_order" &&
+      !isSuperAdmin
+    ) {
+      return;
+    }
+
+    setFulfillmentType(value);
+
+    if (value === "ready_stock") {
+      setPreorderReadyDate("");
+    }
+  }
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -137,14 +170,12 @@ export default function ProductForm() {
     const trimmedSlug =
       slug.trim();
 
-
     if (!trimmedName) {
       setError(
         "Product name is required."
       );
       return;
     }
-
 
     if (!trimmedSlug) {
       setError(
@@ -153,12 +184,26 @@ export default function ProductForm() {
       return;
     }
 
+    if (!categoryId) {
+      setError(
+        "Please select a product category."
+      );
+      return;
+    }
+
+    if (
+      fulfillmentType === "pre_order" &&
+      !preorderReadyDate
+    ) {
+      setError(
+        "Please select the estimated ready-to-ship date for this pre-order product."
+      );
+      return;
+    }
 
     setIsSubmitting(true);
 
-
     try {
-
       const cleanedSpecifications =
         specifications
           .map((item) => ({
@@ -171,21 +216,19 @@ export default function ProductForm() {
               item.value !== ""
           );
 
-
       const cleanedFeatures =
         features
           .split("\n")
           .map((item) => item.trim())
           .filter(Boolean);
 
-
       await createAdminProductAction({
         name: trimmedName,
 
         slug: trimmedSlug,
 
-        category:
-          category.trim(),
+        categoryId:
+          Number(categoryId),
 
         badge:
           badge.trim() || null,
@@ -212,10 +255,16 @@ export default function ProductForm() {
           craftsmanship.trim(),
 
         status,
+
+        fulfillmentType,
+
+        preorderReadyDate:
+          fulfillmentType ===
+          "pre_order"
+            ? preorderReadyDate
+            : null,
       });
-
     } catch (error) {
-
       setIsSubmitting(false);
 
       setError(
@@ -223,24 +272,18 @@ export default function ProductForm() {
           ? error.message
           : "Failed to create product."
       );
-
     }
   }
 
-
   return (
-
     <form
       onSubmit={handleSubmit}
       className="space-y-6"
     >
-
       {/* Basic Information */}
 
       <section className="rounded-2xl border border-neutral-200 bg-white p-6">
-
         <div className="mb-6">
-
           <h2 className="text-base font-medium">
             Basic Information
           </h2>
@@ -249,16 +292,12 @@ export default function ProductForm() {
             Main information displayed on the
             product page.
           </p>
-
         </div>
 
-
         <div className="space-y-5">
-
           {/* Name */}
 
           <div>
-
             <label
               htmlFor="name"
               className="mb-2 block text-sm font-medium"
@@ -279,14 +318,11 @@ export default function ProductForm() {
               className="h-11 w-full rounded-xl border border-neutral-200 px-4 text-sm outline-none focus:border-neutral-400"
               required
             />
-
           </div>
-
 
           {/* Slug */}
 
           <div>
-
             <label
               htmlFor="slug"
               className="mb-2 block text-sm font-medium"
@@ -311,16 +347,12 @@ export default function ProductForm() {
             <p className="mt-2 text-xs text-neutral-400">
               Used in the product URL.
             </p>
-
           </div>
-
 
           {/* Category + Badge */}
 
           <div className="grid gap-5 sm:grid-cols-2">
-
             <div>
-
               <label
                 htmlFor="category"
                 className="mb-2 block text-sm font-medium"
@@ -328,24 +360,44 @@ export default function ProductForm() {
                 Category
               </label>
 
-              <input
+              <select
                 id="category"
-                type="text"
-                value={category}
+                value={categoryId}
                 onChange={(event) =>
-                  setCategory(
+                  setCategoryId(
                     event.target.value
                   )
                 }
-                placeholder="Abaya"
-                className="h-11 w-full rounded-xl border border-neutral-200 px-4 text-sm outline-none focus:border-neutral-400"
-              />
+                className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm outline-none focus:border-neutral-400"
+                required
+              >
+                <option value="">
+                  Select category
+                </option>
 
+                {categories.map(
+                  (category) => (
+                    <option
+                      key={category.id}
+                      value={category.id}
+                    >
+                      {category.name}
+                    </option>
+                  )
+                )}
+              </select>
+
+              <Link
+                href="/admin/categories/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex text-xs font-medium text-neutral-500 transition hover:text-black"
+              >
+                + Add Category ↗
+              </Link>
             </div>
 
-
             <div>
-
               <label
                 htmlFor="badge"
                 className="mb-2 block text-sm font-medium"
@@ -365,16 +417,12 @@ export default function ProductForm() {
                 placeholder="NEW"
                 className="h-11 w-full rounded-xl border border-neutral-200 px-4 text-sm outline-none focus:border-neutral-400"
               />
-
             </div>
-
           </div>
-
 
           {/* Description */}
 
           <div>
-
             <label
               htmlFor="description"
               className="mb-2 block text-sm font-medium"
@@ -394,20 +442,105 @@ export default function ProductForm() {
               placeholder="Describe the product..."
               className="w-full resize-y rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-neutral-400"
             />
-
           </div>
-
         </div>
-
       </section>
 
+      {/* Fulfillment */}
+
+      <section className="rounded-2xl border border-neutral-200 bg-white p-6">
+        <div className="mb-6">
+          <h2 className="text-base font-medium">
+            Fulfillment
+          </h2>
+
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-neutral-500">
+            Choose how this product will be fulfilled. Pre-order products
+            can be purchased and paid for before the estimated ready date.
+          </p>
+        </div>
+
+        <div className="space-y-5">
+          <div>
+            <label
+              htmlFor="fulfillmentType"
+              className="mb-2 block text-sm font-medium"
+            >
+              Fulfillment Method
+            </label>
+
+            <select
+              id="fulfillmentType"
+              value={fulfillmentType}
+              onChange={(event) =>
+                handleFulfillmentChange(
+                  event.target
+                    .value as FulfillmentType
+                )
+              }
+              className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm outline-none focus:border-neutral-400 sm:max-w-md"
+            >
+              <option value="ready_stock">
+                Ready to Ship
+              </option>
+
+              {isSuperAdmin && (
+                <option value="pre_order">
+                  Pre-Order
+                </option>
+              )}
+            </select>
+
+            {!isSuperAdmin && (
+              <p className="mt-2 text-xs text-neutral-400">
+                Pre-order settings can only be managed by a Super Admin.
+              </p>
+            )}
+          </div>
+
+          {fulfillmentType ===
+            "pre_order" && (
+            <div className="max-w-md">
+              <label
+                htmlFor="preorderReadyDate"
+                className="mb-2 block text-sm font-medium"
+              >
+                Estimated Ready-to-Ship Date
+              </label>
+
+              <input
+                id="preorderReadyDate"
+                type="date"
+                value={
+                  preorderReadyDate
+                }
+                onChange={(event) =>
+                  setPreorderReadyDate(
+                    event.target.value
+                  )
+                }
+                min={
+                  new Date()
+                    .toISOString()
+                    .slice(0, 10)
+                }
+                className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm outline-none focus:border-neutral-400"
+                required
+              />
+
+              <p className="mt-2 text-xs leading-5 text-neutral-400">
+                Customers can purchase and pay for this product before
+                the ready-to-ship date.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Features */}
 
       <section className="rounded-2xl border border-neutral-200 bg-white p-6">
-
         <div className="mb-6">
-
           <h2 className="text-base font-medium">
             Features
           </h2>
@@ -415,9 +548,7 @@ export default function ProductForm() {
           <p className="mt-1 text-sm text-neutral-500">
             Enter one feature per line.
           </p>
-
         </div>
-
 
         <textarea
           value={features}
@@ -432,18 +563,13 @@ export default function ProductForm() {
           }
           className="w-full resize-y rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-neutral-400"
         />
-
       </section>
-
 
       {/* Specifications */}
 
       <section className="rounded-2xl border border-neutral-200 bg-white p-6">
-
         <div className="mb-6 flex items-start justify-between gap-4">
-
           <div>
-
             <h2 className="text-base font-medium">
               Specifications
             </h2>
@@ -452,9 +578,7 @@ export default function ProductForm() {
               Add product specifications such as
               material, care, or color.
             </p>
-
           </div>
-
 
           <button
             type="button"
@@ -463,20 +587,15 @@ export default function ProductForm() {
           >
             + Add
           </button>
-
         </div>
 
-
         <div className="space-y-3">
-
           {specifications.map(
             (specification, index) => (
-
               <div
                 key={index}
                 className="grid gap-3 sm:grid-cols-[1fr_1.5fr_auto]"
               >
-
                 <input
                   type="text"
                   value={
@@ -492,7 +611,6 @@ export default function ProductForm() {
                   placeholder="Material"
                   className="h-11 rounded-xl border border-neutral-200 px-4 text-sm outline-none focus:border-neutral-400"
                 />
-
 
                 <input
                   type="text"
@@ -510,7 +628,6 @@ export default function ProductForm() {
                   className="h-11 rounded-xl border border-neutral-200 px-4 text-sm outline-none focus:border-neutral-400"
                 />
 
-
                 <button
                   type="button"
                   onClick={() =>
@@ -522,23 +639,16 @@ export default function ProductForm() {
                 >
                   Remove
                 </button>
-
               </div>
-
             )
           )}
-
         </div>
-
       </section>
-
 
       {/* Product Detail Content */}
 
       <section className="rounded-2xl border border-neutral-200 bg-white p-6">
-
         <div className="mb-6">
-
           <h2 className="text-base font-medium">
             Product Detail Content
           </h2>
@@ -548,16 +658,10 @@ export default function ProductForm() {
             accordion. Leave a section empty if it does
             not apply to this product.
           </p>
-
         </div>
 
-
         <div className="space-y-5">
-
-          {/* Size Guide */}
-
           <div>
-
             <label
               htmlFor="sizeGuide"
               className="mb-2 block text-sm font-medium"
@@ -577,14 +681,9 @@ export default function ProductForm() {
               placeholder="Available in All Size. Please contact us for detailed measurements."
               className="w-full resize-y rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-neutral-400"
             />
-
           </div>
 
-
-          {/* Shipping & Returns */}
-
           <div>
-
             <label
               htmlFor="shippingReturns"
               className="mb-2 block text-sm font-medium"
@@ -606,14 +705,9 @@ export default function ProductForm() {
               }
               className="w-full resize-y rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-neutral-400"
             />
-
           </div>
 
-
-          {/* Care Instructions */}
-
           <div>
-
             <label
               htmlFor="careInstructions"
               className="mb-2 block text-sm font-medium"
@@ -635,14 +729,9 @@ export default function ProductForm() {
               }
               className="w-full resize-y rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-neutral-400"
             />
-
           </div>
 
-
-          {/* Craftsmanship */}
-
           <div>
-
             <label
               htmlFor="craftsmanship"
               className="mb-2 block text-sm font-medium"
@@ -662,20 +751,14 @@ export default function ProductForm() {
               placeholder="Describe the craftsmanship, finishing techniques, or production details of this product."
               className="w-full resize-y rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-neutral-400"
             />
-
           </div>
-
         </div>
-
       </section>
-
 
       {/* Status */}
 
       <section className="rounded-2xl border border-neutral-200 bg-white p-6">
-
         <div className="mb-6">
-
           <h2 className="text-base font-medium">
             Publishing
           </h2>
@@ -684,12 +767,9 @@ export default function ProductForm() {
             New products should normally remain
             draft until variants and media are ready.
           </p>
-
         </div>
 
-
         <div>
-
           <label
             htmlFor="status"
             className="mb-2 block text-sm font-medium"
@@ -702,14 +782,11 @@ export default function ProductForm() {
             value={status}
             onChange={(event) =>
               setStatus(
-                event.target.value as
-                  | "draft"
-                  | "published"
+                event.target.value as ProductStatus
               )
             }
             className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm outline-none focus:border-neutral-400 sm:max-w-xs"
           >
-
             <option value="draft">
               Draft
             </option>
@@ -717,36 +794,27 @@ export default function ProductForm() {
             <option value="published">
               Published
             </option>
-
           </select>
-
         </div>
-
       </section>
-
 
       {/* Error */}
 
       {error && (
-
         <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
           {error}
         </div>
-
       )}
-
 
       {/* Actions */}
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-
         <Link
           href="/admin/products"
           className="inline-flex h-11 items-center justify-center rounded-full border border-neutral-200 px-6 text-sm font-medium text-neutral-700 transition hover:border-neutral-400 hover:text-black"
         >
           Cancel
         </Link>
-
 
         <button
           type="submit"
@@ -757,9 +825,7 @@ export default function ProductForm() {
             ? "Creating..."
             : "Create Product"}
         </button>
-
       </div>
-
     </form>
   );
 }
