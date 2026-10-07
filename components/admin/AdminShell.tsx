@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const navigation = [
+const topNavigation = [
   {
     name: "Dashboard",
     href: "/admin",
@@ -13,9 +13,16 @@ const navigation = [
     name: "Orders",
     href: "/admin/orders",
   },
+];
+
+const catalogNavigation = [
   {
     name: "Products",
     href: "/admin/products",
+  },
+  {
+    name: "Categories",
+    href: "/admin/categories",
   },
   {
     name: "Inventory",
@@ -25,6 +32,9 @@ const navigation = [
     name: "Media",
     href: "/admin/media",
   },
+];
+
+const bottomNavigation = [
   {
     name: "Customers",
     href: "/admin/customers",
@@ -41,7 +51,7 @@ const navigation = [
 
 function isActivePath(
   pathname: string,
-  href: string
+  href: string,
 ) {
   if (href === "/admin") {
     return pathname === "/admin";
@@ -53,12 +63,129 @@ function isActivePath(
   );
 }
 
+function isCatalogPath(pathname: string) {
+  return catalogNavigation.some(
+    (item) =>
+      pathname === item.href ||
+      pathname.startsWith(`${item.href}/`),
+  );
+}
+
+function NavigationLink({
+  name,
+  href,
+  pathname,
+  onClick,
+}: {
+  name: string;
+  href: string;
+  pathname: string;
+  onClick?: () => void;
+}) {
+  const active = isActivePath(
+    pathname,
+    href,
+  );
+
+  return (
+    <Link
+      href={href}
+      aria-current={
+        active ? "page" : undefined
+      }
+      onClick={onClick}
+      className={[
+        "block rounded-xl px-3 py-3 text-sm transition",
+        active
+          ? "bg-neutral-900 text-white"
+          : "text-neutral-600 hover:bg-stone-100 hover:text-neutral-900",
+      ].join(" ")}
+    >
+      {name}
+    </Link>
+  );
+}
+
+function CatalogNavigation({
+  pathname,
+  open,
+  onToggle,
+  onNavigate,
+}: {
+  pathname: string;
+  open: boolean;
+  onToggle: () => void;
+  onNavigate?: () => void;
+}) {
+  const catalogActive =
+    isCatalogPath(pathname);
+
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="admin-catalog-navigation"
+        onClick={onToggle}
+        className={[
+          "flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm transition",
+          catalogActive
+            ? open
+              ? "font-medium text-neutral-900"
+              : "border border-neutral-300 font-medium text-neutral-900"
+            : "text-neutral-600 hover:bg-stone-100 hover:text-neutral-900",
+        ].join(" ")}
+      >
+        <span>Catalog</span>
+
+        <span
+          aria-hidden="true"
+          className="text-xs text-neutral-400"
+        >
+          {open ? "⌄" : "›"}
+        </span>
+      </button>
+
+      {open && (
+        <div
+          id="admin-catalog-navigation"
+          className="mt-1 space-y-1 border-l border-stone-200 pl-3"
+        >
+          {catalogNavigation.map(
+            (item) => (
+              <NavigationLink
+                key={item.href}
+                name={item.name}
+                href={item.href}
+                pathname={pathname}
+                onClick={onNavigate}
+              />
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminShell({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+
+  /*
+   * Initialize Catalog based on the current route.
+   *
+   * This avoids synchronizing state inside an effect
+   * while still making Catalog open automatically when
+   * the admin enters a Catalog page directly.
+   */
+  const [catalogOpen, setCatalogOpen] =
+    useState(() =>
+      isCatalogPath(pathname),
+    );
 
   const [mobileOpen, setMobileOpen] =
     useState(false);
@@ -80,6 +207,12 @@ export default function AdminShell({
       document.body.style.overflow = "";
     };
   }, [mobileOpen]);
+
+  function handleCatalogToggle() {
+    setCatalogOpen(
+      (open) => !open,
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-neutral-900">
@@ -166,33 +299,39 @@ export default function AdminShell({
           </p>
 
           <div className="mt-3 space-y-1">
-            {navigation.map((item) => {
-              const active =
-                isActivePath(
-                  pathname,
-                  item.href
-                );
-
-              return (
-                <Link
+            {topNavigation.map(
+              (item) => (
+                <NavigationLink
                   key={item.href}
+                  name={item.name}
                   href={item.href}
-                  aria-current={
-                    active
-                      ? "page"
-                      : undefined
-                  }
-                  className={[
-                    "block rounded-xl px-3 py-3 text-sm transition",
-                    active
-                      ? "bg-neutral-900 text-white"
-                      : "text-neutral-600 hover:bg-stone-100 hover:text-neutral-900",
-                  ].join(" ")}
-                >
-                  {item.name}
-                </Link>
-              );
-            })}
+                  pathname={pathname}
+                />
+              ),
+            )}
+
+            <div className="my-2 border-t border-stone-100" />
+
+            <CatalogNavigation
+              pathname={pathname}
+              open={catalogOpen}
+              onToggle={
+                handleCatalogToggle
+              }
+            />
+
+            <div className="my-2 border-t border-stone-100" />
+
+            {bottomNavigation.map(
+              (item) => (
+                <NavigationLink
+                  key={item.href}
+                  name={item.name}
+                  href={item.href}
+                  pathname={pathname}
+                />
+              ),
+            )}
           </div>
         </nav>
 
@@ -258,7 +397,7 @@ export default function AdminShell({
           aria-controls="admin-mobile-navigation"
           onClick={() =>
             setMobileOpen(
-              (open) => !open
+              (open) => !open,
             )
           }
           className="
@@ -376,36 +515,52 @@ export default function AdminShell({
             </p>
 
             <div className="mt-3 space-y-1">
-              {navigation.map((item) => {
-                const active =
-                  isActivePath(
-                    pathname,
-                    item.href
-                  );
-
-                return (
-                  <Link
+              {topNavigation.map(
+                (item) => (
+                  <NavigationLink
                     key={item.href}
+                    name={item.name}
                     href={item.href}
-                    aria-current={
-                      active
-                        ? "page"
-                        : undefined
-                    }
+                    pathname={pathname}
                     onClick={() =>
-                      setMobileOpen(false)
+                      setMobileOpen(
+                        false,
+                      )
                     }
-                    className={[
-                      "block rounded-xl px-3 py-3 text-sm transition",
-                      active
-                        ? "bg-neutral-900 text-white"
-                        : "text-neutral-600 hover:bg-stone-100 hover:text-neutral-900",
-                    ].join(" ")}
-                  >
-                    {item.name}
-                  </Link>
-                );
-              })}
+                  />
+                ),
+              )}
+
+              <div className="my-2 border-t border-stone-100" />
+
+              <CatalogNavigation
+                pathname={pathname}
+                open={catalogOpen}
+                onToggle={
+                  handleCatalogToggle
+                }
+                onNavigate={() =>
+                  setMobileOpen(false)
+                }
+              />
+
+              <div className="my-2 border-t border-stone-100" />
+
+              {bottomNavigation.map(
+                (item) => (
+                  <NavigationLink
+                    key={item.href}
+                    name={item.name}
+                    href={item.href}
+                    pathname={pathname}
+                    onClick={() =>
+                      setMobileOpen(
+                        false,
+                      )
+                    }
+                  />
+                ),
+              )}
             </div>
 
             {/* STORE */}
