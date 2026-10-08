@@ -16,6 +16,26 @@ type Props = {
 export default function ProductMiniCard({
   product,
 }: Props) {
+  const discountedVariant =
+    product.variants.find(
+      (variant) =>
+        variant.price === product.price &&
+        typeof variant.compareAtPrice === "number" &&
+        variant.compareAtPrice > variant.price,
+    ) ??
+    product.variants.find(
+      (variant) =>
+        typeof variant.compareAtPrice === "number" &&
+        variant.compareAtPrice > variant.price,
+    );
+
+  const compareAtPrice =
+    discountedVariant?.compareAtPrice ?? null;
+
+  const hasComparePrice =
+    typeof compareAtPrice === "number" &&
+    compareAtPrice > product.price;
+
   return (
     <Link
       href={`/shop/${product.slug}`}
@@ -98,7 +118,6 @@ export default function ProductMiniCard({
             group-hover:opacity-100
           "
         />
-
       </div>
 
       {/* Product Name */}
@@ -118,16 +137,23 @@ export default function ProductMiniCard({
 
       {/* Price */}
 
-      <p
-        className="
-          mt-1
-          text-sm
-          text-neutral-500
-        "
-      >
-        {formatPrice(product.price)}
-      </p>
+      <div className="mt-2 flex items-baseline gap-2">
+        {hasComparePrice && (
+          <span className="text-xs text-neutral-400 line-through">
+            {formatPrice(compareAtPrice)}
+          </span>
+        )}
 
+        <span
+          className={
+            hasComparePrice
+              ? "text-sm font-semibold text-neutral-900"
+              : "text-sm font-medium text-neutral-500"
+          }
+        >
+          {formatPrice(product.price)}
+        </span>
+      </div>
     </Link>
   );
 }

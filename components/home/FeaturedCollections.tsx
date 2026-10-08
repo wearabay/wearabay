@@ -4,33 +4,19 @@ import Image from "next/image";
 import Container from "../ui/Container";
 import SectionTitle from "../ui/SectionTitle";
 
-const collections = [
-  {
-    title: "Abaya",
-    description: "Elegant everyday luxury",
-    image: "/images/products/abaya-07.jpg",
-    href: "/shop?category=abaya",
-  },
-  {
-    title: "Dress",
-    description: "Modern modest fashion",
-    image: "/images/products/abaya-08.jpg",
-    href: "/shop?category=dress",
-  },
-  {
-    title: "Mukena",
-    description: "Premium prayer collection",
-    image: "/images/products/abaya-10.jpg",
-    href: "/shop?category=mukena",
-  },
-];
+import { getStorefrontCategories } from "@/lib/categories";
 
-export default function FeaturedCollections() {
+export default async function FeaturedCollections() {
+  const categories = await getStorefrontCategories();
+
+  if (categories.length === 0) {
+    return null;
+  }
+
   return (
     <section className="bg-[#FAF8F5] py-24 lg:py-32">
       <Container>
         <div className="mx-auto mb-20 max-w-3xl text-center">
-
           <SectionTitle
             eyebrow="Shop by Collection"
             title="Discover Our Collections"
@@ -40,24 +26,21 @@ export default function FeaturedCollections() {
             Discover timeless pieces crafted with elegance for every
             occasion, from everyday essentials to exclusive collections.
           </p>
-
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-
-          {collections.map((item) => (
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {categories.map((category) => (
             <Link
-              key={item.title}
-              href={item.href}
+              key={category.id}
+              href={`/shop?category=${encodeURIComponent(category.slug)}`}
               className="group block"
             >
               <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
-
                 <Image
-                  src={item.image}
-                  alt={item.title}
+                  src={category.coverImageUrl}
+                  alt={category.name}
                   fill
-                  sizes="(max-width:768px) 100vw, 33vw"
+                  sizes="(max-width:768px) 100vw, (max-width:1024px) 50vw, 33vw"
                   className="
                     object-cover
                     transition-all
@@ -92,12 +75,14 @@ export default function FeaturedCollections() {
                   "
                 >
                   <h3 className="text-3xl font-light tracking-wide">
-                    {item.title}
+                    {category.name}
                   </h3>
 
-                  <p className="mt-3 max-w-xs text-sm leading-6 text-white/85">
-                    {item.description}
-                  </p>
+                  {category.description && (
+                    <p className="mt-3 max-w-xs text-sm leading-6 text-white/85">
+                      {category.description}
+                    </p>
+                  )}
 
                   <span
                     className="
@@ -113,11 +98,9 @@ export default function FeaturedCollections() {
                     Shop Now →
                   </span>
                 </div>
-
               </div>
             </Link>
           ))}
-
         </div>
       </Container>
     </section>

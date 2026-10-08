@@ -14,18 +14,15 @@ import ProductThumbnail from "./ProductThumbnail";
 import GalleryNavigation from "./GalleryNavigation";
 import ProductLightbox from "./ProductLightbox";
 
-
 type ProductGalleryProps = {
   images: string[];
   name: string;
 };
 
-
 export default function ProductGallery({
   images,
   name,
 }: ProductGalleryProps) {
-
   /*
    * Only keep valid image URLs.
    *
@@ -38,24 +35,30 @@ export default function ProductGallery({
       images.filter(
         (image) =>
           typeof image === "string" &&
-          image.trim().length > 0
+          image.trim().length > 0,
       ),
-    [images]
+    [images],
   );
 
+  const [
+    currentIndex,
+    setCurrentIndex,
+  ] = useState(0);
 
-  const [currentIndex, setCurrentIndex] =
-    useState(0);
+  const [
+    lightboxOpen,
+    setLightboxOpen,
+  ] = useState(false);
 
-  const [lightboxOpen, setLightboxOpen] =
-    useState(false);
+  const [
+    touchStart,
+    setTouchStart,
+  ] = useState<number | null>(null);
 
-  const [touchStart, setTouchStart] =
-    useState<number | null>(null);
-
-  const [touchEnd, setTouchEnd] =
-    useState<number | null>(null);
-
+  const [
+    touchEnd,
+    setTouchEnd,
+  ] = useState<number | null>(null);
 
   /*
    * Keep the selected index valid without
@@ -72,20 +75,18 @@ export default function ProductGallery({
         ? currentIndex
         : 0;
 
-
   const activeImage =
     validImages.length > 0
       ? validImages[safeCurrentIndex]
       : null;
 
-
   const nextIndex =
     validImages.length > 0
-      ? safeCurrentIndex === validImages.length - 1
+      ? safeCurrentIndex ===
+        validImages.length - 1
         ? 0
         : safeCurrentIndex + 1
       : 0;
-
 
   const previousIndex =
     validImages.length > 0
@@ -94,61 +95,44 @@ export default function ProductGallery({
         : safeCurrentIndex - 1
       : 0;
 
+  const handlePrevious =
+    useCallback(() => {
+      if (validImages.length <= 1) {
+        return;
+      }
 
-  const handlePrevious = useCallback(() => {
-
-    if (
-      validImages.length <= 1
-    ) {
-      return;
-    }
-
-    setCurrentIndex(
-      (prev) =>
+      setCurrentIndex((prev) =>
         prev >= validImages.length
           ? validImages.length - 1
           : prev === 0
             ? validImages.length - 1
-            : prev - 1
-    );
+            : prev - 1,
+      );
+    }, [validImages.length]);
 
-  }, [
-    validImages.length,
-  ]);
+  const handleNext =
+    useCallback(() => {
+      if (validImages.length <= 1) {
+        return;
+      }
 
-
-  const handleNext = useCallback(() => {
-
-    if (
-      validImages.length <= 1
-    ) {
-      return;
-    }
-
-    setCurrentIndex(
-      (prev) =>
+      setCurrentIndex((prev) =>
         prev >= validImages.length - 1
           ? 0
-          : prev + 1
-    );
-
-  }, [
-    validImages.length,
-  ]);
-
+          : prev + 1,
+      );
+    }, [validImages.length]);
 
   // Keyboard Navigation
 
   useEffect(() => {
-
     if (!lightboxOpen) {
       return;
     }
 
     const handleKeyDown = (
-      event: KeyboardEvent
+      event: KeyboardEvent,
     ) => {
-
       if (event.key === "Escape") {
         setLightboxOpen(false);
       }
@@ -160,60 +144,47 @@ export default function ProductGallery({
       if (event.key === "ArrowRight") {
         handleNext();
       }
-
     };
-
 
     window.addEventListener(
       "keydown",
-      handleKeyDown
+      handleKeyDown,
     );
-
 
     return () =>
       window.removeEventListener(
         "keydown",
-        handleKeyDown
+        handleKeyDown,
       );
-
   }, [
     lightboxOpen,
     handleNext,
     handlePrevious,
   ]);
 
-
   // Swipe
 
   const minSwipeDistance = 50;
 
-
   function onTouchStart(
-    e: React.TouchEvent
+    e: React.TouchEvent,
   ) {
-
     setTouchEnd(null);
 
     setTouchStart(
-      e.targetTouches[0].clientX
+      e.targetTouches[0].clientX,
     );
-
   }
-
 
   function onTouchMove(
-    e: React.TouchEvent
+    e: React.TouchEvent,
   ) {
-
     setTouchEnd(
-      e.targetTouches[0].clientX
+      e.targetTouches[0].clientX,
     );
-
   }
 
-
   function onTouchEnd() {
-
     if (
       touchStart === null ||
       touchEnd === null
@@ -221,10 +192,8 @@ export default function ProductGallery({
       return;
     }
 
-
     const distance =
       touchStart - touchEnd;
-
 
     if (
       distance > minSwipeDistance
@@ -232,15 +201,12 @@ export default function ProductGallery({
       handleNext();
     }
 
-
     if (
       distance < -minSwipeDistance
     ) {
       handlePrevious();
     }
-
   }
-
 
   /*
    * Empty gallery state.
@@ -253,9 +219,7 @@ export default function ProductGallery({
   if (
     validImages.length === 0
   ) {
-
     return (
-
       <div
         className="
           relative
@@ -265,7 +229,6 @@ export default function ProductGallery({
           bg-[#ECE8E2]
         "
       >
-
         <div
           className="
             absolute
@@ -275,7 +238,6 @@ export default function ProductGallery({
             justify-center
           "
         >
-
           <span
             className="
               text-[10px]
@@ -286,18 +248,12 @@ export default function ProductGallery({
           >
             NO IMAGE
           </span>
-
         </div>
-
       </div>
-
     );
-
   }
 
-
   return (
-
     <div
       className="
         grid
@@ -305,7 +261,6 @@ export default function ProductGallery({
         lg:grid-cols-[90px_1fr]
       "
     >
-
       {/* Desktop Thumbnail */}
 
       <div
@@ -313,28 +268,20 @@ export default function ProductGallery({
           sticky
           top-24
           hidden
-          max-h-[calc(100vh-7rem)]
           self-start
-          overflow-y-auto
           lg:block
-          scrollbar-thin
-          scrollbar-track-transparent
-          scrollbar-thumb-neutral-300
         "
       >
-
         <ProductThumbnail
           images={validImages}
           activeImage={activeImage!}
           onSelect={(image) =>
             setCurrentIndex(
-              validImages.indexOf(image)
+              validImages.indexOf(image),
             )
           }
         />
-
       </div>
-
 
       {/* Main Image */}
 
@@ -344,7 +291,6 @@ export default function ProductGallery({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-
         <ProductImage
           key={activeImage}
           src={activeImage!}
@@ -354,32 +300,25 @@ export default function ProductGallery({
           }
         />
 
-
         {/* Desktop Navigation */}
 
         {validImages.length > 1 && (
-
           <div
             className="
               hidden
               xl:block
             "
           >
-
             <GalleryNavigation
               onPrevious={handlePrevious}
               onNext={handleNext}
             />
-
           </div>
-
         )}
-
 
         {/* Mobile Indicator */}
 
         {validImages.length > 1 && (
-
           <div
             className="
               mt-5
@@ -389,10 +328,8 @@ export default function ProductGallery({
               lg:hidden
             "
           >
-
             {validImages.map(
               (_, index) => (
-
                 <button
                   key={index}
                   type="button"
@@ -408,20 +345,17 @@ export default function ProductGallery({
                     transition-all
                     duration-300
                     ${
-                      index === safeCurrentIndex
+                      index ===
+                      safeCurrentIndex
                         ? "w-8 bg-black"
                         : "w-2 bg-neutral-300"
                     }
                   `}
                 />
-
-              )
+              ),
             )}
-
           </div>
-
         )}
-
 
         {/* Lightbox */}
 
@@ -435,14 +369,11 @@ export default function ProductGallery({
           onPrevious={handlePrevious}
           onNext={handleNext}
         />
-
       </div>
-
 
       {/* Preload next & previous image */}
 
       {validImages.length > 1 && (
-
         <div
           aria-hidden
           className="
@@ -453,7 +384,6 @@ export default function ProductGallery({
             opacity-0
           "
         >
-
           <Image
             src={validImages[nextIndex]}
             alt=""
@@ -462,7 +392,6 @@ export default function ProductGallery({
             loading="eager"
           />
 
-
           <Image
             src={validImages[previousIndex]}
             alt=""
@@ -470,12 +399,8 @@ export default function ProductGallery({
             height={1}
             loading="eager"
           />
-
         </div>
-
       )}
-
     </div>
-
   );
 }

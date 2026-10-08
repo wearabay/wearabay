@@ -14,6 +14,19 @@ export default function ProductCard({
   product,
   badges = [],
 }: ProductCardProps) {
+  const discountedVariant =
+    product.variants.find(
+      (variant) =>
+        variant.price === product.price &&
+        typeof variant.compareAtPrice === "number" &&
+        variant.compareAtPrice > variant.price,
+    ) ??
+    product.variants.find(
+      (variant) =>
+        typeof variant.compareAtPrice === "number" &&
+        variant.compareAtPrice > variant.price,
+    );
+
   return (
     <div
       className="
@@ -54,6 +67,9 @@ export default function ProductCard({
 
           <ProductPrice
             price={product.price}
+            compareAtPrice={
+              discountedVariant?.compareAtPrice
+            }
           />
         </div>
       </Link>

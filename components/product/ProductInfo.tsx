@@ -89,6 +89,15 @@ export default function ProductInfo({
     selectedVariant?.price ??
     product.price;
 
+  const selectedVariantCompareAtPrice =
+    selectedVariant?.compareAtPrice ?? null;
+
+  const hasComparePrice =
+    typeof selectedVariantCompareAtPrice ===
+      "number" &&
+    selectedVariantCompareAtPrice >
+      selectedVariantPrice;
+
   /*
    * Selected color image
    */
@@ -237,6 +246,8 @@ export default function ProductInfo({
             name: product.name,
             price:
               selectedVariant.price,
+            compareAtPrice:
+              selectedVariant.compareAtPrice,
             image:
               selectedColorImage,
             quantity,
@@ -349,16 +360,21 @@ export default function ProductInfo({
 
       {/* Price */}
 
-      <p
-        className="
-          mt-6
-          text-2xl
-        "
-      >
-        {formatPrice(
-          selectedVariantPrice,
+      <div className="mt-6 flex items-baseline gap-3">
+        {hasComparePrice && (
+          <span className="text-lg text-neutral-400 line-through">
+            {formatPrice(
+              selectedVariantCompareAtPrice,
+            )}
+          </span>
         )}
-      </p>
+
+        <span className="text-2xl text-neutral-900">
+          {formatPrice(
+            selectedVariantPrice,
+          )}
+        </span>
+      </div>
 
       <Divider
         className="

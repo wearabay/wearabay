@@ -25,31 +25,31 @@ import {
   useAuthUser,
 } from "@/hooks/useAuthUser";
 
-
 type Props = {
   product: Product;
+  selectedColor: string;
+  onColorChange: (
+    color: string,
+  ) => void;
 };
-
 
 export default function QuickViewActions({
   product,
+  selectedColor,
+  onColorChange,
 }: Props) {
-
   const {
     user,
     loading: authLoading,
   } = useAuthUser();
 
-
   const variants = useMemo(
     () => product.variants ?? [],
-    [product.variants]
+    [product.variants],
   );
-
 
   const hasVariants =
     variants.length > 0;
-
 
   const availableColors = useMemo(
     () =>
@@ -58,27 +58,22 @@ export default function QuickViewActions({
           variants
             .filter(
               (variant) =>
-                variant.stock > 0
+                variant.stock > 0,
             )
             .map(
               (variant) =>
-                variant.color
-            )
-        )
+                variant.color,
+            ),
+        ),
       ),
-    [variants]
+    [variants],
   );
 
-
-  const [
-    color,
-    setColor,
-  ] = useState(
-    availableColors[0] ??
-    product.colors?.[0] ??
-    ""
-  );
-
+  const color =
+    selectedColor ||
+    availableColors[0] ||
+    product.colors?.[0] ||
+    "";
 
   const availableSizes = useMemo(
     () =>
@@ -87,80 +82,66 @@ export default function QuickViewActions({
           variants
             .filter(
               (variant) =>
-                variant.color === color &&
-                variant.stock > 0
+                variant.color ===
+                  color &&
+                variant.stock > 0,
             )
             .map(
               (variant) =>
-                variant.size
-            )
-        )
+                variant.size,
+            ),
+        ),
       ),
-    [variants, color]
+    [variants, color],
   );
-
 
   const initialSize =
     availableSizes[0] ??
     product.sizes?.[0] ??
     "";
 
-
   const [
     size,
     setSize,
   ] = useState(
-    initialSize
+    initialSize,
   );
-
 
   const selectedVariant = useMemo(
     () =>
       variants.find(
         (variant) =>
-          variant.color === color &&
-          variant.size === size
+          variant.color ===
+            color &&
+          variant.size ===
+            size,
       ) ?? null,
-    [variants, color, size]
+    [variants, color, size],
   );
-
 
   const selectedVariantStock =
     selectedVariant?.stock ?? 0;
 
-
-  const selectedVariantPrice =
-    selectedVariant?.price ??
-    product.price;
-
-
   const hasValidVariant =
     Boolean(
       selectedVariant &&
-      selectedVariantStock > 0
+        selectedVariantStock > 0,
     );
-
 
   const [
     qty,
     setQty,
   ] = useState(1);
 
-
   const [
     adding,
     setAdding,
   ] = useState(false);
 
-
   const handleColorChange = (
-    nextColor: string
+    nextColor: string,
   ) => {
-
-    setColor(
-      nextColor
-    );
-
+    onColorChange(nextColor);
 
     const nextAvailableSizes =
       Array.from(
@@ -170,50 +151,36 @@ export default function QuickViewActions({
               (variant) =>
                 variant.color ===
                   nextColor &&
-                variant.stock > 0
+                variant.stock > 0,
             )
             .map(
               (variant) =>
-                variant.size
-            )
-        )
+                variant.size,
+            ),
+        ),
       );
-
 
     const nextSize =
       nextAvailableSizes.includes(
-        size
+        size,
       )
         ? size
         : nextAvailableSizes[0] ??
           "";
 
-
-    setSize(
-      nextSize
-    );
-
+    setSize(nextSize);
     setQty(1);
-
   };
-
 
   const handleSizeChange = (
-    nextSize: string
+    nextSize: string,
   ) => {
-
-    setSize(
-      nextSize
-    );
-
+    setSize(nextSize);
     setQty(1);
-
   };
-
 
   const handleIncreaseQuantity =
     () => {
-
       if (
         !hasVariants ||
         !selectedVariant
@@ -221,27 +188,21 @@ export default function QuickViewActions({
         return;
       }
 
-
       setQty(
         (currentQty) =>
           Math.min(
             currentQty + 1,
-            selectedVariantStock
-          )
+            selectedVariantStock,
+          ),
       );
-
     };
-
 
   const handleAddToCart =
     async (
-      e: React.MouseEvent<HTMLButtonElement>
+      event: React.MouseEvent<HTMLButtonElement>,
     ) => {
-
-      e.preventDefault();
-
-      e.stopPropagation();
-
+      event.preventDefault();
+      event.stopPropagation();
 
       if (
         authLoading ||
@@ -249,74 +210,63 @@ export default function QuickViewActions({
         !selectedVariant ||
         selectedVariantStock <= 0
       ) {
-
         return;
-
       }
-
 
       setAdding(true);
 
-
       try {
-
         await addToCart(
           {
             id: product.id,
             name: product.name,
             price:
               selectedVariant.price,
+            compareAtPrice:
+              selectedVariant.compareAtPrice,
             image: product.image,
             quantity: Math.min(
               qty,
-              selectedVariantStock
+              selectedVariantStock,
             ),
             color:
               selectedVariant.color,
             size:
               selectedVariant.size,
           },
-          user?.id
+          user?.id,
         );
-
 
         closeQuickView();
-
         openCartWithBanner();
-
-      } catch (
-        error
-      ) {
-
+      } catch (error) {
         console.error(
           "Failed to add product to cart:",
-          error
+          error,
         );
-
       } finally {
-
         setAdding(false);
-
       }
-
     };
 
+  const specifications =
+    product.specifications?.filter(
+      (spec) =>
+        spec.label?.trim() &&
+        spec.value?.trim(),
+    ) ?? [];
 
   return (
-
     <div
       className="
         mt-10
         space-y-8
       "
     >
-
       {/* Color */}
 
-      {product.colors && (
-
+      {product.colors?.length > 0 && (
         <div>
-
           <p
             className="
               mb-4
@@ -329,7 +279,6 @@ export default function QuickViewActions({
             Color
           </p>
 
-
           <div
             className="
               flex
@@ -337,35 +286,26 @@ export default function QuickViewActions({
               gap-3
             "
           >
-
             {product.colors.map(
               (item) => {
-
                 const isAvailable =
                   availableColors.includes(
-                    item
+                    item,
                   );
 
-
                 return (
-
                   <button
-
                     type="button"
-
                     key={item}
-
                     disabled={
                       hasVariants &&
                       !isAvailable
                     }
-
                     onClick={() =>
                       handleColorChange(
-                        item
+                        item,
                       )
                     }
-
                     className={`
                       rounded-full
                       border
@@ -373,7 +313,6 @@ export default function QuickViewActions({
                       py-2
                       text-sm
                       transition
-
                       ${
                         color === item
                           ? "border-black bg-black text-white"
@@ -383,31 +322,20 @@ export default function QuickViewActions({
                             : "cursor-not-allowed border-stone-200 text-neutral-300 opacity-50"
                       }
                     `}
-
                   >
-
                     {item}
-
                   </button>
-
                 );
-
-              }
+              },
             )}
-
           </div>
-
         </div>
-
       )}
-
 
       {/* Size */}
 
-      {product.sizes && (
-
+      {product.sizes?.length > 0 && (
         <div>
-
           <p
             className="
               mb-4
@@ -420,7 +348,6 @@ export default function QuickViewActions({
             Size
           </p>
 
-
           <div
             className="
               flex
@@ -428,36 +355,27 @@ export default function QuickViewActions({
               gap-3
             "
           >
-
             {product.sizes.map(
               (item) => {
-
                 const isAvailable =
                   !hasVariants ||
                   availableSizes.includes(
-                    item
+                    item,
                   );
 
-
                 return (
-
                   <button
-
                     type="button"
-
                     key={item}
-
                     disabled={
                       hasVariants &&
                       !isAvailable
                     }
-
                     onClick={() =>
                       handleSizeChange(
-                        item
+                        item,
                       )
                     }
-
                     className={`
                       h-11
                       min-w-[48px]
@@ -465,7 +383,6 @@ export default function QuickViewActions({
                       border
                       px-4
                       transition
-
                       ${
                         size === item
                           ? "border-black bg-black text-white"
@@ -474,71 +391,19 @@ export default function QuickViewActions({
                             : "cursor-not-allowed border-stone-200 text-neutral-300 opacity-50"
                       }
                     `}
-
                   >
-
                     {item}
-
                   </button>
-
                 );
-
-              }
+              },
             )}
-
           </div>
-
         </div>
-
       )}
-
-
-      {/* Selected Variant */}
-
-      {hasVariants && (
-
-        <div
-          className="
-            -mt-3
-            flex
-            items-center
-            justify-between
-            text-xs
-          "
-        >
-
-          <span
-            className="
-              uppercase
-              tracking-[0.18em]
-              text-neutral-400
-            "
-          >
-            Price
-          </span>
-
-          <span
-            className="
-              font-medium
-              text-neutral-900
-            "
-          >
-
-            {selectedVariant
-              ? `Rp${selectedVariantPrice.toLocaleString("id-ID")}`
-              : "Select an available option"}
-
-          </span>
-
-        </div>
-
-      )}
-
 
       {/* Quantity */}
 
       <div>
-
         <p
           className="
             mb-4
@@ -551,7 +416,6 @@ export default function QuickViewActions({
           Quantity
         </p>
 
-
         <div
           className="
             flex
@@ -562,25 +426,18 @@ export default function QuickViewActions({
             border-stone-300
           "
         >
-
           <button
-
             type="button"
-
             onClick={() =>
               setQty(
                 (currentQty) =>
                   Math.max(
                     1,
-                    currentQty - 1
-                  )
+                    currentQty - 1,
+                  ),
               )
             }
-
-            disabled={
-              qty <= 1
-            }
-
+            disabled={qty <= 1}
             className="
               h-11
               w-11
@@ -590,11 +447,9 @@ export default function QuickViewActions({
               disabled:cursor-not-allowed
               disabled:opacity-40
             "
-
           >
             −
           </button>
-
 
           <span
             className="
@@ -606,23 +461,19 @@ export default function QuickViewActions({
             {qty}
           </span>
 
-
           <button
-
             type="button"
-
             onClick={
               handleIncreaseQuantity
             }
-
             disabled={
               hasVariants &&
               (
                 !selectedVariant ||
-                qty >= selectedVariantStock
+                qty >=
+                  selectedVariantStock
               )
             }
-
             className="
               h-11
               w-11
@@ -632,34 +483,11 @@ export default function QuickViewActions({
               disabled:cursor-not-allowed
               disabled:opacity-40
             "
-
           >
             +
           </button>
-
         </div>
-
-
-        {hasVariants && (
-
-          <p
-            className="
-              mt-3
-              text-xs
-              text-neutral-400
-            "
-          >
-
-            {selectedVariant
-              ? `${selectedVariantStock} available`
-              : "Select an available color and size"}
-
-          </p>
-
-        )}
-
       </div>
-
 
       {/* Buttons */}
 
@@ -669,24 +497,17 @@ export default function QuickViewActions({
           pt-2
         "
       >
-
-        {/* Add To Bag */}
-
         <button
-
           type="button"
-
           onClick={
             handleAddToCart
           }
-
           disabled={
             adding ||
             authLoading ||
             (hasVariants &&
               !hasValidVariant)
           }
-
           className="
             w-full
             rounded-full
@@ -701,29 +522,19 @@ export default function QuickViewActions({
             disabled:cursor-not-allowed
             disabled:opacity-60
           "
-
         >
-
-          {
-            authLoading
-              ? "Loading..."
-              : adding
-                ? "Adding..."
-                : hasVariants &&
-                    !hasValidVariant
-                  ? "Select Option"
-                  : "Add To Bag"
-          }
-
+          {authLoading
+            ? "Loading..."
+            : adding
+              ? "Adding..."
+              : hasVariants &&
+                  !hasValidVariant
+                ? "Select Option"
+                : "Add To Bag"}
         </button>
 
-
-        {/* Full Details */}
-
         <Link
-
           href={`/shop/${product.slug}`}
-
           className="
             block
             w-full
@@ -739,96 +550,19 @@ export default function QuickViewActions({
             transition
             hover:border-black
           "
-
         >
-
           View Full Details
-
         </Link>
-
-
-        {/* Highlights */}
-
-        {product.features && (
-
-          <div
-            className="
-              border-t
-              pt-8
-            "
-          >
-
-            <p
-              className="
-                mb-4
-                text-xs
-                font-medium
-                uppercase
-                tracking-[0.22em]
-                text-neutral-700
-              "
-            >
-              Highlights
-            </p>
-
-
-            <ul
-              className="
-                space-y-3
-              "
-            >
-
-              {product.features.map(
-                (item) => (
-
-                  <li
-
-                    key={item}
-
-                    className="
-                      flex
-                      items-center
-                      gap-3
-                      text-sm
-                      text-neutral-800
-                    "
-
-                  >
-
-                    <span
-                      className="
-                        h-1.5
-                        w-1.5
-                        rounded-full
-                        bg-black
-                      "
-                    />
-
-                    {item}
-
-                  </li>
-
-                )
-              )}
-
-            </ul>
-
-          </div>
-
-        )}
-
 
         {/* Specifications */}
 
-        {product.specifications && (
-
+        {specifications.length > 0 && (
           <div
             className="
               border-t
               pt-8
             "
           >
-
             <p
               className="
                 mb-5
@@ -842,28 +576,22 @@ export default function QuickViewActions({
               Specifications
             </p>
 
-
             <div
               className="
                 space-y-4
               "
             >
-
-              {product.specifications.map(
+              {specifications.map(
                 (spec) => (
-
                   <div
-
                     key={spec.label}
-
                     className="
                       flex
                       justify-between
+                      gap-6
                       text-sm
                     "
-
                   >
-
                     <span
                       className="
                         text-neutral-500
@@ -872,31 +600,22 @@ export default function QuickViewActions({
                       {spec.label}
                     </span>
 
-
                     <span
                       className="
+                        text-right
                         font-medium
                         text-neutral-900
                       "
                     >
                       {spec.value}
                     </span>
-
                   </div>
-
-                )
+                ),
               )}
-
             </div>
-
           </div>
-
         )}
-
       </div>
-
     </div>
-
   );
-
 }

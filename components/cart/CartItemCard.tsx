@@ -8,38 +8,45 @@ import { type CartItem } from "@/lib/cart";
 
 import { useCart } from "@/context/CartContext";
 
-
 type Props = {
   item: CartItem;
 };
 
-
 export default function CartItemCard({
   item,
 }: Props) {
-
   const {
     updateQuantity,
     removeItem,
   } = useCart();
 
-
   const hasStockLimit =
     typeof item.stock === "number";
-
 
   const reachedStockLimit =
     hasStockLimit &&
     item.quantity >=
       (item.stock ?? 0);
 
+  const hasComparePrice =
+    typeof item.compareAtPrice ===
+      "number" &&
+    item.compareAtPrice >
+      item.price;
+
+  const linePrice =
+    item.price *
+    item.quantity;
+
+  const lineComparePrice =
+    hasComparePrice
+      ? item.compareAtPrice! *
+        item.quantity
+      : null;
 
   return (
-
     <div className="flex gap-4 border-b pb-6">
-
       <div className="relative h-28 w-20 overflow-hidden rounded-xl bg-stone-100">
-
         <Image
           src={item.image}
           alt={item.name}
@@ -47,16 +54,12 @@ export default function CartItemCard({
           sizes="80px"
           className="object-cover"
         />
-
       </div>
 
-
       <div className="flex flex-1 flex-col">
-
         <h3 className="font-medium text-neutral-900">
           {item.name}
         </h3>
-
 
         <p className="mt-1 text-sm text-neutral-500">
           {item.color}
@@ -68,9 +71,7 @@ export default function CartItemCard({
           {item.size}
         </p>
 
-
         <div className="mt-4 flex items-center gap-3">
-
           {/* DECREASE */}
 
           <button
@@ -83,7 +84,7 @@ export default function CartItemCard({
                 item.id,
                 item.color,
                 item.size,
-                item.quantity - 1
+                item.quantity - 1,
               )
             }
             className="
@@ -100,13 +101,11 @@ export default function CartItemCard({
             −
           </button>
 
-
           {/* QUANTITY */}
 
           <span>
             {item.quantity}
           </span>
-
 
           {/* INCREASE */}
 
@@ -125,7 +124,7 @@ export default function CartItemCard({
                 item.id,
                 item.color,
                 item.size,
-                item.quantity + 1
+                item.quantity + 1,
               )
             }
             className="
@@ -142,36 +141,22 @@ export default function CartItemCard({
           >
             +
           </button>
-
         </div>
 
-
-        {hasStockLimit && (
-
-          <p
-            className="
-              mt-2
-              text-xs
-              text-neutral-400
-            "
-          >
-            {item.stock === 0
-              ? "Out of stock"
-              : `${item.stock} available`}
-          </p>
-
-        )}
-
-
         <div className="mt-4 flex items-center justify-between">
-
-          <p className="font-medium">
-            {formatPrice(
-              item.price *
-                item.quantity
+          <div className="flex items-baseline gap-2">
+            {lineComparePrice !== null && (
+              <span className="text-sm text-neutral-400 line-through">
+                {formatPrice(
+                  lineComparePrice,
+                )}
+              </span>
             )}
-          </p>
 
+            <p className="font-medium text-neutral-900">
+              {formatPrice(linePrice)}
+            </p>
+          </div>
 
           <button
             type="button"
@@ -180,7 +165,7 @@ export default function CartItemCard({
               removeItem(
                 item.id,
                 item.color,
-                item.size
+                item.size,
               )
             }
             className="
@@ -192,17 +177,10 @@ export default function CartItemCard({
               hover:text-red-500
             "
           >
-            <Trash2
-              size={18}
-            />
+            <Trash2 size={18} />
           </button>
-
         </div>
-
       </div>
-
     </div>
-
   );
-
 }

@@ -1,36 +1,36 @@
 "use client";
 
 import {
-  motion,
   AnimatePresence,
+  motion,
 } from "framer-motion";
 
 import { formatPrice } from "@/lib/currency";
-
 
 type StickyAddToBagProps = {
   visible: boolean;
   name: string;
   price: number;
+  compareAtPrice?: number | null;
   onAddToCart: () => void;
   disabled?: boolean;
 };
-
 
 export default function StickyAddToBag({
   visible,
   name,
   price,
+  compareAtPrice,
   onAddToCart,
   disabled = false,
 }: StickyAddToBagProps) {
+  const hasComparePrice =
+    typeof compareAtPrice === "number" &&
+    compareAtPrice > price;
 
   return (
-
     <AnimatePresence>
-
       {visible && (
-
         <motion.div
           initial={{
             y: 120,
@@ -59,7 +59,6 @@ export default function StickyAddToBag({
             lg:hidden
           "
         >
-
           <div
             className="
               mx-auto
@@ -72,13 +71,7 @@ export default function StickyAddToBag({
               py-4
             "
           >
-
-            <div
-              className="
-                min-w-0
-              "
-            >
-
+            <div className="min-w-0">
               <p
                 className="
                   truncate
@@ -89,18 +82,24 @@ export default function StickyAddToBag({
                 {name}
               </p>
 
-              <p
-                className="
-                  mt-1
-                  text-sm
-                  text-neutral-500
-                "
-              >
-                {formatPrice(price)}
-              </p>
+              <div className="mt-1 flex items-baseline gap-2">
+                {hasComparePrice && (
+                  <span className="text-xs text-neutral-400 line-through">
+                    {formatPrice(compareAtPrice)}
+                  </span>
+                )}
 
+                <span
+                  className={
+                    hasComparePrice
+                      ? "text-sm font-semibold text-neutral-900"
+                      : "text-sm font-medium text-neutral-500"
+                  }
+                >
+                  {formatPrice(price)}
+                </span>
+              </div>
             </div>
-
 
             <button
               type="button"
@@ -126,14 +125,9 @@ export default function StickyAddToBag({
                 ? "Not Available"
                 : "Add to Bag"}
             </button>
-
           </div>
-
         </motion.div>
-
       )}
-
     </AnimatePresence>
-
   );
 }

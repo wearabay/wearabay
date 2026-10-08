@@ -1,14 +1,12 @@
-"use client";
-
 import { createClient } from "@/lib/supabase/client";
 
 import { getMediaUrl } from "@/lib/media";
-
 
 export type CartItem = {
   id: number;
   name: string;
   price: number;
+  compareAtPrice?: number | null;
   image: string;
   quantity: number;
   color?: string;
@@ -23,7 +21,6 @@ export type CartItem = {
   stock?: number;
 };
 
-
 type VariantStockRow = {
   product_id: number;
   color: string;
@@ -32,6 +29,14 @@ type VariantStockRow = {
   status: "active" | "inactive";
 };
 
+type VariantPricingRow = {
+  product_id: number;
+  color: string;
+  size: string;
+  price: number;
+  compare_at_price: number | null;
+  status: "active" | "inactive";
+};
 
 type VariantMediaRow = {
   id: number;
@@ -41,7 +46,6 @@ type VariantMediaRow = {
   status: "active" | "inactive";
 };
 
-
 type ProductMediaRow = {
   variant_id: number | null;
   type: "image" | "video";
@@ -49,78 +53,56 @@ type ProductMediaRow = {
   sort_order: number;
 };
 
-
 /* =========================================================
    LOCAL STORAGE
 ========================================================= */
 
-function getCartKey(
-  userId?: string
-) {
-
+function getCartKey(userId?: string) {
   if (userId) {
-
     return `wearing-abaya-user-${userId}-cart`;
-
   }
 
   return "wearing-abaya-guest-cart";
-
 }
 
-
 function getLocalCart(
-  userId?: string
+  userId?: string,
 ): CartItem[] {
-
   if (
     typeof window === "undefined"
   ) {
-
     return [];
-
   }
 
   try {
-
     const data =
       localStorage.getItem(
-        getCartKey(userId)
+        getCartKey(userId),
       );
 
     return data
       ? JSON.parse(data)
       : [];
-
   } catch {
-
     return [];
-
   }
-
 }
-
 
 function saveLocalCart(
   cart: CartItem[],
-  userId?: string
+  userId?: string,
 ) {
-
   if (
     typeof window === "undefined"
   ) {
-
     return;
-
   }
 
   localStorage.setItem(
     getCartKey(userId),
-    JSON.stringify(cart)
+    JSON.stringify(cart),
   );
-
 }
-
 
 /* =========================================================
    STOCK
@@ -129,24 +111,20 @@ function saveLocalCart(
 function getVariantKey(
   productId: number,
   color?: string,
-  size?: string
+  size?: string,
 ) {
-
   return [
     productId,
     color ?? "",
     size ?? "",
   ].join("::");
-
 }
-
 
 async function getVariantStock(
   productId: number,
   color?: string,
-  size?: string
+  size?: string,
 ): Promise<number | undefined> {
-
   /*
    * Products without a color/size variant are not
    * stock-limited by this helper.
@@ -156,15 +134,11 @@ async function getVariantStock(
     !color ||
     !size
   ) {
-
     return undefined;
-
   }
-
 
   const supabase =
     createClient();
-
 
   const {
     data,
@@ -179,92 +153,74 @@ async function getVariantStock(
         size,
         stock,
         status
-        `
+        `,
       )
       .eq(
         "product_id",
-        productId
+        productId,
       )
       .eq(
         "color",
-        color
+        color,
       )
       .eq(
         "size",
-        size
+        size,
       )
       .eq(
         "status",
-        "active"
+        "active",
       )
       .maybeSingle();
 
-
   if (error) {
-
     console.error(
       "Failed to load variant stock:",
-      error
+      error,
     );
 
     return undefined;
-
   }
-
 
   if (!data) {
-
     return 0;
-
   }
-
 
   return Math.max(
     0,
-    Number(
-      data.stock
-    )
+    Number(data.stock),
   );
-
 }
 
-
 async function hydrateCartStock(
-  cart: CartItem[]
+  cart: CartItem[],
 ): Promise<CartItem[]> {
-
   const variantItems =
     cart.filter(
       (item) =>
         Boolean(
           item.color &&
-          item.size
-        )
+            item.size,
+        ),
     );
-
 
   if (
     variantItems.length === 0
   ) {
-
     return cart;
-
   }
-
 
   const productIds = [
     ...new Set(
       variantItems.map(
         (item) =>
-          item.id
-      )
+          item.id,
+      ),
     ),
   ];
 
-
   const supabase =
     createClient();
-
 
   const {
     data,
@@ -279,97 +235,80 @@ async function hydrateCartStock(
         size,
         stock,
         status
-        `
+        `,
       )
       .in(
         "product_id",
-        productIds
+        productIds,
       )
       .eq(
         "status",
-        "active"
+        "active",
       );
 
-
   if (error) {
-
     console.error(
       "Failed to load cart variant stock:",
-      error
+      error,
     );
 
     return cart;
-
   }
-
 
   const stockMap =
     new Map<string, number>();
-
 
   (
     (data ?? []) as VariantStockRow[]
   ).forEach(
     (variant) => {
-
       stockMap.set(
         getVariantKey(
           Number(
-            variant.product_id
+            variant.product_id,
           ),
           variant.color,
-          variant.size
+          variant.size,
         ),
         Math.max(
           0,
           Number(
-            variant.stock
-          )
-        )
+            variant.stock,
+          ),
+        ),
       );
-
-    }
+    },
   );
-
 
   return cart.map(
     (item) => {
-
       if (
         !item.color ||
         !item.size
       ) {
-
         return item;
-
       }
-
 
       const key =
         getVariantKey(
           item.id,
           item.color,
-          item.size
+          item.size,
         );
-
 
       const stock =
         stockMap.get(
-          key
+          key,
         );
-
 
       if (
         stock === undefined
       ) {
-
         return {
           ...item,
           stock: 0,
         };
-
       }
-
 
       return {
         ...item,
@@ -378,20 +317,166 @@ async function hydrateCartStock(
           Math.min(
             Math.max(
               1,
-              item.quantity
+              item.quantity,
             ),
             Math.max(
               1,
-              stock
-            )
+              stock,
+            ),
           ),
       };
-
-    }
+    },
   );
-
 }
 
+/* =========================================================
+   PRICING
+========================================================= */
+
+/*
+ * Refresh cart pricing from the exact active variant.
+ *
+ * The cart price remains the transaction price.
+ * compareAtPrice is only used for displaying the crossed-out
+ * reference/original price.
+ *
+ * Database product_variants remains the source of truth.
+ */
+
+async function hydrateCartPricing(
+  cart: CartItem[],
+): Promise<CartItem[]> {
+  const variantItems =
+    cart.filter(
+      (item) =>
+        Boolean(
+          item.color &&
+            item.size,
+        ),
+    );
+
+  if (
+    variantItems.length === 0
+  ) {
+    return cart;
+  }
+
+  const productIds = [
+    ...new Set(
+      variantItems.map(
+        (item) =>
+          item.id,
+      ),
+    ),
+  ];
+
+  const supabase =
+    createClient();
+
+  const {
+    data,
+    error,
+  } =
+    await supabase
+      .from("product_variants")
+      .select(
+        `
+        product_id,
+        color,
+        size,
+        price,
+        compare_at_price,
+        status
+        `,
+      )
+      .in(
+        "product_id",
+        productIds,
+      )
+      .eq(
+        "status",
+        "active",
+      );
+
+  if (error) {
+    console.error(
+      "Failed to load cart variant pricing:",
+      error,
+    );
+
+    return cart;
+  }
+
+  const pricingRows =
+    (data ?? []) as VariantPricingRow[];
+
+  const pricingMap =
+    new Map<
+      string,
+      VariantPricingRow
+    >();
+
+  pricingRows.forEach(
+    (variant) => {
+      pricingMap.set(
+        getVariantKey(
+          Number(
+            variant.product_id,
+          ),
+          variant.color,
+          variant.size,
+        ),
+        variant,
+      );
+    },
+  );
+
+  return cart.map(
+    (item) => {
+      if (
+        !item.color ||
+        !item.size
+      ) {
+        return item;
+      }
+
+      const variant =
+        pricingMap.get(
+          getVariantKey(
+            item.id,
+            item.color,
+            item.size,
+          ),
+        );
+
+      if (!variant) {
+        return item;
+      }
+
+      const price =
+        Number(
+          variant.price,
+        );
+
+      const compareAtPrice =
+        variant.compare_at_price !==
+          null &&
+        Number(
+          variant.compare_at_price,
+        ) > price
+          ? Number(
+              variant.compare_at_price,
+            )
+          : null;
+
+      return {
+        ...item,
+        price,
+        compareAtPrice,
+      };
+    },
+  );
+}
 
 /* =========================================================
    MEDIA
@@ -415,41 +500,34 @@ async function hydrateCartStock(
  */
 
 async function hydrateCartMedia(
-  cart: CartItem[]
+  cart: CartItem[],
 ): Promise<CartItem[]> {
-
   const variantItems =
     cart.filter(
       (item) =>
         Boolean(
           item.color &&
-          item.size
-        )
+            item.size,
+        ),
     );
-
 
   if (
     variantItems.length === 0
   ) {
-
     return cart;
-
   }
-
 
   const productIds = [
     ...new Set(
       variantItems.map(
         (item) =>
-          item.id
-      )
+          item.id,
+      ),
     ),
   ];
 
-
   const supabase =
     createClient();
-
 
   /*
    * Load active variants so cart color + size can resolve
@@ -469,110 +547,98 @@ async function hydrateCartMedia(
         color,
         size,
         status
-        `
+        `,
       )
       .in(
         "product_id",
-        productIds
+        productIds,
       )
       .eq(
         "status",
-        "active"
+        "active",
       );
-
 
   if (
     variantsError
   ) {
-
     console.error(
       "Failed to load cart variant media mapping:",
-      variantsError
+      variantsError,
     );
 
     return cart;
-
   }
-
 
   const variants =
     (variantsData ?? []) as VariantMediaRow[];
 
-
   if (
     variants.length === 0
   ) {
-
     return cart;
-
   }
 
-
   const variantByKey =
-    new Map<string, VariantMediaRow>();
-
+    new Map<
+      string,
+      VariantMediaRow
+    >();
 
   const variantIdsByColor =
-    new Map<string, number[]>();
-
+    new Map<
+      string,
+      number[]
+    >();
 
   variants.forEach(
     (variant) => {
-
       variantByKey.set(
         getVariantKey(
           Number(
-            variant.product_id
+            variant.product_id,
           ),
           variant.color,
-          variant.size
+          variant.size,
         ),
-        variant
+        variant,
       );
-
 
       const colorKey =
         getVariantKey(
           Number(
-            variant.product_id
+            variant.product_id,
           ),
-          variant.color
+          variant.color,
         );
-
 
       const existing =
         variantIdsByColor.get(
-          colorKey
+          colorKey,
         ) ?? [];
-
 
       existing.push(
         Number(
-          variant.id
-        )
+          variant.id,
+        ),
       );
-
 
       variantIdsByColor.set(
         colorKey,
-        existing
+        existing,
       );
-
-    }
+    },
   );
-
 
   const variantIds = [
     ...new Set(
       variants.map(
         (variant) =>
           Number(
-            variant.id
-          )
-      )
+            variant.id,
+          ),
+      ),
     ),
   ];
-
 
   const {
     data: mediaData,
@@ -586,89 +652,76 @@ async function hydrateCartMedia(
         type,
         storage_path,
         sort_order
-        `
+        `,
       )
       .in(
         "variant_id",
-        variantIds
+        variantIds,
       )
       .eq(
         "type",
-        "image"
+        "image",
       )
       .order(
         "sort_order",
         {
           ascending: true,
-        }
+        },
       );
-
 
   if (
     mediaError
   ) {
-
     console.error(
       "Failed to load cart variant media:",
-      mediaError
+      mediaError,
     );
 
     return cart;
-
   }
-
 
   const media =
     (mediaData ?? []) as ProductMediaRow[];
-
 
   /*
    * First image for each exact variant.
    */
 
   const imageByVariantId =
-    new Map<number, string>();
-
+    new Map<
+      number,
+      string
+    >();
 
   media.forEach(
     (item) => {
-
       if (
         item.variant_id === null
       ) {
-
         return;
-
       }
-
 
       const variantId =
         Number(
-          item.variant_id
+          item.variant_id,
         );
-
 
       if (
         imageByVariantId.has(
-          variantId
+          variantId,
         )
       ) {
-
         return;
-
       }
-
 
       imageByVariantId.set(
         variantId,
         getMediaUrl(
-          item.storage_path
-        )
+          item.storage_path,
+        ),
       );
-
-    }
+    },
   );
-
 
   /*
    * Color fallback:
@@ -679,44 +732,35 @@ async function hydrateCartMedia(
    */
 
   const imageByColor =
-    new Map<string, string>();
-
+    new Map<
+      string,
+      string
+    >();
 
   variantIdsByColor.forEach(
     (
       ids,
-      colorKey
+      colorKey,
     ) => {
-
       for (
-        const variantId
-        of ids
+        const variantId of ids
       ) {
-
         const image =
           imageByVariantId.get(
-            variantId
+            variantId,
           );
 
-
-        if (
-          image
-        ) {
-
+        if (image) {
           imageByColor.set(
             colorKey,
-            image
+            image,
           );
 
           break;
-
         }
-
       }
-
-    }
+    },
   );
-
 
   /*
    * Apply media to cart items.
@@ -724,126 +768,99 @@ async function hydrateCartMedia(
 
   return cart.map(
     (item) => {
-
       if (
         !item.color ||
         !item.size
       ) {
-
         return item;
-
       }
-
 
       const variant =
         variantByKey.get(
           getVariantKey(
             item.id,
             item.color,
-            item.size
-          )
+            item.size,
+          ),
         );
-
 
       if (
         !variant
       ) {
-
         return item;
-
       }
-
 
       const exactImage =
         imageByVariantId.get(
           Number(
-            variant.id
-          )
+            variant.id,
+          ),
         );
-
 
       if (
         exactImage
       ) {
-
         return {
           ...item,
           image:
             exactImage,
         };
-
       }
-
 
       const colorImage =
         imageByColor.get(
           getVariantKey(
             item.id,
-            item.color
-          )
+            item.color,
+          ),
         );
-
 
       if (
         colorImage
       ) {
-
         return {
           ...item,
           image:
             colorImage,
         };
-
       }
 
-
       return item;
-
-    }
+    },
   );
-
 }
-
 
 /* =========================================================
    GET CART
 ========================================================= */
 
 export function getCart(
-  userId?: string
+  userId?: string,
 ): CartItem[] {
-
   return getLocalCart(
-    userId
+    userId,
   );
-
 }
-
 
 /* =========================================================
    LOAD CART FROM SUPABASE
 ========================================================= */
 
 export async function loadCart(
-  userId: string
+  userId: string,
 ): Promise<CartItem[]> {
-
   if (
     !userId
   ) {
-
     return [];
-
   }
-
 
   const supabase =
     createClient();
 
-
   const {
     data,
-    error
+    error,
   } =
     await supabase
       .from("cart_items")
@@ -857,32 +874,33 @@ export async function loadCart(
         quantity,
         color,
         size
-        `
+        `,
       )
       .eq(
         "user_id",
-        userId
+        userId,
       )
       .order(
         "created_at",
         {
           ascending: true,
-        }
+        },
       );
 
-
   if (error) {
-
     console.error(
       "Failed to load cart:",
       {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-      }
+        message:
+          error.message,
+        details:
+          error.details,
+        hint:
+          error.hint,
+        code:
+          error.code,
+      },
     );
-
 
     /*
      * JWT may temporarily be invalid
@@ -894,30 +912,34 @@ export async function loadCart(
      */
 
     return getLocalCart(
-      userId
+      userId,
     );
-
   }
-
 
   const cart: CartItem[] =
     (data ?? []).map(
       (item) => ({
         id: Number(
-          item.product_id
+          item.product_id,
         ),
 
-        name: item.name,
+        name:
+          item.name,
 
         price: Number(
-          item.price
+          item.price,
         ),
 
-        image: item.image,
+        compareAtPrice:
+          null,
 
-        quantity: Number(
-          item.quantity
-        ),
+        image:
+          item.image,
+
+        quantity:
+          Number(
+            item.quantity,
+          ),
 
         color:
           item.color ??
@@ -926,9 +948,8 @@ export async function loadCart(
         size:
           item.size ??
           undefined,
-      })
+      }),
     );
-
 
   /*
    * Refresh stock from the current
@@ -937,44 +958,45 @@ export async function loadCart(
 
   const stockHydratedCart =
     await hydrateCartStock(
-      cart
+      cart,
     );
-
 
   /*
    * Refresh thumbnails from the current
    * variant media.
    */
 
-  const hydratedCart =
+  const mediaHydratedCart =
     await hydrateCartMedia(
-      stockHydratedCart
+      stockHydratedCart,
     );
 
+  /*
+   * Refresh current variant pricing.
+   */
+
+  const hydratedCart =
+    await hydrateCartPricing(
+      mediaHydratedCart,
+    );
 
   saveLocalCart(
     hydratedCart,
-    userId
+    userId,
   );
-
 
   if (
     typeof window !== "undefined"
   ) {
-
     window.dispatchEvent(
       new Event(
-        "cart-updated"
-      )
+        "cart-updated",
+      ),
     );
-
   }
 
-
   return hydratedCart;
-
 }
-
 
 /* =========================================================
    SAVE CART
@@ -982,35 +1004,29 @@ export async function loadCart(
 
 export async function saveCart(
   cart: CartItem[],
-  userId?: string
+  userId?: string,
 ) {
-
   /*
    * GUEST
    */
 
   if (!userId) {
-
     saveLocalCart(
-      cart
+      cart,
     );
 
     if (
       typeof window !== "undefined"
     ) {
-
       window.dispatchEvent(
         new Event(
-          "cart-updated"
-        )
+          "cart-updated",
+        ),
       );
-
     }
 
     return;
-
   }
-
 
   /*
    * USER
@@ -1018,7 +1034,6 @@ export async function saveCart(
 
   const supabase =
     createClient();
-
 
   /*
    * Get current remote items
@@ -1036,25 +1051,21 @@ export async function saveCart(
         product_id,
         color,
         size
-        `
+        `,
       )
       .eq(
         "user_id",
-        userId
+        userId,
       );
 
-
   if (fetchError) {
-
     console.error(
       "Failed to read cart:",
-      fetchError
+      fetchError,
     );
 
     return;
-
   }
-
 
   /*
    * Remove remote items
@@ -1062,68 +1073,57 @@ export async function saveCart(
    */
 
   for (
-    const remoteItem
-    of existing ?? []
+    const remoteItem of
+    existing ?? []
   ) {
-
     const stillExists =
       cart.some(
         (item) =>
           Number(
-            remoteItem.product_id
+            remoteItem.product_id,
           ) === item.id &&
           (remoteItem.color ??
             undefined) ===
             item.color &&
           (remoteItem.size ??
             undefined) ===
-            item.size
+            item.size,
       );
-
 
     if (
       !stillExists
     ) {
-
       const {
-        error
+        error,
       } =
         await supabase
           .from("cart_items")
           .delete()
           .eq(
             "id",
-            remoteItem.id
+            remoteItem.id,
           )
           .eq(
             "user_id",
-            userId
+            userId,
           );
 
-
       if (error) {
-
         console.error(
           "Failed to remove cart item:",
-          error
+          error,
         );
-
       }
-
     }
-
   }
-
 
   /*
    * Insert or update cart items
    */
 
   for (
-    const item
-    of cart
+    const item of cart
   ) {
-
     const {
       data: existingItem,
       error: findError,
@@ -1131,26 +1131,25 @@ export async function saveCart(
       await supabase
         .from("cart_items")
         .select(
-          "id"
+          "id",
         )
         .eq(
           "user_id",
-          userId
+          userId,
         )
         .eq(
           "product_id",
-          item.id
+          item.id,
         )
         .eq(
           "color",
-          item.color ?? ""
+          item.color ?? "",
         )
         .eq(
           "size",
-          item.size ?? ""
+          item.size ?? "",
         )
         .maybeSingle();
-
 
     /*
      * Because nullable color/size
@@ -1162,29 +1161,26 @@ export async function saveCart(
     let foundId =
       existingItem?.id;
 
-
     if (
       !foundId &&
       !findError
     ) {
-
       const {
-        data: candidates
+        data: candidates,
       } =
         await supabase
           .from("cart_items")
           .select(
-            "id, color, size"
+            "id, color, size",
           )
           .eq(
             "user_id",
-            userId
+            userId,
           )
           .eq(
             "product_id",
-            item.id
+            item.id,
           );
-
 
       const candidate =
         (candidates ?? [])
@@ -1195,15 +1191,12 @@ export async function saveCart(
                 item.color &&
               (candidate.size ??
                 undefined) ===
-                item.size
+                item.size,
           );
-
 
       foundId =
         candidate?.id;
-
     }
-
 
     /*
      * UPDATE
@@ -1212,86 +1205,95 @@ export async function saveCart(
     if (
       foundId
     ) {
-
       const {
-        error
+        error,
       } =
         await supabase
           .from("cart_items")
           .update({
-            name: item.name,
-            price: item.price,
-            image: item.image,
-            quantity: item.quantity,
+            name:
+              item.name,
+
+            price:
+              item.price,
+
+            image:
+              item.image,
+
+            quantity:
+              item.quantity,
+
             color:
               item.color ??
               null,
+
             size:
               item.size ??
               null,
           })
           .eq(
             "id",
-            foundId
+            foundId,
           )
           .eq(
             "user_id",
-            userId
+            userId,
           );
 
-
       if (error) {
-
         console.error(
           "Failed to update cart item:",
-          error
+          error,
         );
-
       }
-
     }
-
 
     /*
      * INSERT
      */
 
     else {
-
       const {
-        error
+        error,
       } =
         await supabase
           .from("cart_items")
           .insert({
-            user_id: userId,
-            product_id: item.id,
-            name: item.name,
-            price: item.price,
-            image: item.image,
-            quantity: item.quantity,
+            user_id:
+              userId,
+
+            product_id:
+              item.id,
+
+            name:
+              item.name,
+
+            price:
+              item.price,
+
+            image:
+              item.image,
+
+            quantity:
+              item.quantity,
+
             color:
               item.color ??
               null,
+
             size:
               item.size ??
               null,
           });
 
-
       if (error) {
-
         console.error(
           "Failed to insert cart item:",
-          error
+          error,
         );
-
       }
-
     }
-
   }
-
 
   /*
    * Update local cache
@@ -1299,24 +1301,19 @@ export async function saveCart(
 
   saveLocalCart(
     cart,
-    userId
+    userId,
   );
-
 
   if (
     typeof window !== "undefined"
   ) {
-
     window.dispatchEvent(
       new Event(
-        "cart-updated"
-      )
+        "cart-updated",
+      ),
     );
-
   }
-
 }
-
 
 /* =========================================================
    ADD TO CART
@@ -1324,25 +1321,23 @@ export async function saveCart(
 
 export async function addToCart(
   item: CartItem,
-  userId?: string
+  userId?: string,
 ) {
-
   const cart =
     getCart(
-      userId
+      userId,
     );
-
 
   const existingIndex =
     cart.findIndex(
       (product) =>
-        product.id === item.id &&
+        product.id ===
+          item.id &&
         product.color ===
           item.color &&
         product.size ===
-          item.size
+          item.size,
     );
-
 
   /*
    * Read the current stock before
@@ -1353,9 +1348,8 @@ export async function addToCart(
     await getVariantStock(
       item.id,
       item.color,
-      item.size
+      item.size,
     );
-
 
   const requestedQuantity =
     existingIndex >= 0
@@ -1365,26 +1359,25 @@ export async function addToCart(
         item.quantity
       : item.quantity;
 
-
   /*
    * If this is a variant item, never allow
    * the cart quantity to exceed current stock.
    */
 
   const finalQuantity =
-    currentStock === undefined
+    currentStock ===
+      undefined
       ? Math.max(
           1,
-          requestedQuantity
+          requestedQuantity,
         )
       : Math.min(
           Math.max(
             1,
-            requestedQuantity
+            requestedQuantity,
           ),
-          currentStock
+          currentStock,
         );
-
 
   /*
    * Do not add a variant that has no
@@ -1392,19 +1385,16 @@ export async function addToCart(
    */
 
   if (
-    currentStock !== undefined &&
+    currentStock !==
+      undefined &&
     currentStock <= 0
   ) {
-
     return cart;
-
   }
-
 
   if (
     existingIndex >= 0
   ) {
-
     cart[
       existingIndex
     ] = {
@@ -1428,10 +1418,15 @@ export async function addToCart(
         cart[
           existingIndex
         ].image,
+
+      compareAtPrice:
+        item.compareAtPrice ??
+        cart[
+          existingIndex
+        ].compareAtPrice ??
+        null,
     };
-
   } else {
-
     cart.push({
       ...item,
 
@@ -1440,10 +1435,12 @@ export async function addToCart(
 
       stock:
         currentStock,
+
+      compareAtPrice:
+        item.compareAtPrice ??
+        null,
     });
-
   }
-
 
   /*
    * Optimistic local update
@@ -1451,28 +1448,24 @@ export async function addToCart(
 
   saveLocalCart(
     cart,
-    userId
+    userId,
   );
-
 
   if (
     typeof window !== "undefined"
   ) {
-
     window.dispatchEvent(
       new Event(
-        "cart-updated"
-      )
+        "cart-updated",
+      ),
     );
 
     window.dispatchEvent(
       new Event(
-        "cart-added"
-      )
+        "cart-added",
+      ),
     );
-
   }
-
 
   /*
    * Persist
@@ -1480,49 +1473,40 @@ export async function addToCart(
 
   await saveCart(
     cart,
-    userId
+    userId,
   );
 
-
   return cart;
-
 }
-
 
 /* =========================================================
    CLEAR
 ========================================================= */
 
 export async function clearCart(
-  userId?: string
+  userId?: string,
 ) {
-
   /*
    * GUEST
    */
 
   if (!userId) {
-
     saveLocalCart(
-      []
+      [],
     );
 
     if (
       typeof window !== "undefined"
     ) {
-
       window.dispatchEvent(
         new Event(
-          "cart-updated"
-        )
+          "cart-updated",
+        ),
       );
-
     }
 
     return;
-
   }
-
 
   /*
    * USER
@@ -1531,98 +1515,82 @@ export async function clearCart(
   const supabase =
     createClient();
 
-
   const {
-    error
+    error,
   } =
     await supabase
       .from("cart_items")
       .delete()
       .eq(
         "user_id",
-        userId
+        userId,
       );
 
-
   if (error) {
-
     console.error(
       "Failed to clear cart:",
-      error
+      error,
     );
 
     return;
-
   }
-
 
   saveLocalCart(
     [],
-    userId
+    userId,
   );
-
 
   if (
     typeof window !== "undefined"
   ) {
-
     window.dispatchEvent(
       new Event(
-        "cart-updated"
-      )
+        "cart-updated",
+      ),
     );
-
   }
-
 }
-
 
 /* =========================================================
    COUNT
 ========================================================= */
 
 export function getCartCount(
-  userId?: string
+  userId?: string,
 ) {
-
   return getCart(
-    userId
+    userId,
   ).reduce(
     (
       total,
-      item
+      item,
     ) =>
       total +
       item.quantity,
-    0
+    0,
   );
-
 }
-
 
 /* =========================================================
    TOTAL
 ========================================================= */
 
 export function getCartTotal(
-  userId?: string
+  userId?: string,
 ) {
-
   return getCart(
-    userId
+    userId,
   ).reduce(
     (
       total,
-      item
+      item,
     ) =>
       total +
       item.price *
         item.quantity,
-    0
+    0,
   );
-
 }
-
 
 /* =========================================================
    REMOVE ITEM
@@ -1632,21 +1600,21 @@ export async function removeCartItem(
   id: number,
   color?: string,
   size?: string,
-  userId?: string
+  userId?: string,
 ) {
-
   const updated =
     getCart(
-      userId
+      userId,
     ).filter(
       (item) =>
         !(
           item.id === id &&
-          item.color === color &&
-          item.size === size
-        )
+          item.color ===
+            color &&
+          item.size ===
+            size
+        ),
     );
-
 
   /*
    * Optimistic
@@ -1654,30 +1622,24 @@ export async function removeCartItem(
 
   saveLocalCart(
     updated,
-    userId
+    userId,
   );
-
 
   if (
     typeof window !== "undefined"
   ) {
-
     window.dispatchEvent(
       new Event(
-        "cart-updated"
-      )
+        "cart-updated",
+      ),
     );
-
   }
-
 
   await saveCart(
     updated,
-    userId
+    userId,
   );
-
 }
-
 
 /* =========================================================
    UPDATE QUANTITY
@@ -1688,14 +1650,12 @@ export async function updateCartQuantity(
   color: string | undefined,
   size: string | undefined,
   quantity: number,
-  userId?: string
+  userId?: string,
 ) {
-
   const cart =
     getCart(
-      userId
+      userId,
     );
-
 
   /*
    * Refresh the current stock for this
@@ -1706,35 +1666,34 @@ export async function updateCartQuantity(
     await getVariantStock(
       id,
       color,
-      size
+      size,
     );
 
-
   const safeQuantity =
-    currentStock === undefined
+    currentStock ===
+      undefined
       ? Math.max(
           1,
-          quantity
+          quantity,
         )
       : Math.min(
           Math.max(
             1,
-            quantity
+            quantity,
           ),
-          currentStock
+          currentStock,
         );
-
 
   const updated =
     cart.map(
       (item) => {
-
         if (
           item.id === id &&
-          item.color === color &&
-          item.size === size
+          item.color ===
+            color &&
+          item.size ===
+            size
         ) {
-
           return {
             ...item,
 
@@ -1744,14 +1703,11 @@ export async function updateCartQuantity(
             stock:
               currentStock,
           };
-
         }
 
         return item;
-
-      }
+      },
     );
-
 
   /*
    * Optimistic
@@ -1759,30 +1715,24 @@ export async function updateCartQuantity(
 
   saveLocalCart(
     updated,
-    userId
+    userId,
   );
-
 
   if (
     typeof window !== "undefined"
   ) {
-
     window.dispatchEvent(
       new Event(
-        "cart-updated"
-      )
+        "cart-updated",
+      ),
     );
-
   }
-
 
   await saveCart(
     updated,
-    userId
+    userId,
   );
-
 }
-
 
 /* =========================================================
    CHECK ITEM
@@ -1792,20 +1742,19 @@ export function isInCart(
   id: number,
   color?: string,
   size?: string,
-  userId?: string
+  userId?: string,
 ) {
-
   return getCart(
-    userId
+    userId,
   ).some(
     (item) =>
       item.id === id &&
-      item.color === color &&
-      item.size === size
+      item.color ===
+        color &&
+      item.size ===
+        size,
   );
-
 }
-
 
 /* =========================================================
    GET ITEM
@@ -1815,51 +1764,42 @@ export function getCartItem(
   id: number,
   color?: string,
   size?: string,
-  userId?: string
+  userId?: string,
 ) {
-
   return getCart(
-    userId
+    userId,
   ).find(
     (item) =>
       item.id === id &&
-      item.color === color &&
-      item.size === size
+      item.color ===
+        color &&
+      item.size ===
+        size,
   );
-
 }
-
 
 /* =========================================================
    SUBSCRIBE
 ========================================================= */
 
 export function subscribeCart(
-  callback: () => void
+  callback: () => void,
 ) {
-
   if (
     typeof window === "undefined"
   ) {
-
     return () => {};
-
   }
-
 
   window.addEventListener(
     "cart-updated",
-    callback
+    callback,
   );
 
-
   return () => {
-
     window.removeEventListener(
       "cart-updated",
-      callback
+      callback,
     );
-
   };
-
 }

@@ -5,9 +5,26 @@ import ProductGrid from "@/components/shop/ProductGrid";
 
 import { getProducts } from "@/lib/products";
 import { getProductBadgesForProducts } from "@/lib/product-badge-service";
+import { getStorefrontCategories } from "@/lib/categories";
 
-export default async function ShopPage() {
-  const products = await getProducts();
+type ShopPageProps = {
+  searchParams: Promise<{
+    category?: string;
+  }>;
+};
+
+export default async function ShopPage({
+  searchParams,
+}: ShopPageProps) {
+  const params = await searchParams;
+
+  const [
+    products,
+    storefrontCategories,
+  ] = await Promise.all([
+    getProducts(),
+    getStorefrontCategories(),
+  ]);
 
   const badgeMap =
     await getProductBadgesForProducts(
@@ -18,8 +35,26 @@ export default async function ShopPage() {
     badgeMap.entries(),
   );
 
+  const requestedCategories =
+    params.category
+      ?.split(",")
+      .map((slug) => slug.trim())
+      .filter(Boolean) ?? [];
+
+  const initialCategories =
+    storefrontCategories
+      .filter((category) =>
+        requestedCategories.includes(
+          category.slug,
+        ),
+      )
+      .map((category) => category.name);
+
   return (
-    <ShopProvider>
+    <ShopProvider
+      categories={storefrontCategories}
+      initialCategory={initialCategories}
+    >
       <main>
         <ShopHeader />
 

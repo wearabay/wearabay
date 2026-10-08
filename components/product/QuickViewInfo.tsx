@@ -11,16 +11,40 @@ type Props = {
 export default function QuickViewInfo({
   product,
 }: Props) {
+  const discountedVariant =
+    product.variants.find(
+      (variant) =>
+        variant.price === product.price &&
+        typeof variant.compareAtPrice ===
+          "number" &&
+        variant.compareAtPrice >
+          variant.price,
+    ) ??
+    product.variants.find(
+      (variant) =>
+        typeof variant.compareAtPrice ===
+          "number" &&
+        variant.compareAtPrice >
+          variant.price,
+    );
+
+  const compareAtPrice =
+    discountedVariant?.compareAtPrice ??
+    null;
+
+  const hasComparePrice =
+    typeof compareAtPrice === "number" &&
+    compareAtPrice > product.price;
 
   return (
-
-    <div className="flex h-full flex-col">
-
+    <div className="flex flex-col">
       {/* Badge */}
 
       {product.badge && (
         <div className="mb-5">
-          <Badge>{product.badge}</Badge>
+          <Badge>
+            {product.badge}
+          </Badge>
         </div>
       )}
 
@@ -38,30 +62,23 @@ export default function QuickViewInfo({
 
       {/* Price */}
 
-      <p className="mt-6 text-2xl font-semibold text-black">
-        {formatPrice(product.price)}
-      </p>
+      <div className="mt-6 flex items-baseline gap-3">
+        {hasComparePrice && (
+          <span className="text-base text-neutral-400 line-through">
+            {formatPrice(compareAtPrice)}
+          </span>
+        )}
+
+        <span className="text-2xl font-semibold text-black">
+          {formatPrice(product.price)}
+        </span>
+      </div>
 
       {/* Description */}
 
       <p className="mt-6 leading-8 text-neutral-600">
         {product.description}
       </p>
-
-      {/* Stock */}
-
-      <div className="mt-8">
-
-        <span className="rounded-full bg-green-100 px-4 py-2 text-xs font-medium text-green-700">
-
-          In Stock ({product.stock})
-
-        </span>
-
-      </div>
-
     </div>
-
   );
-
 }

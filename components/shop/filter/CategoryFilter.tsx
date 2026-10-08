@@ -1,28 +1,42 @@
 "use client";
 
-import { categories } from "@/data/categories";
 import { useShop } from "../context/ShopContext";
 
 export default function CategoryFilter() {
-  const { category, setCategory } = useShop();
+  const {
+    category,
+    setCategory,
+    categories,
+  } = useShop();
 
   function toggleCategory(name: string) {
     if (category.includes(name)) {
-      setCategory(category.filter((item) => item !== name));
+      setCategory(
+        category.filter(
+          (item) => item !== name,
+        ),
+      );
     } else {
-      setCategory([...category, name]);
+      setCategory([
+        ...category,
+        name,
+      ]);
     }
   }
 
   return (
     <div className="flex flex-wrap gap-3">
       {categories.map((item) => {
-        const active = category.includes(item.name);
+        const active =
+          category.includes(item.name);
 
         return (
           <button
             key={item.id}
-            onClick={() => toggleCategory(item.name)}
+            type="button"
+            onClick={() =>
+              toggleCategory(item.name)
+            }
             className={`
               rounded-full
               border
@@ -32,7 +46,7 @@ export default function CategoryFilter() {
               transition
               ${
                 active
-                  ? "bg-black text-white border-black"
+                  ? "border-black bg-black text-white"
                   : "border-neutral-300 hover:bg-black hover:text-white"
               }
             `}
