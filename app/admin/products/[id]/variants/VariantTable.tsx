@@ -387,6 +387,13 @@ export default function VariantTable({
               <div className="mt-5 grid grid-cols-2 gap-2 border-t border-stone-100 pt-4">
                 <Link
                   href={`/admin/products/${product.id}/variants/${variant.id}`}
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-stone-200 px-4 text-xs font-medium text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-900"
+                >
+                  View
+                </Link>
+
+                <Link
+                  href={`/admin/products/${product.id}/variants/${variant.id}/edit`}
                   className="inline-flex h-10 items-center justify-center rounded-full border border-stone-200 px-4 text-xs font-medium text-neutral-700 transition hover:border-neutral-400 hover:text-neutral-900"
                 >
                   Edit
@@ -521,6 +528,13 @@ export default function VariantTable({
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/admin/products/${product.id}/variants/${variant.id}`}
+                          className="inline-flex rounded-xl border border-stone-200 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-900"
+                        >
+                          View
+                        </Link>
+
+                        <Link
+                          href={`/admin/products/${product.id}/variants/${variant.id}/edit`}
                           className="inline-flex rounded-xl border border-stone-200 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-600 transition hover:border-neutral-900 hover:bg-neutral-900 hover:text-white"
                         >
                           Edit
