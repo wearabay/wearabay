@@ -107,7 +107,7 @@ export default function VariantForm({
       });
 
       window.location.assign(
-        `/admin/products/${productId}/variants`
+        `/admin/products/${productId}/variants/${variant.id}`
       );
     } catch (error) {
       setError(
