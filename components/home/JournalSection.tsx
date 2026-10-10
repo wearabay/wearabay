@@ -16,8 +16,8 @@ export default function JournalSection() {
             className="z-0 object-cover object-center"
           />
 
-          {/* The original artwork contains branding; the opaque left panel keeps the new copy clean and editable. */}
-          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#F7EDE1] from-0% via-[#F7EDE1]/98 via-45% via-[#F7EDE1]/92 via-62% to-[#F7EDE1]/5 to-100%" />
+          {/* Keep the editable copy legible while revealing more of the image on the right. */}
+          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#F7EDE1]/98 from-0% via-[#F7EDE1]/90 via-35% via-[#F7EDE1]/45 via-52% to-[#F7EDE1]/0 to-68%" />
 
           <div className="relative z-20 flex min-h-[420px] items-center sm:min-h-[480px] lg:min-h-[540px]">
             <div className="max-w-2xl px-7 py-14 sm:px-10 md:px-14 md:py-16 lg:px-16">
