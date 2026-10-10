@@ -17,7 +17,7 @@ export default function JournalSection() {
           />
 
           {/* The original artwork contains branding; the opaque left panel keeps the new copy clean and editable. */}
-          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#F7EDE1] from-0% via-[#F7EDE1]/95 via-45% to-[#F7EDE1]/10 to-100%" />
+          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#F7EDE1] from-0% via-[#F7EDE1] via-45% via-[#F7EDE1]/95 via-58% to-transparent to-100%" />
 
           <div className="relative z-20 flex min-h-[420px] items-center sm:min-h-[480px] lg:min-h-[540px]">
             <div className="max-w-2xl px-7 py-14 sm:px-10 md:px-14 md:py-16 lg:px-16">
