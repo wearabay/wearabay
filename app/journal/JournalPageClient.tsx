@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Container from "@/components/ui/Container";
 
 type Props = {
@@ -52,41 +53,40 @@ export default function JournalPageClient({ storeName }: Props) {
       </section>
 
       <section className="bg-[#F6EFE6]">
-        <div className="grid lg:min-h-[620px] lg:grid-cols-[0.92fr_1.08fr]">
-          <div className="relative flex min-h-[320px] items-center justify-center overflow-hidden bg-[#F6EFE6] sm:min-h-[420px] lg:min-h-[620px]">
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 bg-contain bg-left bg-no-repeat"
-              style={{
-                backgroundImage:
-                  "url(https://d2ol7oe51mr4n9.cloudfront.net/user_3ISY4nI4NP5OoHjmvxc4f8TQg6w/b8022032-609e-4d97-ad46-1f028bcdbc07.jpg)",
-              }}
+        <div className="grid items-stretch lg:min-h-[600px] lg:grid-cols-[45fr_55fr]">
+          <div className="relative flex min-h-[320px] items-center overflow-hidden bg-[#F6EFE6] sm:min-h-[420px] lg:min-h-[600px]">
+            <Image
+              src="https://d2ol7oe51mr4n9.cloudfront.net/user_3ISY4nI4NP5OoHjmvxc4f8TQg6w/b8022032-609e-4d97-ad46-1f028bcdbc07.jpg"
+              alt=""
+              fill
+              sizes="(max-width: 1024px) 100vw, 45vw"
+              className="object-contain object-left"
             />
             <div
               aria-hidden="true"
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F6EFE6]/10 to-[#F6EFE6]"
+              className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-r from-transparent via-[#F6EFE6]/55 to-[#F6EFE6]"
             />
           </div>
 
           <div className="flex items-center">
             <Container>
-              <div className="mx-auto max-w-3xl py-16 sm:py-20 lg:py-24 lg:pl-4">
+              <div className="mx-auto max-w-3xl py-14 sm:py-16 lg:py-20 lg:pl-5">
                 <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-600">
                   Our Ethos
                 </p>
 
-                <h2 className="mt-6 text-3xl font-light leading-snug tracking-[-0.035em] text-neutral-950 sm:text-4xl md:text-5xl">
+                <h2 className="mt-5 text-3xl font-light leading-snug tracking-[-0.035em] text-neutral-950 sm:text-4xl md:text-5xl">
                   Modesty, made meaningful.
                 </h2>
 
-                <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-neutral-700 md:text-base md:leading-8">
+                <p className="mt-5 max-w-2xl text-sm leading-7 text-neutral-700 md:text-base md:leading-8">
                   We believe true elegance is never loud. It lives in thoughtful
                   design, considered details, and pieces made to feel timeless.
                   Through Wearabay, we celebrate a quieter kind of confidence —
                   where comfort, craftsmanship, and modesty meet.
                 </p>
 
-                <div className="mt-10 grid gap-7 border-t border-neutral-400/50 pt-7 sm:grid-cols-3 sm:gap-4">
+                <div className="mt-8 grid gap-6 border-t border-neutral-400/50 pt-6 sm:grid-cols-3 sm:gap-4">
                   <div className="sm:pr-3">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
                       Timeless Design
