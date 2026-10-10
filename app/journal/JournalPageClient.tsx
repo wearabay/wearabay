@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-
 import Container from "@/components/ui/Container";
 
 type Props = {
@@ -12,13 +10,13 @@ export default function JournalPageClient({ storeName }: Props) {
   return (
     <main className="bg-[#FAF8F5]">
       <section className="relative isolate min-h-[580px] overflow-hidden bg-[#E9DFD2] md:min-h-[660px] lg:min-h-[720px]">
-        <Image
-          src="/images/journal/journal-coming-soon.svg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="z-0 object-cover object-center"
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url(https://d2ol7oe51mr4n9.cloudfront.net/user_3ISY4nI4NP5OoHjmvxc4f8TQg6w/4254efa1-3721-4fdc-9c8d-9a84cfa07a5d.jpg)",
+          }}
         />
         <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#FAF5EE]/95 via-[#FAF5EE]/88 to-[#FAF5EE]/20" />
 
@@ -57,20 +55,19 @@ export default function JournalPageClient({ storeName }: Props) {
         </p>
       </section>
 
-      <section className="relative isolate overflow-hidden bg-[#F6EFE6]">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/journal/journal-ethos.svg"
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover object-center"
+      <section className="bg-[#F6EFE6]">
+        <div className="grid lg:min-h-[620px] lg:grid-cols-[0.92fr_1.08fr]">
+          <div
+            aria-hidden="true"
+            className="relative min-h-[320px] overflow-hidden bg-cover bg-center sm:min-h-[420px] lg:min-h-full"
+            style={{
+              backgroundImage:
+                "url(https://d2ol7oe51mr4n9.cloudfront.net/user_3ISY4nI4NP5OoHjmvxc4f8TQg6w/b8022032-609e-4d97-ad46-1f028bcdbc07.jpg)",
+            }}
           />
-        </div>
-        <div className="absolute inset-0 z-10 bg-[#FAF7F1]/72" />
-
-        <Container>
-          <div className="relative z-20 mx-auto max-w-4xl py-20 text-center md:py-28 lg:py-32">
+          <div className="flex items-center">
+            <Container>
+              <div className="mx-auto max-w-3xl py-16 sm:py-20 lg:py-24 lg:pl-4">
             <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-600">
               Our Ethos
             </p>
@@ -86,36 +83,37 @@ export default function JournalPageClient({ storeName }: Props) {
               where comfort, craftsmanship, and modesty meet.
             </p>
 
-            <div className="mt-12 grid gap-8 border-t border-neutral-400/50 pt-8 sm:grid-cols-3 sm:gap-6">
-              <div className="px-3">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-neutral-800">
+                <div className="mt-10 grid gap-7 border-t border-neutral-400/50 pt-7 sm:grid-cols-3 sm:gap-4">
+              <div className="sm:pr-3">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
                   Timeless Design
                 </p>
-                <p className="mx-auto mt-3 max-w-xs text-xs leading-6 text-neutral-600 md:text-sm">
+                <p className="mt-3 text-xs leading-6 text-neutral-600 md:text-sm">
                   Pieces designed to transcend trends and remain meaningful.
                 </p>
               </div>
 
-              <div className="border-neutral-400/50 px-3 sm:border-x">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-neutral-800">
+              <div className="border-neutral-400/50 sm:border-x sm:px-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
                   Thoughtful Craft
                 </p>
-                <p className="mx-auto mt-3 max-w-xs text-xs leading-6 text-neutral-600 md:text-sm">
+                <p className="mt-3 text-xs leading-6 text-neutral-600 md:text-sm">
                   Considered materials, careful details, and quality made to last.
                 </p>
               </div>
 
-              <div className="px-3">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-neutral-800">
+              <div className="sm:pr-3">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
                   Quiet Confidence
                 </p>
-                <p className="mx-auto mt-3 max-w-xs text-xs leading-6 text-neutral-600 md:text-sm">
+                <p className="mt-3 text-xs leading-6 text-neutral-600 md:text-sm">
                   Modesty that feels effortless, personal, and assured.
                 </p>
               </div>
+                </div>
             </div>
           </div>
-        </Container>
+        </div>
       </section>
     </main>
   );
