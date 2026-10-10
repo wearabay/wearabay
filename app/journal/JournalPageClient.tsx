@@ -102,7 +102,7 @@ export default function JournalPageClient({ storeName }: Props) {
                 </p>
               </div>
 
-              <div className="sm:pr-3">
+              <div className="sm:pl-3">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
                   Quiet Confidence
                 </p>
