@@ -11,77 +11,108 @@ type Props = {
 export default function JournalPageClient({ storeName }: Props) {
   return (
     <main className="bg-[#FAF8F5]">
-      <section className="px-6 py-12 md:py-16 lg:py-20">
+      {/* Journal Coming Soon — image is a background; copy remains editable HTML. */}
+      <section className="relative isolate flex min-h-[560px] items-center overflow-hidden bg-[#E9DFD2] md:min-h-[650px] lg:min-h-[720px]">
+        <Image
+          src="/images/journal/journal-coming-soon.svg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="-z-20 object-cover object-center"
+        />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#FAF5EE]/95 via-[#FAF5EE]/85 to-[#FAF5EE]/15" />
+
         <Container>
-          <div className="grid items-center gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:gap-16">
-            <div className="order-2 text-center lg:order-1 lg:py-12 lg:text-left">
-              <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-500 md:text-[11px]">
-                {storeName} Journal
-              </p>
+          <div className="max-w-2xl py-20 md:py-28">
+            <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-600 md:text-[11px]">
+              {storeName} Journal
+            </p>
 
-              <h1 className="mx-auto mt-6 max-w-xl text-4xl font-light leading-[1.15] tracking-[-0.035em] text-neutral-900 md:text-5xl lg:mx-0 lg:text-6xl">
-                Stories with intention.
-                <span className="mt-1 block text-neutral-500">
-                  Coming soon.
-                </span>
-              </h1>
+            <h1 className="mt-7 max-w-xl text-4xl font-light leading-[1.12] tracking-[-0.04em] text-neutral-950 sm:text-5xl md:text-6xl lg:text-7xl">
+              Stories with intention.
+              <span className="mt-2 block font-normal italic text-neutral-600">
+                Coming soon.
+              </span>
+            </h1>
 
-              <p className="mx-auto mt-6 max-w-lg text-sm leading-8 text-neutral-600 md:text-base lg:mx-0">
-                We’re preparing thoughtful stories on modest style,
-                craftsmanship, and the little details that make each piece
-                meaningful.
-              </p>
+            <p className="mt-7 max-w-lg text-sm leading-7 text-neutral-700 md:text-base md:leading-8">
+              We’re preparing thoughtful stories on modest style,
+              craftsmanship, and the little details that make each piece
+              meaningful. The Journal will be here soon.
+            </p>
 
-              <div className="mt-9 inline-flex items-center gap-3 border-y border-neutral-300 py-4">
-                <span className="h-1.5 w-1.5 rounded-full bg-neutral-800" />
-                <p className="text-[10px] uppercase tracking-[0.32em] text-neutral-700">
-                  The Journal is on its way
-                </p>
-              </div>
-            </div>
-
-            <div className="relative order-1 aspect-[5/4] overflow-hidden bg-[#E9DFD2] lg:order-2 lg:aspect-[4/5]">
-              <Image
-                src="/images/journal/journal-coming-soon.svg"
-                alt="Softly draped neutral fabric and natural textures in a warm editorial setting"
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
-              />
-              <div className="absolute inset-5 border border-white/50 md:inset-7" />
-              <p className="absolute bottom-8 left-8 text-[9px] uppercase tracking-[0.32em] text-neutral-700 md:bottom-10 md:left-10">
-                A considered point of view
+            <div className="mt-9 inline-flex items-center gap-3 border-y border-neutral-400/70 py-4">
+              <span className="h-1.5 w-1.5 rounded-full bg-neutral-800" />
+              <p className="text-[9px] uppercase tracking-[0.3em] text-neutral-700 md:text-[10px]">
+                The Journal is on its way
               </p>
             </div>
           </div>
         </Container>
+
+        <p className="absolute bottom-6 right-6 text-[8px] uppercase tracking-[0.3em] text-neutral-600 md:bottom-9 md:right-10 md:text-[9px]">
+          A considered point of view
+        </p>
       </section>
 
-      <section className="border-t border-neutral-200 bg-white px-6 py-16 md:py-24">
+      {/* Our Ethos — a separate visual background with editable text and values. */}
+      <section className="relative isolate overflow-hidden bg-[#F6EFE6]">
+        <div className="absolute inset-0 -z-20">
+          <Image
+            src="/images/journal/journal-ethos.svg"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+        </div>
+        <div className="absolute inset-0 -z-10 bg-[#FAF7F1]/65" />
+
         <Container>
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-500">
+          <div className="mx-auto max-w-4xl py-20 text-center md:py-28 lg:py-32">
+            <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-600">
               Our Ethos
             </p>
 
-            <h2 className="mt-6 text-3xl font-light leading-snug tracking-[-0.025em] text-neutral-900 md:text-4xl">
+            <h2 className="mt-6 text-3xl font-light leading-snug tracking-[-0.035em] text-neutral-950 sm:text-4xl md:text-5xl">
               Modesty, made meaningful.
             </h2>
 
-            <p className="mx-auto mt-6 max-w-2xl text-sm leading-8 text-neutral-600 md:text-base">
+            <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-neutral-700 md:text-base md:leading-8">
               We believe true elegance is never loud. It lives in thoughtful
               design, considered details, and pieces made to feel timeless.
               Through Wearabay, we celebrate a quieter kind of confidence —
               where comfort, craftsmanship, and modesty meet.
             </p>
 
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-[9px] uppercase tracking-[0.28em] text-neutral-500 md:text-[10px]">
-              <span>Timeless Design</span>
-              <span className="hidden h-1 w-1 rounded-full bg-neutral-400 sm:block" />
-              <span>Thoughtful Craft</span>
-              <span className="hidden h-1 w-1 rounded-full bg-neutral-400 sm:block" />
-              <span>Quiet Confidence</span>
+            <div className="mt-12 grid gap-8 border-t border-neutral-400/50 pt-8 sm:grid-cols-3 sm:gap-6">
+              <div className="px-3">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-neutral-800">
+                  Timeless Design
+                </p>
+                <p className="mx-auto mt-3 max-w-xs text-xs leading-6 text-neutral-600 md:text-sm">
+                  Pieces designed to transcend trends and remain meaningful.
+                </p>
+              </div>
+
+              <div className="border-neutral-400/50 px-3 sm:border-x">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-neutral-800">
+                  Thoughtful Craft
+                </p>
+                <p className="mx-auto mt-3 max-w-xs text-xs leading-6 text-neutral-600 md:text-sm">
+                  Considered materials, careful details, and quality made to last.
+                </p>
+              </div>
+
+              <div className="px-3">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-neutral-800">
+                  Quiet Confidence
+                </p>
+                <p className="mx-auto mt-3 max-w-xs text-xs leading-6 text-neutral-600 md:text-sm">
+                  Modesty that feels effortless, personal, and assured.
+                </p>
+              </div>
             </div>
           </div>
         </Container>
