@@ -111,7 +111,8 @@ export default function JournalPageClient({ storeName }: Props) {
                 </p>
               </div>
                 </div>
-            </div>
+              </div>
+            </Container>
           </div>
         </div>
       </section>
