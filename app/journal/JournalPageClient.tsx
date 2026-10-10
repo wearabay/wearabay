@@ -49,67 +49,70 @@ export default function JournalPageClient({ storeName }: Props) {
             </div>
           </div>
         </Container>
-
-        <p className="absolute bottom-6 right-6 z-20 text-[8px] uppercase tracking-[0.3em] text-neutral-700 md:bottom-9 md:right-10 md:text-[9px]">
-          A considered point of view
-        </p>
       </section>
 
       <section className="bg-[#F6EFE6]">
         <div className="grid lg:min-h-[620px] lg:grid-cols-[0.92fr_1.08fr]">
-          <div
-            aria-hidden="true"
-            className="relative min-h-[320px] overflow-hidden bg-cover bg-center sm:min-h-[420px] lg:min-h-full"
-            style={{
-              backgroundImage:
-                "url(https://d2ol7oe51mr4n9.cloudfront.net/user_3ISY4nI4NP5OoHjmvxc4f8TQg6w/b8022032-609e-4d97-ad46-1f028bcdbc07.jpg)",
-            }}
-          />
+          <div className="relative flex min-h-[320px] items-center justify-center overflow-hidden bg-[#F6EFE6] sm:min-h-[420px] lg:min-h-[620px]">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-contain bg-left bg-no-repeat"
+              style={{
+                backgroundImage:
+                  "url(https://d2ol7oe51mr4n9.cloudfront.net/user_3ISY4nI4NP5OoHjmvxc4f8TQg6w/b8022032-609e-4d97-ad46-1f028bcdbc07.jpg)",
+              }}
+            />
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F6EFE6]/10 to-[#F6EFE6]"
+            />
+          </div>
+
           <div className="flex items-center">
             <Container>
               <div className="mx-auto max-w-3xl py-16 sm:py-20 lg:py-24 lg:pl-4">
-            <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-600">
-              Our Ethos
-            </p>
+                <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-600">
+                  Our Ethos
+                </p>
 
-            <h2 className="mt-6 text-3xl font-light leading-snug tracking-[-0.035em] text-neutral-950 sm:text-4xl md:text-5xl">
-              Modesty, made meaningful.
-            </h2>
+                <h2 className="mt-6 text-3xl font-light leading-snug tracking-[-0.035em] text-neutral-950 sm:text-4xl md:text-5xl">
+                  Modesty, made meaningful.
+                </h2>
 
-            <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-neutral-700 md:text-base md:leading-8">
-              We believe true elegance is never loud. It lives in thoughtful
-              design, considered details, and pieces made to feel timeless.
-              Through Wearabay, we celebrate a quieter kind of confidence —
-              where comfort, craftsmanship, and modesty meet.
-            </p>
+                <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-neutral-700 md:text-base md:leading-8">
+                  We believe true elegance is never loud. It lives in thoughtful
+                  design, considered details, and pieces made to feel timeless.
+                  Through Wearabay, we celebrate a quieter kind of confidence —
+                  where comfort, craftsmanship, and modesty meet.
+                </p>
 
                 <div className="mt-10 grid gap-7 border-t border-neutral-400/50 pt-7 sm:grid-cols-3 sm:gap-4">
-              <div className="sm:pr-3">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
-                  Timeless Design
-                </p>
-                <p className="mt-3 text-xs leading-6 text-neutral-600 md:text-sm">
-                  Pieces designed to transcend trends and remain meaningful.
-                </p>
-              </div>
+                  <div className="sm:pr-3">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
+                      Timeless Design
+                    </p>
+                    <p className="mt-3 text-xs leading-6 text-neutral-600 md:text-sm">
+                      Pieces designed to transcend trends and remain meaningful.
+                    </p>
+                  </div>
 
-              <div className="border-neutral-400/50 sm:border-x sm:px-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
-                  Thoughtful Craft
-                </p>
-                <p className="mt-3 text-xs leading-6 text-neutral-600 md:text-sm">
-                  Considered materials, careful details, and quality made to last.
-                </p>
-              </div>
+                  <div className="border-neutral-400/50 sm:border-x sm:px-4">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
+                      Thoughtful Craft
+                    </p>
+                    <p className="mt-3 text-xs leading-6 text-neutral-600 md:text-sm">
+                      Considered materials, careful details, and quality made to last.
+                    </p>
+                  </div>
 
-              <div className="sm:pl-3">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
-                  Quiet Confidence
-                </p>
-                <p className="mt-3 text-xs leading-6 text-neutral-600 md:text-sm">
-                  Modesty that feels effortless, personal, and assured.
-                </p>
-              </div>
+                  <div className="sm:pl-3">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-800">
+                      Quiet Confidence
+                    </p>
+                    <p className="mt-3 text-xs leading-6 text-neutral-600 md:text-sm">
+                      Modesty that feels effortless, personal, and assured.
+                    </p>
+                  </div>
                 </div>
               </div>
             </Container>
