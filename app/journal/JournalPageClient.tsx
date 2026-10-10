@@ -1,85 +1,34 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
-import JournalHero from "@/components/journal/JournalHero";
-import FeaturedArticle from "@/components/journal/FeaturedArticle";
-import CategoryTabs from "@/components/journal/CategoryTabs";
-import ArticleGrid from "@/components/journal/ArticleGrid";
-import NewsletterBanner from "@/components/journal/NewsletterBanner";
-
-import {
-  featuredArticle,
-  journalArticles,
-} from "@/data/journal";
-
-import type {
-  JournalCategory,
-} from "@/types/journal";
-
+import Container from "@/components/ui/Container";
 
 type Props = {
   storeName: string;
 };
 
-
-export default function JournalPageClient({
-  storeName,
-}: Props) {
-
-  const [category, setCategory] =
-    useState<JournalCategory | "All">("All");
-
-
-  const filteredArticles =
-    useMemo(() => {
-
-      return journalArticles.filter((article) => {
-
-        if (article.featured) {
-          return false;
-        }
-
-        if (category === "All") {
-          return true;
-        }
-
-        return article.category === category;
-
-      });
-
-    }, [category]);
-
-
+export default function JournalPageClient({ storeName }: Props) {
   return (
+    <main className="flex min-h-[65vh] items-center justify-center bg-[#FAF8F5] px-6 py-24">
+      <Container>
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-[11px] uppercase tracking-[0.35em] text-neutral-500">
+            {storeName} Journal
+          </p>
 
-    <main className="bg-white">
+          <h1 className="mt-6 text-4xl font-light tracking-wide text-neutral-900 md:text-6xl">
+            Something thoughtful is coming.
+          </h1>
 
-      <JournalHero
-        storeName={storeName}
-      />
+          <p className="mx-auto mt-6 max-w-lg text-sm leading-8 text-neutral-600 md:text-base">
+            We’re preparing stories on modest style, craftsmanship, and the
+            details behind our collections. The Journal will be here soon.
+          </p>
 
-
-      <FeaturedArticle
-        article={featuredArticle}
-      />
-
-
-      <CategoryTabs
-        value={category}
-        onChange={setCategory}
-      />
-
-
-      <ArticleGrid
-        articles={filteredArticles}
-      />
-
-
-      <NewsletterBanner />
-
+          <p className="mt-10 text-[10px] uppercase tracking-[0.3em] text-neutral-500">
+            Coming Soon
+          </p>
+        </div>
+      </Container>
     </main>
-
   );
-
 }
