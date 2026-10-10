@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 
 import Container from "@/components/ui/Container";
 import SectionTitle from "@/components/ui/SectionTitle";
@@ -8,30 +8,59 @@ import ProductCard from "@/components/product/ProductCard";
 
 import type { Product } from "@/types/product";
 
-import { getRecentlyViewed } from "@/lib/recently-viewed";
+const RECENTLY_VIEWED_KEY = "wearing-abaya-recent";
+const EMPTY_SNAPSHOT = "[]";
 
 type RecentlyViewedProps = {
   products: Product[];
   currentSlug?: string;
 };
 
+function subscribeToRecentlyViewed(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function getRecentlyViewedSnapshot() {
+  return localStorage.getItem(RECENTLY_VIEWED_KEY) ?? EMPTY_SNAPSHOT;
+}
+
+function getServerSnapshot() {
+  return EMPTY_SNAPSHOT;
+}
+
 export default function RecentlyViewed({
   products,
   currentSlug,
 }: RecentlyViewedProps) {
+  const recentlyViewedSnapshot = useSyncExternalStore(
+    subscribeToRecentlyViewed,
+    getRecentlyViewedSnapshot,
+    getServerSnapshot,
+  );
+
   const items = useMemo(() => {
-    const slugs = getRecentlyViewed().filter(
-      (slug) => slug !== currentSlug,
-    );
+    let slugs: string[];
+
+    try {
+      const parsed: unknown = JSON.parse(recentlyViewedSnapshot);
+      slugs = Array.isArray(parsed)
+        ? parsed.filter((slug): slug is string => typeof slug === "string")
+        : [];
+    } catch {
+      slugs = [];
+    }
 
     return slugs
+      .filter((slug) => slug !== currentSlug)
       .map((slug) =>
-        products.find(
-          (product) => product.slug === slug,
-        ),
+        products.find((product) => product.slug === slug),
       )
-      .filter(Boolean) as Product[];
-  }, [currentSlug, products]);
+      .filter((product): product is Product => Boolean(product));
+  }, [currentSlug, products, recentlyViewedSnapshot]);
 
   if (!items.length) {
     return null;
