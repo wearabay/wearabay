@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Container from "@/components/ui/Container";
 
 type Props = {
@@ -55,12 +54,13 @@ export default function JournalPageClient({ storeName }: Props) {
       <section className="bg-[#F6EFE6]">
         <div className="grid items-stretch lg:min-h-[600px] lg:grid-cols-[45fr_55fr]">
           <div className="relative flex min-h-[320px] items-center overflow-hidden bg-[#F6EFE6] sm:min-h-[420px] lg:min-h-[600px]">
-            <Image
-              src="https://d2ol7oe51mr4n9.cloudfront.net/user_3ISY4nI4NP5OoHjmvxc4f8TQg6w/b8022032-609e-4d97-ad46-1f028bcdbc07.jpg"
-              alt=""
-              fill
-              sizes="(max-width: 1024px) 100vw, 45vw"
-              className="object-contain object-left"
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-contain bg-left bg-no-repeat"
+              style={{
+                backgroundImage:
+                  "url(https://d2ol7oe51mr4n9.cloudfront.net/user_3ISY4nI4NP5OoHjmvxc4f8TQg6w/b8022032-609e-4d97-ad46-1f028bcdbc07.jpg)",
+              }}
             />
             <div
               aria-hidden="true"
