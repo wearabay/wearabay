@@ -11,54 +11,54 @@ type Props = {
 export default function JournalPageClient({ storeName }: Props) {
   return (
     <main className="bg-[#FAF8F5]">
-      {/* Journal Coming Soon — image is a background; copy remains editable HTML. */}
-      <section className="relative isolate flex min-h-[560px] items-center overflow-hidden bg-[#E9DFD2] md:min-h-[650px] lg:min-h-[720px]">
+      <section className="relative isolate min-h-[580px] overflow-hidden bg-[#E9DFD2] md:min-h-[660px] lg:min-h-[720px]">
         <Image
           src="/images/journal/journal-coming-soon.svg"
           alt=""
           fill
           priority
           sizes="100vw"
-          className="-z-20 object-cover object-center"
+          className="z-0 object-cover object-center"
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#FAF5EE]/95 via-[#FAF5EE]/85 to-[#FAF5EE]/15" />
+        <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#FAF5EE]/95 via-[#FAF5EE]/88 to-[#FAF5EE]/20" />
 
         <Container>
-          <div className="max-w-2xl py-20 md:py-28">
-            <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-600 md:text-[11px]">
-              {storeName} Journal
-            </p>
-
-            <h1 className="mt-7 max-w-xl text-4xl font-light leading-[1.12] tracking-[-0.04em] text-neutral-950 sm:text-5xl md:text-6xl lg:text-7xl">
-              Stories with intention.
-              <span className="mt-2 block font-normal italic text-neutral-600">
-                Coming soon.
-              </span>
-            </h1>
-
-            <p className="mt-7 max-w-lg text-sm leading-7 text-neutral-700 md:text-base md:leading-8">
-              We’re preparing thoughtful stories on modest style,
-              craftsmanship, and the little details that make each piece
-              meaningful. The Journal will be here soon.
-            </p>
-
-            <div className="mt-9 inline-flex items-center gap-3 border-y border-neutral-400/70 py-4">
-              <span className="h-1.5 w-1.5 rounded-full bg-neutral-800" />
-              <p className="text-[9px] uppercase tracking-[0.3em] text-neutral-700 md:text-[10px]">
-                The Journal is on its way
+          <div className="relative z-20 flex min-h-[580px] items-center md:min-h-[660px] lg:min-h-[720px]">
+            <div className="max-w-2xl py-20 md:py-28">
+              <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-600 md:text-[11px]">
+                {storeName} Journal
               </p>
+
+              <h1 className="mt-7 max-w-xl text-4xl font-light leading-[1.12] tracking-[-0.04em] text-neutral-950 sm:text-5xl md:text-6xl lg:text-7xl">
+                Stories with intention.
+                <span className="mt-2 block font-normal italic text-neutral-600">
+                  Coming soon.
+                </span>
+              </h1>
+
+              <p className="mt-7 max-w-lg text-sm leading-7 text-neutral-700 md:text-base md:leading-8">
+                We’re preparing thoughtful stories on modest style,
+                craftsmanship, and the little details that make each piece
+                meaningful. The Journal will be here soon.
+              </p>
+
+              <div className="mt-9 inline-flex items-center gap-3 border-y border-neutral-400/70 py-4">
+                <span className="h-1.5 w-1.5 rounded-full bg-neutral-800" />
+                <p className="text-[9px] uppercase tracking-[0.3em] text-neutral-700 md:text-[10px]">
+                  The Journal is on its way
+                </p>
+              </div>
             </div>
           </div>
         </Container>
 
-        <p className="absolute bottom-6 right-6 text-[8px] uppercase tracking-[0.3em] text-neutral-600 md:bottom-9 md:right-10 md:text-[9px]">
+        <p className="absolute bottom-6 right-6 z-20 text-[8px] uppercase tracking-[0.3em] text-neutral-700 md:bottom-9 md:right-10 md:text-[9px]">
           A considered point of view
         </p>
       </section>
 
-      {/* Our Ethos — a separate visual background with editable text and values. */}
       <section className="relative isolate overflow-hidden bg-[#F6EFE6]">
-        <div className="absolute inset-0 -z-20">
+        <div className="absolute inset-0 z-0">
           <Image
             src="/images/journal/journal-ethos.svg"
             alt=""
@@ -67,10 +67,10 @@ export default function JournalPageClient({ storeName }: Props) {
             className="object-cover object-center"
           />
         </div>
-        <div className="absolute inset-0 -z-10 bg-[#FAF7F1]/65" />
+        <div className="absolute inset-0 z-10 bg-[#FAF7F1]/72" />
 
         <Container>
-          <div className="mx-auto max-w-4xl py-20 text-center md:py-28 lg:py-32">
+          <div className="relative z-20 mx-auto max-w-4xl py-20 text-center md:py-28 lg:py-32">
             <p className="text-[10px] uppercase tracking-[0.38em] text-neutral-600">
               Our Ethos
             </p>
