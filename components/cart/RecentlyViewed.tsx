@@ -1,32 +1,26 @@
+
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 import Container from "@/components/ui/Container";
 import SectionTitle from "@/components/ui/SectionTitle";
 import ProductCard from "@/components/product/ProductCard";
 
+import { useAuthUser } from "@/hooks/useAuthUser";
+import {
+  getRecentlyViewed,
+  subscribeRecentlyViewed,
+} from "@/lib/recently-viewed";
+
 import type { Product } from "@/types/product";
 
-const RECENTLY_VIEWED_KEY = "wearing-abaya-recent";
 const EMPTY_SNAPSHOT = "[]";
 
 type RecentlyViewedProps = {
   products: Product[];
   currentSlug?: string;
 };
-
-function subscribeToRecentlyViewed(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-
-  return () => {
-    window.removeEventListener("storage", onStoreChange);
-  };
-}
-
-function getRecentlyViewedSnapshot() {
-  return localStorage.getItem(RECENTLY_VIEWED_KEY) ?? EMPTY_SNAPSHOT;
-}
 
 function getServerSnapshot() {
   return EMPTY_SNAPSHOT;
@@ -36,9 +30,23 @@ export default function RecentlyViewed({
   products,
   currentSlug,
 }: RecentlyViewedProps) {
-  const recentlyViewedSnapshot = useSyncExternalStore(
-    subscribeToRecentlyViewed,
-    getRecentlyViewedSnapshot,
+  const { user, loading } = useAuthUser();
+  const userId = user?.id ?? null;
+
+  const subscribe = useCallback(
+    (onStoreChange: () => void) =>
+      subscribeRecentlyViewed(userId, onStoreChange),
+    [userId],
+  );
+
+  const getSnapshot = useCallback(
+    () => JSON.stringify(userId ? getRecentlyViewed(userId) : []),
+    [userId],
+  );
+
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
     getServerSnapshot,
   );
 
@@ -46,23 +54,28 @@ export default function RecentlyViewed({
     let slugs: string[];
 
     try {
-      const parsed: unknown = JSON.parse(recentlyViewedSnapshot);
+      const parsed: unknown = JSON.parse(snapshot);
+
       slugs = Array.isArray(parsed)
-        ? parsed.filter((slug): slug is string => typeof slug === "string")
+        ? parsed.filter(
+            (slug): slug is string => typeof slug === "string",
+          )
         : [];
     } catch {
       slugs = [];
     }
 
+    const productBySlug = new Map(
+      products.map((product) => [product.slug, product]),
+    );
+
     return slugs
       .filter((slug) => slug !== currentSlug)
-      .map((slug) =>
-        products.find((product) => product.slug === slug),
-      )
+      .map((slug) => productBySlug.get(slug))
       .filter((product): product is Product => Boolean(product));
-  }, [currentSlug, products, recentlyViewedSnapshot]);
+  }, [currentSlug, products, snapshot]);
 
-  if (!items.length) {
+  if (loading || !userId || items.length === 0) {
     return null;
   }
 
@@ -84,10 +97,7 @@ export default function RecentlyViewed({
           "
         >
           {items.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-            />
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       </Container>
