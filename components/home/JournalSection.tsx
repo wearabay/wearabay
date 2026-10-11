@@ -2,279 +2,52 @@ import Image from "next/image";
 import Link from "next/link";
 
 import Container from "../ui/Container";
-import SectionTitle from "../ui/SectionTitle";
 
-import { getStoreSettings } from "@/lib/store-settings";
-
-
-export default async function JournalSection() {
-
-  const settings =
-    await getStoreSettings();
-
-
+export default function JournalSection() {
   return (
-    <section className="bg-[#FAF8F5] py-20 lg:py-28">
-
+    <section className="bg-[#FAF8F5] px-4 py-12 sm:px-6 md:py-16 lg:py-20">
       <Container>
+        <div className="relative isolate min-h-[420px] overflow-hidden bg-[#DCCBBB] sm:min-h-[480px] lg:min-h-[540px]">
+          <Image
+            src="/images/journal/journal-01.jpg"
+            alt=""
+            fill
+            sizes="(max-width: 1024px) 100vw, 1200px"
+            className="z-0 object-cover object-center"
+          />
 
-        <SectionTitle
-          eyebrow="Journal"
-          title="Stories Behind The Collection"
-          description="Discover inspiration, craftsmanship and timeless modest fashion."
-        />
+          {/* Keep the editable copy legible while revealing more of the image on the right. */}
+          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#F7EDE1]/98 from-0% via-[#F7EDE1]/90 via-35% via-[#F7EDE1]/45 via-52% to-[#F7EDE1]/0 to-68%" />
 
-
-        <div className="mt-16 grid gap-8 lg:grid-cols-2">
-
-          {/* Featured Article */}
-
-          <Link
-            href="/journal"
-            className="group overflow-hidden rounded-2xl bg-white"
-          >
-
-            <div className="relative aspect-[4/5] overflow-hidden">
-
-              <Image
-                src="/images/journal/journal-01.jpg"
-                alt="Journal"
-                fill
-                className="
-                  object-cover
-                  transition
-                  duration-700
-                  group-hover:scale-105
-                "
-              />
-
-            </div>
-
-
-            <div className="p-8">
-
-              <p
-                className="
-                  text-xs
-                  uppercase
-                  tracking-[0.30em]
-                  text-neutral-500
-                "
-              >
-                Editorial
+          <div className="relative z-20 flex min-h-[420px] items-center sm:min-h-[480px] lg:min-h-[540px]">
+            <div className="max-w-2xl px-7 py-14 sm:px-10 md:px-14 md:py-16 lg:px-16">
+              <p className="text-[10px] uppercase tracking-[0.34em] text-neutral-700 md:text-[11px]">
+                Wearabay Journal
               </p>
 
+              <h2 className="mt-6 max-w-xl text-4xl font-light leading-[1.12] tracking-[-0.04em] text-neutral-950 sm:text-5xl md:text-6xl">
+                Stories with intention.
+                <span className="mt-2 block font-normal italic text-neutral-600">
+                  Coming soon.
+                </span>
+              </h2>
 
-              <h3
-                className="
-                  mt-3
-                  text-3xl
-                  font-light
-                  text-neutral-900
-                "
-              >
-                The Art of Modern Modesty
-              </h3>
-
-
-              <p
-                className="
-                  mt-5
-                  leading-8
-                  text-neutral-600
-                "
-              >
-                Every {settings.storeName} piece is crafted
-                with premium fabrics, elegant silhouettes and
-                timeless details designed for women who
-                appreciate understated luxury.
+              <p className="mt-6 max-w-lg text-sm leading-7 text-neutral-700 md:text-base md:leading-8">
+                We’re preparing thoughtful stories on modest style,
+                craftsmanship, and the details behind our collections.
               </p>
 
-
-              <span
-                className="
-                  mt-8
-                  inline-block
-                  uppercase
-                  tracking-[0.25em]
-                  text-sm
-                  transition
-                  group-hover:translate-x-2
-                "
+              <Link
+                href="/journal"
+                className="mt-8 inline-flex items-center gap-3 rounded-full border border-neutral-700/70 px-6 py-3 text-[10px] uppercase tracking-[0.22em] text-neutral-900 transition-colors hover:border-neutral-950 hover:bg-white/30 md:px-7 md:text-[11px]"
               >
-                Read Story →
-              </span>
-
+                Visit Journal
+                <span aria-hidden="true">→</span>
+              </Link>
             </div>
-
-          </Link>
-
-
-          {/* Side Articles */}
-
-          <div className="grid gap-8">
-
-            <Link
-              href="/journal"
-              className="
-                group
-                flex
-                overflow-hidden
-                rounded-2xl
-                bg-white
-              "
-            >
-
-              <div className="relative w-40 shrink-0">
-
-                <Image
-                  src="/images/journal/journal-02.jpg"
-                  alt=""
-                  fill
-                  className="
-                    object-cover
-                    transition
-                    duration-700
-                    group-hover:scale-105
-                  "
-                />
-
-              </div>
-
-
-              <div
-                className="
-                  flex
-                  flex-col
-                  justify-center
-                  p-6
-                "
-              >
-
-                <p
-                  className="
-                    text-xs
-                    uppercase
-                    tracking-[0.30em]
-                    text-neutral-500
-                  "
-                >
-                  Craftsmanship
-                </p>
-
-
-                <h3
-                  className="
-                    mt-3
-                    text-xl
-                    font-light
-                  "
-                >
-                  Handmade Finishing
-                </h3>
-
-
-                <span
-                  className="
-                    mt-5
-                    text-sm
-                    uppercase
-                    tracking-[0.25em]
-                    transition
-                    group-hover:translate-x-2
-                  "
-                >
-                  Read →
-                </span>
-
-              </div>
-
-            </Link>
-
-
-            <Link
-              href="/journal"
-              className="
-                group
-                flex
-                overflow-hidden
-                rounded-2xl
-                bg-white
-              "
-            >
-
-              <div className="relative w-40 shrink-0">
-
-                <Image
-                  src="/images/journal/journal-03.jpg"
-                  alt=""
-                  fill
-                  className="
-                    object-cover
-                    transition
-                    duration-700
-                    group-hover:scale-105
-                  "
-                />
-
-              </div>
-
-
-              <div
-                className="
-                  flex
-                  flex-col
-                  justify-center
-                  p-6
-                "
-              >
-
-                <p
-                  className="
-                    text-xs
-                    uppercase
-                    tracking-[0.30em]
-                    text-neutral-500
-                  "
-                >
-                  Collection
-                </p>
-
-
-                <h3
-                  className="
-                    mt-3
-                    text-xl
-                    font-light
-                  "
-                >
-                  Autumn 2026 Preview
-                </h3>
-
-
-                <span
-                  className="
-                    mt-5
-                    text-sm
-                    uppercase
-                    tracking-[0.25em]
-                    transition
-                    group-hover:translate-x-2
-                  "
-                >
-                  Read →
-                </span>
-
-              </div>
-
-            </Link>
-
           </div>
-
         </div>
-
       </Container>
-
     </section>
   );
 }
