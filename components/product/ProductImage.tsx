@@ -21,6 +21,7 @@ export default function ProductImage({
 }: Props) {
   const router = useRouter();
 
+  const customBadge = product.badge?.trim();
   const visibleBadges = badges.slice(0, 2);
 
   const primaryImage =
@@ -55,9 +56,9 @@ export default function ProductImage({
         hover:shadow-xl
       "
     >
-      {/* Automatic Badges */}
+      {/* Custom and automatic badges */}
 
-      {visibleBadges.length > 0 && (
+      {(customBadge || visibleBadges.length > 0) && (
         <div
           className="
             absolute
@@ -69,6 +70,28 @@ export default function ProductImage({
             gap-2
           "
         >
+          {customBadge && (
+            <span
+              key="custom-badge"
+              className="
+                rounded-full
+                border
+                border-neutral-900/10
+                bg-neutral-900
+                px-3
+                py-1.5
+                text-[10px]
+                font-medium
+                uppercase
+                tracking-[0.12em]
+                text-white
+                shadow-sm
+              "
+            >
+              {customBadge}
+            </span>
+          )}
+
           {visibleBadges.map((badge) => (
             <span
               key={badge.type}

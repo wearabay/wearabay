@@ -653,6 +653,14 @@ export async function createAdminProduct(
     await assertSuperAdmin();
   }
 
+  const customBadge = normalizeNullableString(input.badge);
+  if (customBadge) {
+    await assertSuperAdmin();
+    if (customBadge.length > 30) {
+      throw new Error("Custom badge must be 30 characters or fewer.");
+    }
+  }
+
   const {
     data,
     error,
@@ -880,10 +888,18 @@ export async function updateAdminProduct(
   }
 
   if (input.badge !== undefined) {
-    payload.badge =
-      normalizeNullableString(
-        input.badge
+    await assertSuperAdmin();
+
+    const customBadge =
+      normalizeNullableString(input.badge);
+
+    if (customBadge && customBadge.length > 30) {
+      throw new Error(
+        "Custom badge must be 30 characters or fewer."
       );
+    }
+
+    payload.badge = customBadge;
   }
 
   if (input.features !== undefined) {
