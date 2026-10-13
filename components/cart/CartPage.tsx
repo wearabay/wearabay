@@ -1,6 +1,7 @@
 "use client";
 
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
 
 import { useCart } from "@/context/CartContext";
 
@@ -14,11 +15,13 @@ import RecentlyViewed from "./RecentlyViewed";
 
 type CartPageProps = {
   products: Product[];
+  badgesByProductId: Record<number, ProductBadge[]>;
 };
 
 
 export default function CartPage({
   products,
+  badgesByProductId,
 }: CartPageProps) {
 
   const {
@@ -92,12 +95,14 @@ export default function CartPage({
 
         <RecommendedProducts
           products={products}
+          badgesByProductId={badgesByProductId}
         />
 
 
         <RecentlyViewed
-  products={products}
-/>
+          products={products}
+          badgesByProductId={badgesByProductId}
+        />
 
 
       </section>

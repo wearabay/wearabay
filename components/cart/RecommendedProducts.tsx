@@ -5,15 +5,18 @@ import Link from "next/link";
 import ProductMiniCard from "@/components/product/ProductMiniCard";
 
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
 
 
 type RecommendedProductsProps = {
   products: Product[];
+  badgesByProductId?: Record<number, ProductBadge[]>;
 };
 
 
 export default function RecommendedProducts({
   products,
+  badgesByProductId = {},
 }: RecommendedProductsProps) {
 
 
@@ -69,6 +72,7 @@ export default function RecommendedProducts({
           <ProductMiniCard
             key={product.id}
             product={product}
+            badges={badgesByProductId[product.id] ?? []}
           />
 
         ))}
