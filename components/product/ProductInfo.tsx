@@ -10,10 +10,10 @@ import StickyAddToBag from "./StickyAddToBag";
 
 import type { Product } from "@/types/product";
 import type { ProductBadge } from "@/lib/product-badges";
+import { getDisplayProductBadges } from "@/lib/custom-product-badge";
 
 import { formatPrice } from "@/lib/currency";
 
-import Badge from "@/components/ui/Badge";
 import Divider from "@/components/ui/Divider";
 
 import ProductVariant from "./variants/ProductVariant";
@@ -35,6 +35,8 @@ export default function ProductInfo({
   selectedColor,
   onColorChange,
 }: ProductInfoProps) {
+  const { custom: customBadge, automatic: automaticBadges } = getDisplayProductBadges(product.badge, badges.slice(0, 2));
+
   const {
     user,
     loading: authLoading,
@@ -321,28 +323,11 @@ export default function ProductInfo({
         {product.category}
       </p>
 
-      {/* Automatic Badges */}
-
-      {badges.length > 0 && (
-        <div
-          className="
-            mt-4
-            flex
-            flex-wrap
-            gap-2
-          "
-        >
-          {badges
-            .slice(0, 2)
-            .map((badge) => (
-              <Badge
-                key={
-                  badge.type
-                }
-              >
-                {badge.label}
-              </Badge>
-            ))}
+      {/* Custom and automatic badges */}
+      {(customBadge || automaticBadges.length > 0) && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {customBadge && <span className="inline-flex rounded-full border border-neutral-900/10 bg-neutral-900 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-white shadow-sm">{customBadge}</span>}
+          {automaticBadges.map((badge) => <span key={badge.type} className="inline-flex rounded-full border border-white/70 bg-white/90 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-700 shadow-sm">{badge.label}</span>)}
         </div>
       )}
 

@@ -52,6 +52,8 @@ export default function CartPage({
             <CartItemCard
               key={`${item.id}-${item.color}-${item.size}`}
               item={item}
+              customBadge={products.find((product) => product.id === item.id)?.badge}
+              badges={badgesByProductId[item.id] ?? []}
             />
 
           ))}

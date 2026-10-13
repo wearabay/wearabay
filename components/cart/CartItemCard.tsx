@@ -5,16 +5,23 @@ import { Trash2 } from "lucide-react";
 
 import { formatPrice } from "@/lib/currency";
 import { type CartItem } from "@/lib/cart";
+import type { ProductBadge } from "@/lib/product-badges";
+import { getDisplayProductBadges } from "@/lib/custom-product-badge";
 
 import { useCart } from "@/context/CartContext";
 
 type Props = {
   item: CartItem;
+  customBadge?: string | null;
+  badges?: ProductBadge[];
 };
 
 export default function CartItemCard({
   item,
+  customBadge,
+  badges = [],
 }: Props) {
+  const displayBadges = getDisplayProductBadges(customBadge, badges);
   const {
     updateQuantity,
     removeItem,
@@ -60,6 +67,12 @@ export default function CartItemCard({
         <h3 className="font-medium text-neutral-900">
           {item.name}
         </h3>
+        {(displayBadges.custom || displayBadges.automatic.length > 0) && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {displayBadges.custom && <span className="inline-flex rounded-full border border-neutral-900/10 bg-neutral-900 px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.12em] text-white">{displayBadges.custom}</span>}
+            {displayBadges.automatic.map((badge) => <span key={badge.type} className="inline-flex rounded-full border border-stone-300 bg-white px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.12em] text-neutral-700">{badge.label}</span>)}
+          </div>
+        )}
 
         <p className="mt-1 text-sm text-neutral-500">
           {item.color}

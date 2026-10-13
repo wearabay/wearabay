@@ -8,7 +8,6 @@ import type { ProductBadge } from "@/lib/product-badges";
 import { getDisplayProductBadges } from "@/lib/custom-product-badge";
 import { formatPrice } from "@/lib/currency";
 
-import Badge from "@/components/ui/Badge";
 import WishlistButton from "@/components/ui/WishlistButton";
 
 type Props = {
@@ -61,10 +60,8 @@ export default function ProductMiniCard({
 
         {(displayBadges.custom || displayBadges.automatic.length > 0) && (
           <div className="absolute left-3 top-3 z-20 flex flex-wrap gap-1.5">
-            {displayBadges.custom && <Badge>{displayBadges.custom}</Badge>}
-            {displayBadges.automatic.map((badge) => (
-              <Badge key={badge.type}>{badge.label}</Badge>
-            ))}
+            {displayBadges.custom && <span className="inline-flex rounded-full border border-neutral-900/10 bg-neutral-900 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-white shadow-sm">{displayBadges.custom}</span>}
+            {displayBadges.automatic.map((badge) => <span key={badge.type} className="inline-flex rounded-full border border-white/70 bg-white/90 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-700 shadow-sm">{badge.label}</span>)}
           </div>
         )}
 
