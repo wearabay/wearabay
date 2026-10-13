@@ -1,4 +1,5 @@
 import { getStoreSettings } from "@/lib/store-settings";
+import { getProductBadgesForProducts } from "@/lib/product-badge-service";
 
 import NavbarClient from "./NavbarClient";
 
@@ -16,14 +17,18 @@ export default async function Navbar({
   products,
 }: NavbarProps) {
 
-  const settings =
-    await getStoreSettings();
+  const [settings, badgeMap] = await Promise.all([
+    getStoreSettings(),
+    getProductBadgesForProducts(products.map((product) => product.id)),
+  ]);
+  const badgesByProductId = Object.fromEntries(badgeMap.entries());
 
 
   return (
     <NavbarClient
       transparent={transparent}
       products={products}
+      badgesByProductId={badgesByProductId}
       storeName={settings.storeName}
       tagline={settings.tagline}
       instagram={settings.instagram}
