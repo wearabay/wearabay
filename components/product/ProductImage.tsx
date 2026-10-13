@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import WishlistButton from "@/components/ui/WishlistButton";
 
 import { openQuickView } from "@/lib/quick-view";
+import { getDisplayProductBadges } from "@/lib/custom-product-badge";
 
 import type { Product } from "@/types/product";
 import type { ProductBadge } from "@/lib/product-badges";
@@ -21,8 +22,8 @@ export default function ProductImage({
 }: Props) {
   const router = useRouter();
 
-  const customBadge = product.badge?.trim();
-  const visibleBadges = badges.slice(0, 2);
+  const { custom: customBadge, automatic: visibleBadges } =
+    getDisplayProductBadges(product.badge, badges.slice(0, 2));
 
   const primaryImage =
     [product.images?.[0], product.image].find(
@@ -232,7 +233,7 @@ export default function ProductImage({
           e.preventDefault();
           e.stopPropagation();
 
-          openQuickView(product);
+          openQuickView(product, badges);
         }}
         className="
           absolute

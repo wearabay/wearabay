@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
+import { getDisplayProductBadges } from "@/lib/custom-product-badge";
 import { formatPrice } from "@/lib/currency";
 
 import Badge from "@/components/ui/Badge";
@@ -11,11 +13,14 @@ import WishlistButton from "@/components/ui/WishlistButton";
 
 type Props = {
   product: Product;
+  badges?: ProductBadge[];
 };
 
 export default function ProductMiniCard({
   product,
+  badges = [],
 }: Props) {
+  const displayBadges = getDisplayProductBadges(product.badge, badges);
   const discountedVariant =
     product.variants.find(
       (variant) =>
@@ -52,9 +57,12 @@ export default function ProductMiniCard({
       >
         {/* Badge */}
 
-        {product.badge && (
-          <div className="absolute left-3 top-3 z-20">
-            <Badge>{product.badge}</Badge>
+        {(displayBadges.custom || displayBadges.automatic.length > 0) && (
+          <div className="absolute left-3 top-3 z-20 flex flex-wrap gap-1.5">
+            {displayBadges.custom && <Badge>{displayBadges.custom}</Badge>}
+            {displayBadges.automatic.map((badge) => (
+              <Badge key={badge.type}>{badge.label}</Badge>
+            ))}
           </div>
         )}
 

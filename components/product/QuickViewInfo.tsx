@@ -3,14 +3,19 @@
 import Badge from "@/components/ui/Badge";
 import { formatPrice } from "@/lib/currency";
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
+import { getDisplayProductBadges } from "@/lib/custom-product-badge";
 
 type Props = {
   product: Product;
+  badges?: ProductBadge[];
 };
 
 export default function QuickViewInfo({
   product,
+  badges = [],
 }: Props) {
+  const displayBadges = getDisplayProductBadges(product.badge, badges);
   const discountedVariant =
     product.variants.find(
       (variant) =>
@@ -40,11 +45,12 @@ export default function QuickViewInfo({
     <div className="flex flex-col">
       {/* Badge */}
 
-      {product.badge && (
-        <div className="mb-5">
-          <Badge>
-            {product.badge}
-          </Badge>
+      {(displayBadges.custom || displayBadges.automatic.length > 0) && (
+        <div className="mb-5 flex flex-wrap gap-2">
+          {displayBadges.custom && <Badge>{displayBadges.custom}</Badge>}
+          {displayBadges.automatic.map((badge) => (
+            <Badge key={badge.type}>{badge.label}</Badge>
+          ))}
         </div>
       )}
 

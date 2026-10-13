@@ -3,6 +3,7 @@ import SectionTitle from "@/components/ui/SectionTitle";
 import ProductCard from "./ProductCard";
 
 import { getProducts } from "@/lib/products";
+import { getProductBadgesForProducts } from "@/lib/product-badge-service";
 
 
 type RelatedProductsProps = {
@@ -47,6 +48,10 @@ export default async function RelatedProducts({
     ...otherProducts,
   ].slice(0, 4);
 
+  const badgeMap = await getProductBadgesForProducts(
+    relatedProducts.map((product) => product.id),
+  );
+
 
   return (
     <section className="py-24">
@@ -73,6 +78,7 @@ export default async function RelatedProducts({
               <ProductCard
                 key={product.id}
                 product={product}
+                badges={badgeMap.get(product.id) ?? []}
               />
 
             )
