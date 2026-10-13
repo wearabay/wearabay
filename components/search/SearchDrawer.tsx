@@ -171,7 +171,7 @@ export default function SearchDrawer({
         );
       },
     );
-  }, [query, products]);
+  }, [query, products, badgesByProductId]);
 
   const popular = [
     "Abaya",
@@ -320,7 +320,13 @@ export default function SearchDrawer({
 
                   <div className="space-y-5">
                     {results.map(
-                      (product) => (
+                      (product) => {
+                        const displayBadges = getDisplayProductBadges(
+                          product.badge,
+                          badgesByProductId[product.id] ?? [],
+                        );
+
+                        return (
                         <Link
                           key={product.id}
                           href={`/shop/${product.slug}`}
@@ -385,7 +391,8 @@ export default function SearchDrawer({
                             </p>
                           </div>
                         </Link>
-                      ),
+                        );
+                      },
                     )}
                   </div>
                 </>
