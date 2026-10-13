@@ -21,6 +21,8 @@ export default function ProductMiniCard({
   badges = [],
 }: Props) {
   const displayBadges = getDisplayProductBadges(product.badge, badges);
+  const mainImage = product.images?.[0] || product.image || null;
+  const hoverImage = product.images?.[1] || mainImage;
   const discountedVariant =
     product.variants.find(
       (variant) =>
@@ -74,40 +76,44 @@ export default function ProductMiniCard({
 
         {/* Main Image */}
 
-        <Image
-          src={product.images?.[0] ?? product.image}
-          alt={product.name}
-          fill
-          sizes="(max-width:768px) 50vw, 25vw"
-          className="
-            object-cover
-            transition-all
-            duration-700
-            group-hover:opacity-0
-            group-hover:scale-105
-          "
-        />
+        {mainImage ? (
+          <Image
+            src={mainImage}
+            alt={product.name}
+            fill
+            sizes="(max-width:768px) 50vw, 25vw"
+            className="
+              object-cover
+              transition-all
+              duration-700
+              group-hover:opacity-0
+              group-hover:scale-105
+            "
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-xs tracking-[0.2em] text-neutral-400">
+            NO IMAGE
+          </div>
+        )}
 
         {/* Hover Image */}
 
-        <Image
-          src={
-            product.images?.[1] ??
-            product.images?.[0] ??
-            product.image
-          }
-          alt={product.name}
-          fill
-          sizes="(max-width:768px) 50vw, 25vw"
-          className="
-            object-cover
-            opacity-0
-            transition-all
-            duration-700
-            group-hover:opacity-100
-            group-hover:scale-[1.03]
-          "
-        />
+        {hoverImage && hoverImage !== mainImage && (
+          <Image
+            src={hoverImage}
+            alt={product.name}
+            fill
+            sizes="(max-width:768px) 50vw, 25vw"
+            className="
+              object-cover
+              opacity-0
+              transition-all
+              duration-700
+              group-hover:opacity-100
+              group-hover:scale-[1.03]
+            "
+          />
+        )}
 
         {/* Gradient */}
 
