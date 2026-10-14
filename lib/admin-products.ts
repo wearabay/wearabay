@@ -29,6 +29,7 @@ export type AdminProduct = {
   category: string;
 
   badge: string | null;
+  isFeatured: boolean;
   features: string[];
   specifications: AdminProductSpecification[];
 
@@ -57,6 +58,7 @@ export type CreateAdminProductInput = {
   category?: string;
 
   badge?: string | null;
+  isFeatured?: boolean;
   features?: string[];
   specifications?: AdminProductSpecification[];
 
@@ -84,6 +86,7 @@ type ProductRow = {
   category: string | null;
 
   badge: string | null;
+  is_featured: boolean | null;
   features: string[] | null;
 
   specifications:
@@ -287,6 +290,9 @@ function mapAdminProduct(
     badge:
       row.badge ?? null,
 
+    isFeatured:
+      row.is_featured ?? false,
+
     features:
       normalizeFeatures(row.features),
 
@@ -386,6 +392,7 @@ const productSelect = `
   category_id,
   category,
   badge,
+  is_featured,
   features,
   specifications,
   size_guide,
@@ -687,6 +694,8 @@ export async function createAdminProduct(
             input.badge
           ),
 
+        is_featured: false,
+
         features:
           normalizeFeatures(
             input.features
@@ -900,6 +909,11 @@ export async function updateAdminProduct(
     }
 
     payload.badge = customBadge;
+  }
+
+  if (input.isFeatured !== undefined) {
+    await assertSuperAdmin();
+    payload.is_featured = input.isFeatured;
   }
 
   if (input.features !== undefined) {
