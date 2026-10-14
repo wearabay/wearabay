@@ -7,10 +7,12 @@ import {
 
 import {
   getQuickViewProduct,
+  getQuickViewBadges,
   closeQuickView,
 } from "@/lib/quick-view";
 
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
 
 import QuickViewGallery from "./QuickViewGallery";
 import QuickViewInfo from "./QuickViewInfo";
@@ -24,6 +26,8 @@ export default function QuickViewModal() {
 
   const [product, setProduct] =
     useState<Product | null>(null);
+
+  const [badges, setBadges] = useState<ProductBadge[]>([]);
 
   const [
     selectedColor,
@@ -40,6 +44,7 @@ export default function QuickViewModal() {
       }
 
       setProduct(item);
+      setBadges(getQuickViewBadges());
 
       setSelectedColor(
         item.colors?.[0] ?? "",
@@ -157,6 +162,7 @@ export default function QuickViewModal() {
 
           <QuickViewInfo
             product={product}
+            badges={badges}
           />
 
           <QuickViewActions

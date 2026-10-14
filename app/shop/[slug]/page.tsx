@@ -4,7 +4,7 @@ import ReviewList from "@/components/product/reviews/ReviewList";
 
 import { getProducts } from "@/lib/products";
 import { getProductReviews } from "@/lib/reviews";
-import { getProductBadgesForProduct } from "@/lib/product-badge-service";
+import { getProductBadgesForProduct, getProductBadgesForProducts } from "@/lib/product-badge-service";
 
 import Container from "@/components/ui/Container";
 
@@ -44,6 +44,7 @@ export default async function ProductDetail({
   const [
     reviews,
     badges,
+    recentlyViewedBadgeMap,
   ] = await Promise.all([
     getProductReviews(
       product.id,
@@ -51,6 +52,7 @@ export default async function ProductDetail({
     getProductBadgesForProduct(
       product.id,
     ),
+    getProductBadgesForProducts(products.map((item) => item.id)),
   ]);
 
   return (
@@ -115,6 +117,7 @@ export default async function ProductDetail({
             currentSlug={
               product.slug
             }
+            badgesByProductId={Object.fromEntries(recentlyViewedBadgeMap.entries())}
           />
 
           {/* Related Products */}

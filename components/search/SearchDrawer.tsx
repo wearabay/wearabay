@@ -13,6 +13,8 @@ import { Search, X } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
 
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
+import { getDisplayProductBadges } from "@/lib/custom-product-badge";
 
 import {
   getRecentSearches,
@@ -24,12 +26,14 @@ type SearchDrawerProps = {
   open: boolean;
   onClose: () => void;
   products: Product[];
+  badgesByProductId?: Record<number, ProductBadge[]>;
 };
 
 export default function SearchDrawer({
   open,
   onClose,
   products,
+  badgesByProductId = {},
 }: SearchDrawerProps) {
   const [query, setQuery] =
     useState("");
@@ -122,10 +126,10 @@ export default function SearchDrawer({
             .toLowerCase()
             .includes(q);
 
+        const displayBadges = getDisplayProductBadges(product.badge, badgesByProductId[product.id] ?? []);
         const matchBadge =
-          product.badge
-            ?.toLowerCase()
-            .includes(q);
+          [displayBadges.custom, ...displayBadges.automatic.map((badge) => badge.label)]
+            .some((badge) => badge?.toLowerCase().includes(q));
 
         const matchColor =
           product.colors?.some(
@@ -167,7 +171,7 @@ export default function SearchDrawer({
         );
       },
     );
-  }, [query, products]);
+  }, [query, products, badgesByProductId]);
 
   const popular = [
     "Abaya",
@@ -316,7 +320,13 @@ export default function SearchDrawer({
 
                   <div className="space-y-5">
                     {results.map(
-                      (product) => (
+                      (product) => {
+                        const displayBadges = getDisplayProductBadges(
+                          product.badge,
+                          badgesByProductId[product.id] ?? [],
+                        );
+
+                        return (
                         <Link
                           key={product.id}
                           href={`/shop/${product.slug}`}
@@ -367,12 +377,11 @@ export default function SearchDrawer({
                               }
                             </p>
 
-                            {product.badge && (
-                              <span className="mt-2 inline-flex rounded-full bg-stone-900 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white">
-                                {
-                                  product.badge
-                                }
-                              </span>
+                            {(displayBadges.custom || displayBadges.automatic.length > 0) && (
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {displayBadges.custom && <span className="inline-flex rounded-full bg-stone-900 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white">{displayBadges.custom}</span>}
+                                {displayBadges.automatic.map((badge) => <span key={badge.type} className="inline-flex rounded-full bg-stone-100 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-700">{badge.label}</span>)}
+                              </div>
                             )}
 
                             <p className="mt-3 text-sm font-medium">
@@ -382,7 +391,8 @@ export default function SearchDrawer({
                             </p>
                           </div>
                         </Link>
-                      ),
+                        );
+                      },
                     )}
                   </div>
                 </>

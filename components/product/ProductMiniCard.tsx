@@ -4,18 +4,24 @@ import Link from "next/link";
 import Image from "next/image";
 
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
+import { getDisplayProductBadges } from "@/lib/custom-product-badge";
 import { formatPrice } from "@/lib/currency";
 
-import Badge from "@/components/ui/Badge";
 import WishlistButton from "@/components/ui/WishlistButton";
 
 type Props = {
   product: Product;
+  badges?: ProductBadge[];
 };
 
 export default function ProductMiniCard({
   product,
+  badges = [],
 }: Props) {
+  const displayBadges = getDisplayProductBadges(product.badge, badges);
+  const mainImage = product.images?.[0] || product.image || null;
+  const hoverImage = product.images?.[1] || mainImage;
   const discountedVariant =
     product.variants.find(
       (variant) =>
@@ -52,9 +58,10 @@ export default function ProductMiniCard({
       >
         {/* Badge */}
 
-        {product.badge && (
-          <div className="absolute left-3 top-3 z-20">
-            <Badge>{product.badge}</Badge>
+        {(displayBadges.custom || displayBadges.automatic.length > 0) && (
+          <div className="absolute left-3 top-3 z-20 flex flex-wrap gap-1.5">
+            {displayBadges.custom && <span className="inline-flex rounded-full border border-neutral-900/10 bg-neutral-900 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-white shadow-sm">{displayBadges.custom}</span>}
+            {displayBadges.automatic.map((badge) => <span key={badge.type} className="inline-flex rounded-full border border-white/70 bg-white/90 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-700 shadow-sm">{badge.label}</span>)}
           </div>
         )}
 
@@ -66,40 +73,44 @@ export default function ProductMiniCard({
 
         {/* Main Image */}
 
-        <Image
-          src={product.images?.[0] ?? product.image}
-          alt={product.name}
-          fill
-          sizes="(max-width:768px) 50vw, 25vw"
-          className="
-            object-cover
-            transition-all
-            duration-700
-            group-hover:opacity-0
-            group-hover:scale-105
-          "
-        />
+        {mainImage ? (
+          <Image
+            src={mainImage}
+            alt={product.name}
+            fill
+            sizes="(max-width:768px) 50vw, 25vw"
+            className="
+              object-cover
+              transition-all
+              duration-700
+              group-hover:opacity-0
+              group-hover:scale-105
+            "
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-xs tracking-[0.2em] text-neutral-400">
+            NO IMAGE
+          </div>
+        )}
 
         {/* Hover Image */}
 
-        <Image
-          src={
-            product.images?.[1] ??
-            product.images?.[0] ??
-            product.image
-          }
-          alt={product.name}
-          fill
-          sizes="(max-width:768px) 50vw, 25vw"
-          className="
-            object-cover
-            opacity-0
-            transition-all
-            duration-700
-            group-hover:opacity-100
-            group-hover:scale-[1.03]
-          "
-        />
+        {hoverImage && hoverImage !== mainImage && (
+          <Image
+            src={hoverImage}
+            alt={product.name}
+            fill
+            sizes="(max-width:768px) 50vw, 25vw"
+            className="
+              object-cover
+              opacity-0
+              transition-all
+              duration-700
+              group-hover:opacity-100
+              group-hover:scale-[1.03]
+            "
+          />
+        )}
 
         {/* Gradient */}
 

@@ -1,9 +1,12 @@
 import CartPage from "@/components/cart/CartPage";
 import { getProducts } from "@/lib/products";
+import { getProductBadgesForProducts } from "@/lib/product-badge-service";
 
 export default async function Page() {
 
   const products = await getProducts();
+  const badgeMap = await getProductBadgesForProducts(products.map((product) => product.id));
+  const badgesByProductId = Object.fromEntries(badgeMap.entries());
 
   return (
     <>
@@ -17,6 +20,7 @@ export default async function Page() {
 
         <CartPage
           products={products}
+          badgesByProductId={badgesByProductId}
         />
 
       </main>

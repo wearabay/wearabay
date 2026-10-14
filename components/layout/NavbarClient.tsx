@@ -16,10 +16,12 @@ import SearchDrawer from "@/components/search/SearchDrawer";
 import { openCart } from "@/lib/cart-drawer";
 
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
 
 type NavbarClientProps = {
   transparent?: boolean;
   products: Product[];
+  badgesByProductId: Record<number, ProductBadge[]>;
   storeName: string;
   tagline: string;
   instagram: string;
@@ -29,6 +31,7 @@ type NavbarClientProps = {
 export default function NavbarClient({
   transparent = false,
   products,
+  badgesByProductId,
   storeName,
   tagline,
   instagram,
@@ -181,6 +184,7 @@ export default function NavbarClient({
       <SearchDrawer
         open={searchOpen}
         products={products}
+        badgesByProductId={badgesByProductId}
         onClose={() =>
           setSearchOpen(false)
         }

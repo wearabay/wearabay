@@ -10,15 +10,24 @@ import { useShop } from "./context/ShopContext";
 
 type ProductGridProps = {
   products: Product[];
-  badgesByProduct: Record<
-    number,
-    ProductBadge[]
-  >;
+  badgesByProduct: Record<number, ProductBadge[]>;
+  salesByProduct?: Record<number, number>;
 };
+
+function createdAt(product: Product): number {
+  if (!product.createdAt) return 0;
+  const timestamp = new Date(product.createdAt).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function newestFirst(a: Product, b: Product): number {
+  return createdAt(b) - createdAt(a) || b.id - a.id;
+}
 
 export default function ProductGrid({
   products,
   badgesByProduct,
+  salesByProduct = {},
 }: ProductGridProps) {
   const {
     search,
@@ -74,6 +83,24 @@ export default function ProductGrid({
 
   // Sort
   switch (sort) {
+    case "newest":
+      filteredProducts.sort(newestFirst);
+      break;
+
+    case "featured":
+      filteredProducts.sort((a, b) => {
+        const featuredDifference = Number(b.isFeatured === true) - Number(a.isFeatured === true);
+        return featuredDifference || newestFirst(a, b);
+      });
+      break;
+
+    case "best-selling":
+      filteredProducts.sort((a, b) => {
+        const salesDifference = (salesByProduct[b.id] ?? 0) - (salesByProduct[a.id] ?? 0);
+        return salesDifference || newestFirst(a, b);
+      });
+      break;
+
     case "low-high":
       filteredProducts.sort(
         (a, b) =>

@@ -230,8 +230,9 @@ export default function ProductForm({
         categoryId:
           Number(categoryId),
 
-        badge:
-          badge.trim() || null,
+        ...(isSuperAdmin
+          ? { badge: badge.trim() || null }
+          : {}),
 
         description:
           description.trim(),
@@ -398,25 +399,32 @@ export default function ProductForm({
             </div>
 
             <div>
-              <label
-                htmlFor="badge"
-                className="mb-2 block text-sm font-medium"
-              >
-                Badge
-              </label>
+              {isSuperAdmin && (
+                <>
+                  <label
+                    htmlFor="badge"
+                    className="mb-2 block text-sm font-medium"
+                  >
+                    Custom Badge
+                  </label>
 
-              <input
-                id="badge"
-                type="text"
-                value={badge}
-                onChange={(event) =>
-                  setBadge(
-                    event.target.value
-                  )
-                }
-                placeholder="NEW"
-                className="h-11 w-full rounded-xl border border-neutral-200 px-4 text-sm outline-none focus:border-neutral-400"
-              />
+                  <input
+                    id="badge"
+                    type="text"
+                    value={badge}
+                    onChange={(event) =>
+                      setBadge(event.target.value)
+                    }
+                    placeholder="e.g. Exclusive"
+                    maxLength={30}
+                    className="h-11 w-full rounded-xl border border-neutral-200 px-4 text-sm outline-none focus:border-neutral-400"
+                  />
+
+                  <p className="mt-2 text-xs leading-5 text-neutral-400">
+                    Optional label displayed alongside automatic badges. Only Super Admins can edit this field.
+                  </p>
+                </>
+              )}
             </div>
           </div>
 

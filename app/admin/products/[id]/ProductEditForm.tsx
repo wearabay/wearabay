@@ -74,6 +74,10 @@ export default function ProductEditForm({
     product.badge ?? ""
   );
 
+  const [isFeatured, setIsFeatured] = useState(
+    product.isFeatured ?? false
+  );
+
   const [description, setDescription] =
     useState(product.description);
 
@@ -244,7 +248,7 @@ export default function ProductEditForm({
           name: trimmedName,
           slug: trimmedSlug,
           categoryId: Number(categoryId),
-          badge: badge.trim() || null,
+          ...(isSuperAdmin ? { badge: badge.trim() || null, isFeatured } : {}),
           description: description.trim(),
           features: cleanedFeatures,
           specifications:
@@ -388,25 +392,32 @@ export default function ProductEditForm({
             </div>
 
             <div>
-              <label
-                htmlFor="badge"
-                className="mb-2 block text-sm font-medium"
-              >
-                Badge
-              </label>
+              {isSuperAdmin && (
+                <>
+                  <label
+                    htmlFor="badge"
+                    className="mb-2 block text-sm font-medium"
+                  >
+                    Custom Badge
+                  </label>
 
-              <input
-                id="badge"
-                type="text"
-                value={badge}
-                onChange={(event) =>
-                  setBadge(
-                    event.target.value
-                  )
-                }
-                placeholder="NEW"
-                className={inputClass}
-              />
+                  <input
+                    id="badge"
+                    type="text"
+                    value={badge}
+                    onChange={(event) =>
+                      setBadge(event.target.value)
+                    }
+                    placeholder="e.g. Exclusive"
+                    maxLength={30}
+                    className={inputClass}
+                  />
+
+                  <p className="mt-2 text-xs leading-5 text-neutral-400">
+                    Optional label displayed alongside automatic badges. Only Super Admins can edit this field.
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
@@ -735,8 +746,28 @@ export default function ProductEditForm({
       <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
         <SectionHeader
           title="Publishing"
-          description="Control whether this product is visible on the storefront."
+          description="Control whether this product is visible on the storefront and whether it is featured."
         />
+
+        {isSuperAdmin && (
+          <div className="mb-6 flex items-start justify-between gap-4 rounded-xl border border-stone-200 p-4">
+            <div>
+              <label htmlFor="isFeatured" className="block text-sm font-medium text-neutral-900">
+                Featured Product
+              </label>
+              <p className="mt-1 text-xs leading-5 text-neutral-500">
+                Prioritize this product when customers sort the Shop by Featured.
+              </p>
+            </div>
+            <input
+              id="isFeatured"
+              type="checkbox"
+              checked={isFeatured}
+              onChange={(event) => setIsFeatured(event.target.checked)}
+              className="mt-1 h-5 w-5 shrink-0 accent-neutral-900"
+            />
+          </div>
+        )}
 
         <div className="grid gap-5 sm:grid-cols-[minmax(0,240px)_1fr] sm:items-start">
           <div>

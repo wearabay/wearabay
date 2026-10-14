@@ -41,6 +41,8 @@ export interface Product {
 
   category: string;
   badge?: string;
+  isFeatured?: boolean;
+  createdAt?: string;
 
   features: string[];
 

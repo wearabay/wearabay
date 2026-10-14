@@ -14,12 +14,14 @@ import {
 } from "@/lib/recently-viewed";
 
 import type { Product } from "@/types/product";
+import type { ProductBadge } from "@/lib/product-badges";
 
 const EMPTY_SNAPSHOT = "[]";
 
 type RecentlyViewedProps = {
   products: Product[];
   currentSlug?: string;
+  badgesByProductId?: Record<number, ProductBadge[]>;
 };
 
 function getServerSnapshot() {
@@ -29,6 +31,7 @@ function getServerSnapshot() {
 export default function RecentlyViewed({
   products,
   currentSlug,
+  badgesByProductId = {},
 }: RecentlyViewedProps) {
   const { user, loading } = useAuthUser();
   const userId = user?.id ?? null;
@@ -97,7 +100,7 @@ export default function RecentlyViewed({
           "
         >
           {items.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} badges={badgesByProductId[product.id] ?? []} />
           ))}
         </div>
       </Container>
