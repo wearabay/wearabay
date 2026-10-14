@@ -6,6 +6,7 @@ import ProductGrid from "@/components/shop/ProductGrid";
 import { getProducts } from "@/lib/products";
 import { getProductBadgesForProducts } from "@/lib/product-badge-service";
 import { getStorefrontCategories } from "@/lib/categories";
+import { getProductSalesCounts } from "@/lib/product-sort-metrics";
 
 type ShopPageProps = {
   searchParams: Promise<{
@@ -26,10 +27,12 @@ export default async function ShopPage({
     getStorefrontCategories(),
   ]);
 
-  const badgeMap =
-    await getProductBadgesForProducts(
-      products.map((product) => product.id),
-    );
+  const productIds = products.map((product) => product.id);
+
+  const [badgeMap, salesByProduct] = await Promise.all([
+    getProductBadgesForProducts(productIds),
+    getProductSalesCounts(productIds),
+  ]);
 
   const badgesByProduct = Object.fromEntries(
     badgeMap.entries(),
@@ -63,6 +66,7 @@ export default async function ShopPage({
         <ProductGrid
           products={products}
           badgesByProduct={badgesByProduct}
+          salesByProduct={salesByProduct}
         />
       </main>
     </ShopProvider>
