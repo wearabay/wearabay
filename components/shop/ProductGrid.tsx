@@ -14,11 +14,13 @@ type ProductGridProps = {
     number,
     ProductBadge[]
   >;
+  salesByProduct: Record<number, number>;
 };
 
 export default function ProductGrid({
   products,
   badgesByProduct,
+  salesByProduct,
 }: ProductGridProps) {
   const {
     search,
@@ -72,8 +74,8 @@ export default function ProductGrid({
       );
   }
 
-  // Sort
-  switch (sort) {
+  // Sort filtered products without mutating the original prop.
+  switch (sort) {\n    case "newest":\n      filteredProducts.sort((a, b) => {\n        const dateA = Date.parse(a.createdAt);\n        const dateB = Date.parse(b.createdAt);\n        const validA = Number.isFinite(dateA) ? dateA : 0;\n        const validB = Number.isFinite(dateB) ? dateB : 0;\n        return validB - validA || b.id - a.id;\n      });\n      break;\n\n    case "featured":\n      filteredProducts.sort((a, b) => {\n        const featuredA = a.badge?.trim().toLowerCase() === "featured" ? 1 : 0;\n        const featuredB = b.badge?.trim().toLowerCase() === "featured" ? 1 : 0;\n        return featuredB - featuredA ||\n          Date.parse(b.createdAt) - Date.parse(a.createdAt) ||\n          b.id - a.id;\n      });\n      break;\n\n    case "best-selling":\n      filteredProducts.sort((a, b) =>\n        (salesByProduct[b.id] ?? 0) - (salesByProduct[a.id] ?? 0) ||\n        Date.parse(b.createdAt) - Date.parse(a.createdAt) ||\n        b.id - a.id,\n      );\n      break;
     case "low-high":
       filteredProducts.sort(
         (a, b) =>
