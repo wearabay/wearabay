@@ -26,6 +26,7 @@ type ProductRow = {
   craftsmanship: string | null;
 
   status: "draft" | "published" | "archived";
+  created_at: string;
 };
 
 
@@ -393,6 +394,9 @@ function mapProduct(
     craftsmanship:
       row.craftsmanship ?? "",
 
+    createdAt:
+      row.created_at,
+
     colors,
 
     sizes,
@@ -434,6 +438,7 @@ export async function getProducts():
           care_instructions,
           craftsmanship,
           status,
+          created_at,
           product_variants (
             id,
             product_id,
