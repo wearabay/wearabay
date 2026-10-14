@@ -14,6 +14,8 @@ type ProductRow = {
   description: string | null;
   category: string | null;
   badge: string | null;
+  is_featured: boolean | null;
+  created_at: string | null;
   features: string[];
   specifications: {
     label: string;
@@ -372,6 +374,12 @@ function mapProduct(
     badge:
       row.badge ?? undefined,
 
+    isFeatured:
+      row.is_featured ?? false,
+
+    createdAt:
+      row.created_at ?? undefined,
+
     features:
       row.features ?? [],
 
@@ -427,6 +435,8 @@ export async function getProducts():
           description,
           category,
           badge,
+          is_featured,
+          created_at,
           features,
           specifications,
           size_guide,
@@ -514,6 +524,8 @@ export async function getProductBySlug(
           description,
           category,
           badge,
+          is_featured,
+          created_at,
           features,
           specifications,
           size_guide,
