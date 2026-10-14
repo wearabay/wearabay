@@ -18,6 +18,8 @@ export interface Product {
   slug: string;
   name: string;
 
+  createdAt: string;
+
   price: number;
 
   image: string;
