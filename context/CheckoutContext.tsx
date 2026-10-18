@@ -9,7 +9,7 @@ import {
 
 export type ShippingSelection = {
   courier: string;
-  courierCode: "jne" | "jnt";
+  courierCode: "jne" | "jnt" | "cod";
   service: string;
   description: string;
   price: number;
@@ -175,7 +175,7 @@ export function CheckoutProvider({
       newErrors.district = "District is required.";
     }
 
-    if (!address.village.trim()) {
+    if (delivery !== "cod_ongkir" && !address.village.trim()) {
       newErrors.postalCode = "Pilih kelurahan untuk mengisi kode pos otomatis.";
     }
 
