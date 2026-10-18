@@ -113,6 +113,7 @@ export async function POST(request: Request) {
     const city = String(body.city ?? "").trim();
     const district = String(body.district ?? "").trim();
     const postalCode = String(body.postalCode ?? "").trim();
+    const selectedDestinationId = Number(body.destinationId) || undefined;
 
     if (!province || !city || !district || !postalCode) {
       return errorResponse(
@@ -205,6 +206,7 @@ export async function POST(request: Request) {
       city,
       district,
       postalCode,
+      selectedDestinationId,
     );
 
     const results = await Promise.allSettled([
