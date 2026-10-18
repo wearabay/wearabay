@@ -13,6 +13,7 @@ export type StoreSettings = {
   announcement: string;
   announcementEnabled: boolean;
   footerText: string;
+  automaticShippingEnabled: boolean;
 };
 
 
@@ -27,6 +28,7 @@ type StoreSettingsRow = {
   announcement: string;
   announcement_enabled: boolean;
   footer_text: string;
+  automatic_shipping_enabled?: boolean;
 };
 
 
@@ -40,6 +42,7 @@ const fallbackSettings: StoreSettings = {
   announcement: "",
   announcementEnabled: false,
   footerText: "",
+  automaticShippingEnabled: true,
 };
 
 
@@ -80,6 +83,8 @@ function mapStoreSettings(
 
     footerText:
       row.footer_text?.trim() || "",
+
+    automaticShippingEnabled: row.automatic_shipping_enabled ?? true,
   };
 
 }
@@ -178,9 +183,24 @@ export async function getStoreSettings(): Promise<StoreSettings> {
     }
 
 
-    return mapStoreSettings(
-      data as StoreSettingsRow,
-    );
+    // Read the optional shipping toggle separately so storefront settings
+    // remain available even before the database migration is applied.
+    let automaticShippingEnabled = true;
+    const shippingSetting = await supabase
+      .from("store_settings")
+      .select("automatic_shipping_enabled")
+      .eq("id", 1)
+      .maybeSingle();
+
+    if (!shippingSetting.error && shippingSetting.data) {
+      automaticShippingEnabled =
+        shippingSetting.data.automatic_shipping_enabled ?? true;
+    }
+
+    return mapStoreSettings({
+      ...(data as Omit<StoreSettingsRow, "automatic_shipping_enabled">),
+      automatic_shipping_enabled: automaticShippingEnabled,
+    });
 
   } catch (error) {
 

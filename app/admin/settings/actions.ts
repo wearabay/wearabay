@@ -56,6 +56,9 @@ export async function saveStoreSettings(
   const footerText =
     String(formData.get("footerText") ?? "").trim();
 
+  const automaticShippingEnabled =
+    formData.get("automaticShippingEnabled") === "on";
+
 
   if (!storeName) {
 
@@ -95,6 +98,7 @@ export async function saveStoreSettings(
       announcement,
       announcement_enabled: announcementEnabled,
       footer_text: footerText,
+      automatic_shipping_enabled: automaticShippingEnabled,
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);

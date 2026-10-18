@@ -71,7 +71,9 @@ export async function savePaymentProofAction(
           user_id,
           payment_method,
           payment_status,
-          payment_proof_path
+          payment_proof_path,
+          payment_expires_at,
+          status
         `)
 
         .eq(
@@ -135,6 +137,17 @@ export async function savePaymentProofAction(
     /* =================================================
        PAYMENT STATUS VALIDATION
     ================================================= */
+
+    if (
+      order.status === "cancelled" ||
+      (order.payment_expires_at &&
+        new Date(order.payment_expires_at).getTime() <= Date.now())
+    ) {
+      return {
+        success: false,
+        message: "Batas waktu pembayaran sudah berakhir. Pesanan tidak dapat menerima bukti pembayaran baru.",
+      };
+    }
 
     if (
       order.payment_status !== "pending"
