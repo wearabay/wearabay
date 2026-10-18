@@ -157,8 +157,7 @@ export async function getStoreSettings(): Promise<StoreSettings> {
           tiktok,
           announcement,
           announcement_enabled,
-          footer_text,
-          automatic_shipping_enabled
+          footer_text
         `,
       )
       .eq("id", 1)
@@ -184,9 +183,24 @@ export async function getStoreSettings(): Promise<StoreSettings> {
     }
 
 
-    return mapStoreSettings(
-      data as StoreSettingsRow,
-    );
+    // Read the optional shipping toggle separately so storefront settings
+    // remain available even before the database migration is applied.
+    let automaticShippingEnabled = true;
+    const shippingSetting = await supabase
+      .from("store_settings")
+      .select("automatic_shipping_enabled")
+      .eq("id", 1)
+      .maybeSingle();
+
+    if (!shippingSetting.error && shippingSetting.data) {
+      automaticShippingEnabled =
+        shippingSetting.data.automatic_shipping_enabled ?? true;
+    }
+
+    return mapStoreSettings({
+      ...(data as Omit<StoreSettingsRow, "automatic_shipping_enabled">),
+      automatic_shipping_enabled: automaticShippingEnabled,
+    });
 
   } catch (error) {
 
