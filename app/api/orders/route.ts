@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { findRajaDestination, rajaOngkirRequest } from "@/lib/rajaongkir";
+import { getStoreSettings } from "@/lib/store-settings";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const MAX_WEIGHT_GRAMS = 100_000;
@@ -80,6 +81,10 @@ export async function POST(request: Request) {
       }
       // Ongkir dibayar penerima langsung ke kurir. No RajaOngkir lookup/cost call.
     } else {
+      const settings = await getStoreSettings();
+      if (!settings.automaticShippingEnabled) {
+        return fail("Ongkir otomatis sedang dinonaktifkan. Pilih COD ongkir atau hubungi admin.", 503);
+      }
       if (
         !selection ||
         !["jne", "jnt"].includes(selection.courierCode) ||
