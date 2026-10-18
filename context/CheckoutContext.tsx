@@ -175,6 +175,10 @@ export function CheckoutProvider({
       newErrors.district = "District is required.";
     }
 
+    if (!address.village.trim()) {
+      newErrors.postalCode = "Pilih kelurahan untuk mengisi kode pos otomatis.";
+    }
+
     if (!address.postalCode.trim()) {
       newErrors.postalCode = "Postal code is required.";
     }
