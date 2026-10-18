@@ -51,6 +51,7 @@ type OrderRow = {
   payment_proof_uploaded_at: string | null;
   payment_proof_verified_at: string | null;
   created_at: string;
+  payment_expires_at?: string | null;
   courier?: string | null;
   tracking_number?: string | null;
   shipped_at?: string | null;
@@ -87,6 +88,7 @@ export type Order = {
   paymentProofUploadedAt: string | null;
   paymentProofVerifiedAt: string | null;
   createdAt: string;
+  paymentExpiresAt: string | null;
   courier?: string | null;
   trackingNumber?: string | null;
   shippedAt?: string | null;
@@ -166,6 +168,7 @@ export function mapOrder(row: OrderRow): Order {
     paymentProofVerifiedAt:
       row.payment_proof_verified_at ?? null,
     createdAt: row.created_at,
+    paymentExpiresAt: row.payment_expires_at ?? null,
     courier: row.courier ?? null,
     trackingNumber: row.tracking_number ?? null,
     shippedAt: row.shipped_at ?? null,
