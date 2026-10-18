@@ -52,6 +52,7 @@ type AdminOrderRow = {
   payment_proof_path?: string | null;
   payment_proof_uploaded_at?: string | null;
   payment_proof_verified_at?: string | null;
+  payment_expires_at?: string | null;
 
   courier?: string | null;
   tracking_number?: string | null;
@@ -222,6 +223,10 @@ function mapAdminOrder(
 
     paymentProofVerifiedAt:
       row.payment_proof_verified_at ??
+      null,
+
+    paymentExpiresAt:
+      row.payment_expires_at ??
       null,
 
     createdAt:
