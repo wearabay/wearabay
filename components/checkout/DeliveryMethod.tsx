@@ -250,7 +250,7 @@ export default function DeliveryMethod() {
       <label className={`mb-4 flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${delivery === "cod_ongkir" ? "border-black bg-stone-50" : "border-stone-200 hover:border-stone-400"}`}>
         <input type="radio" name="delivery" value="cod_ongkir" checked={delivery === "cod_ongkir"} onChange={selectCOD} className="mt-1" />
         <span className="min-w-0">
-          <span className="block font-medium">COD ongkir — bayar ke kurir</span>
+          <span className="block font-medium">COD</span>
           <span className="mt-1 block text-sm text-neutral-500">Ongkir tidak dibayar di checkout. Penerima membayar ongkir langsung ke kurir saat paket tiba.</span>
         </span>
       </label>
