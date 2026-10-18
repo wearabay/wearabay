@@ -1,22 +1,14 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { findRajaDestination, rajaOngkirRequest, type RajaDestination } from "@/lib/rajaongkir";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const API_BASE = "https://rajaongkir.komerce.id/api/v1";
 const MAX_WEIGHT_GRAMS = 100_000;
 
-type Destination = {
-  id: number;
-  label: string;
-  province_name: string;
-  city_name: string;
-  district_name: string;
-  subdistrict_name: string;
-  zip_code: string;
-};
+type Destination = RajaDestination;
 
 type ShippingService = {
   courier: string;
@@ -35,124 +27,9 @@ type CartRequestItem = {
 };
 
 
-function normalize(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\b(kabupaten|kab\.|kota administrasi|kota)\b/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function errorResponse(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
-
-async function rajaOngkirRequest<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<T> {
-  const apiKey = process.env.RAJAONGKIR_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("RAJAONGKIR_API_KEY belum tersedia di server.");
-  }
-
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    cache: "no-store",
-    headers: {
-      key: apiKey,
-      Accept: "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
-
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok || payload?.meta?.status === "error") {
-    throw new Error(
-      payload?.meta?.message ??
-        `RajaOngkir gagal merespons (${response.status}).`,
-    );
-  }
-
-  if (!Array.isArray(payload?.data)) {
-    throw new Error("Format respons RajaOngkir tidak valid.");
-  }
-
-  return payload.data as T;
-}
-
-
-async function findDestination(
-  province: string,
-  city: string,
-  district: string,
-  postalCode: string,
-): Promise<Destination> {
-  const searchTerms = [...new Set([postalCode, district, city].filter(Boolean))];
-  let lastSearchError = "";
-
-  for (const term of searchTerms) {
-    const query = new URLSearchParams({
-      search: term,
-      limit: "100",
-      offset: "0",
-    });
-
-    let results: Destination[];
-
-    try {
-      results = await rajaOngkirRequest<Destination[]>(
-        `/destination/domestic-destination?${query.toString()}`,
-      );
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : String(error);
-
-      // Pencarian tanpa hasil tidak boleh menghentikan pencarian berikutnya.
-      if (/not found|tidak ditemukan/i.test(message)) {
-        lastSearchError = message;
-        continue;
-      }
-
-      // Error autentikasi, kuota, atau gangguan API harus tetap terlihat.
-      throw error;
-    }
-
-    const matches = results.filter((item) => {
-      const provinceMatch =
-        normalize(item.province_name) === normalize(province);
-      const cityMatch =
-        normalize(item.city_name) === normalize(city);
-      const districtMatch =
-        normalize(item.district_name) === normalize(district);
-      const postalMatch =
-        !postalCode ||
-        !item.zip_code ||
-        String(item.zip_code).trim() === postalCode;
-
-      return provinceMatch && cityMatch && districtMatch && postalMatch;
-    });
-
-    if (matches.length === 1) return matches[0];
-
-    if (matches.length > 1) {
-      throw new Error(
-        "Alamat tujuan memiliki beberapa kecocokan. Periksa kecamatan dan kode pos.",
-      );
-    }
-  }
-
-  throw new Error(
-    `Tujuan pengiriman tidak ditemukan untuk ${district}, ${city}, ${province} (${postalCode}). ${
-      lastSearchError ? `Respons pencarian terakhir: ${lastSearchError}` : ""
-    }`,
-  );
-}
-
 
 async function getServices(
   originId: string,
@@ -323,7 +200,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const destination = await findDestination(
+    const destination = await findRajaDestination(
       province,
       city,
       district,
