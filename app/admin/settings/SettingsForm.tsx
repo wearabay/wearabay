@@ -18,6 +18,7 @@ type Props = {
     announcement: string;
     announcementEnabled: boolean;
     footerText: string;
+    automaticShippingEnabled: boolean;
   };
 };
 
@@ -236,6 +237,17 @@ export default function SettingsForm({
               />
 
               <span>Show announcement on storefront</span>
+            </label>
+          </div>
+
+          <div className="grid gap-3 border-b border-stone-200 py-6 md:grid-cols-[180px_minmax(0,1fr)] md:gap-8">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">Automatic Shipping</p>
+              <p className="mt-2 text-xs leading-5 text-neutral-400">Turn RajaOngkir rate lookup on or off. COD shipping paid to the courier remains available.</p>
+            </div>
+            <label className="flex min-h-11 items-center gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 text-sm text-neutral-700">
+              <input name="automaticShippingEnabled" type="checkbox" defaultChecked={initialSettings.automaticShippingEnabled} className="h-4 w-4 accent-neutral-900" />
+              <span>Enable automatic JNE/J&amp;T rates</span>
             </label>
           </div>
 
