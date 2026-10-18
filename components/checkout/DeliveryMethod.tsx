@@ -49,7 +49,7 @@ export default function DeliveryMethod() {
     label: string;
   } | null>(null);
   const [failedCouriers, setFailedCouriers] = useState<string[]>([]);
-  const [automaticShippingEnabled, setAutomaticShippingEnabled] = useState(true);
+  const [automaticShippingEnabled, setAutomaticShippingEnabled] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
