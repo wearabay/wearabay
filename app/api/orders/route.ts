@@ -119,6 +119,7 @@ export async function POST(request: Request) {
       String(address.city).trim(),
       String(address.district).trim(),
       String(address.postalCode).trim(),
+      Number(selection.destinationId),
     );
     if (destination.id !== Number(selection.destinationId)) {
       return fail("Tujuan pengiriman berubah. Pilih layanan lagi.");
