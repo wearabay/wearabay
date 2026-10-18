@@ -6,6 +6,7 @@ type Props = {
   expiresAt: string | null;
   paymentStatus: string;
   orderStatus: string;
+  compact?: boolean;
 };
 
 function formatRemaining(milliseconds: number) {
@@ -22,6 +23,7 @@ export default function PaymentCountdown({
   expiresAt,
   paymentStatus,
   orderStatus,
+  compact = false,
 }: Props) {
   const [now, setNow] = useState<number | null>(null);
 
@@ -47,15 +49,15 @@ export default function PaymentCountdown({
   // Keep server and first client render identical to avoid hydration mismatch.
   if (now === null) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
-        <p className="text-sm font-medium text-amber-950">
+      <div className={`rounded-xl border border-amber-200 bg-amber-50 ${compact ? "px-2.5 py-2" : "px-3 py-2.5"}`}>
+        <p className={`font-medium text-amber-950 ${compact ? "text-xs" : "text-sm"}`}>
           Selesaikan pembayaran dalam
         </p>
-        <p className="mt-1 font-mono text-xl font-semibold tracking-wider text-amber-950">
+        <p className={`mt-1 font-mono font-semibold tracking-wider text-amber-950 ${compact ? "text-lg" : "text-xl"}`}>
           --:--:--
         </p>
-        <p className="mt-1 text-xs leading-4 text-amber-900">
-          Bukti transfer atau konfirmasi WhatsApp tetap menunggu persetujuan admin. Hitung mundur terus berjalan sampai pembayaran disetujui.
+        <p className={`mt-1 text-xs leading-4 text-amber-900 ${compact ? "hidden" : ""}`}>
+          Bukti transfer atau konfirmasi WhatsApp tetap menunggu persetujuan admin.
         </p>
       </div>
     );
@@ -75,7 +77,7 @@ export default function PaymentCountdown({
       >
         {formatRemaining(remaining)}
       </p>
-      <p className="mt-1 text-xs leading-4 text-amber-900">
+      <p className={`mt-1 text-xs leading-4 text-amber-900 ${compact ? "hidden" : ""}`}>
         {expired
           ? "Pesanan menunggu proses pembatalan otomatis. Konfirmasi atau unggah bukti tidak menggantikan persetujuan admin."
           : "Bukti transfer atau konfirmasi WhatsApp tetap menunggu persetujuan admin. Hitung mundur terus berjalan sampai pembayaran disetujui."}
