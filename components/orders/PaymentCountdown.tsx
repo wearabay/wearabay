@@ -48,17 +48,17 @@ export default function PaymentCountdown({
   const expired = remaining <= 0;
 
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+    <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
       <p className="text-sm font-medium text-amber-950">
         {expired ? "Waktu pembayaran habis" : "Selesaikan pembayaran dalam"}
       </p>
       <p
         aria-live="polite"
-        className="mt-2 font-mono text-2xl font-semibold tracking-wider text-amber-950"
+        className="mt-1 font-mono text-xl font-semibold tracking-wider text-amber-950"
       >
         {formatRemaining(remaining)}
       </p>
-      <p className="mt-2 text-xs leading-5 text-amber-900">
+      <p className="mt-1 text-xs leading-4 text-amber-900">
         {expired
           ? "Pesanan menunggu proses pembatalan otomatis. Konfirmasi atau unggah bukti tidak menggantikan persetujuan admin."
           : "Bukti transfer atau konfirmasi WhatsApp tetap menunggu persetujuan admin. Hitung mundur terus berjalan sampai pembayaran disetujui."}
