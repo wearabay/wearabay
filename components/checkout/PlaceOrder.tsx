@@ -34,18 +34,18 @@ export default function PlaceOrder() {
       );
       return;
     }
+    const isCODShipping = delivery === "cod_ongkir";
     if (
       !shippingSelection ||
       !delivery ||
-      `${shippingSelection.courierCode}:${shippingSelection.service}` !==
-        delivery
+      (!isCODShipping && `${shippingSelection.courierCode}:${shippingSelection.service}` !== delivery) ||
+      (isCODShipping && shippingSelection.courierCode !== "cod")
     ) {
       alert("Pilih layanan JNE atau J&T terlebih dahulu.");
       return;
     }
     if (
-      !Number.isFinite(shippingSelection.price) ||
-      shippingSelection.price < 0
+      !isCODShipping && (!Number.isFinite(shippingSelection.price) || shippingSelection.price < 0)
     ) {
       alert("Tarif pengiriman tidak valid. Pilih layanan lagi.");
       return;
@@ -120,16 +120,15 @@ export default function PlaceOrder() {
               Pengiriman
             </span>
             <span className="text-right font-medium">
-              {shippingSelection.courier} ·{" "}
-              {shippingSelection.service}
+              {shippingSelection.courier}
             </span>
           </div>
           <div className="mt-2 flex justify-between gap-4">
             <span className="text-neutral-600">
-              Ongkir tertera
+              Ongkir
             </span>
             <span className="font-medium">
-              {new Intl.NumberFormat("id-ID", {
+              {delivery === "cod_ongkir" ? "Dibayar ke kurir saat tiba" : new Intl.NumberFormat("id-ID", {
                 style: "currency",
                 currency: "IDR",
                 maximumFractionDigits: 0,
