@@ -59,6 +59,9 @@ export async function saveStoreSettings(
   const automaticShippingEnabled =
     formData.get("automaticShippingEnabled") === "on";
 
+  const automaticShippingEnabled =
+    formData.get("automaticShippingEnabled") === "on";
+
 
   if (!storeName) {
 
