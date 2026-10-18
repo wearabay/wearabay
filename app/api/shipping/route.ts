@@ -1,6 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getStoreSettings } from "@/lib/store-settings";
 import { findRajaDestination, rajaOngkirRequest, type RajaDestination } from "@/lib/rajaongkir";
 
 export const runtime = "nodejs";
@@ -90,6 +91,11 @@ export async function POST(request: Request) {
 
     if (authError || !user) {
       return errorResponse("Silakan login untuk menghitung ongkir.", 401);
+    }
+
+    const settings = await getStoreSettings();
+    if (!settings.automaticShippingEnabled) {
+      return errorResponse("Ongkir otomatis sedang dinonaktifkan oleh admin. Pilih COD ongkir atau hubungi admin.", 503);
     }
 
     const originId = process.env.RAJAONGKIR_ORIGIN_ID;
