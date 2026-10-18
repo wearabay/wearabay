@@ -11,6 +11,7 @@ import {
 import ProvinceSelect from "@/components/address/ProvinceSelect";
 import CitySelect from "@/components/address/CitySelect";
 import DistrictSelect from "@/components/address/DistrictSelect";
+import VillageSelect from "@/components/address/VillageSelect";
 
 import AddressForm from "@/components/account/AddressForm";
 
@@ -113,6 +114,8 @@ export default function ShippingAddress() {
           district:
             defaultAddress.district,
 
+          village: "",
+
           postalCode:
             defaultAddress.postalCode,
 
@@ -194,6 +197,8 @@ export default function ShippingAddress() {
 
       district:
         saved.district,
+
+      village: "",
 
       postalCode:
         saved.postalCode,
@@ -652,26 +657,30 @@ export default function ShippingAddress() {
             city={address.city}
             value={address.district}
             error={errors.district}
-            onChange={(value) =>
-              updateField(
-                "district",
-                value
-              )
-            }
+            onChange={(value) => {
+              updateField("district", value);
+              updateField("village", "");
+              updateField("postalCode", "");
+            }}
+          />
+
+          <VillageSelect
+            province={address.province}
+            city={address.city}
+            district={address.district}
+            value={address.village}
+            onChange={(destination) => {
+              updateField("village", destination ? String(destination.id) : "");
+              updateField("postalCode", destination?.zip_code ?? "");
+            }}
           />
 
           <Input
             id="postalCode"
             label="Postal Code"
-            placeholder="51111"
             value={address.postalCode}
+            readOnly
             error={errors.postalCode}
-            onChange={(e) =>
-              updateField(
-                "postalCode",
-                e.target.value
-              )
-            }
           />
 
           <Input
