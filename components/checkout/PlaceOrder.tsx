@@ -120,7 +120,7 @@ export default function PlaceOrder() {
               Pengiriman
             </span>
             <span className="text-right font-medium">
-              {shippingSelection.courier}
+              {delivery === "cod_ongkir" ? "COD" : shippingSelection.courier}
             </span>
           </div>
           <div className="mt-2 flex justify-between gap-4">
