@@ -13,6 +13,7 @@ export type StoreSettings = {
   announcement: string;
   announcementEnabled: boolean;
   footerText: string;
+  automaticShippingEnabled: boolean;
 };
 
 
@@ -27,6 +28,7 @@ type StoreSettingsRow = {
   announcement: string;
   announcement_enabled: boolean;
   footer_text: string;
+  automatic_shipping_enabled?: boolean;
 };
 
 
@@ -40,6 +42,7 @@ const fallbackSettings: StoreSettings = {
   announcement: "",
   announcementEnabled: false,
   footerText: "",
+  automaticShippingEnabled: true,
 };
 
 
@@ -80,6 +83,8 @@ function mapStoreSettings(
 
     footerText:
       row.footer_text?.trim() || "",
+
+    automaticShippingEnabled: row.automatic_shipping_enabled ?? true,
   };
 
 }
@@ -152,7 +157,8 @@ export async function getStoreSettings(): Promise<StoreSettings> {
           tiktok,
           announcement,
           announcement_enabled,
-          footer_text
+          footer_text,
+          automatic_shipping_enabled
         `,
       )
       .eq("id", 1)
