@@ -534,6 +534,26 @@ export default function OrdersClient() {
                 </div>
 
 
+                <div className="w-full space-y-3 md:max-w-xs">
+                  <PaymentCountdown
+                    expiresAt={order.paymentExpiresAt}
+                    paymentStatus={order.paymentStatus}
+                    orderStatus={order.status}
+                  />
+                  {order.paymentStatus === "pending" &&
+                    order.status !== "cancelled" &&
+                    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER && (
+                      <a
+                        href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(/\\D/g, "")}?text=${encodeURIComponent(`Halo Wearabay, berikut bukti transfer untuk order no. ${order.orderNumber}. Mohon verifikasi pembayaran saya. Terima kasih.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-11 w-full items-center justify-center rounded-full border border-stone-300 px-5 text-xs font-medium uppercase tracking-wider transition hover:bg-stone-50"
+                      >
+                        Konfirmasi via WhatsApp
+                      </a>
+                    )}
+                </div>
+
                 {/* =========================================
                     VIEW
                 ========================================= */}
