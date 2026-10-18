@@ -1,8 +1,8 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 
 const API_BASE = "https://rajaongkir.komerce.id/api/v1";
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const destinationCache = new Map<string, { expiresAt: number; data: unknown }>();
+const DESTINATION_CACHE_SECONDS = 6 * 60 * 60;
 
 export type RajaDestination = {
   id: number;
@@ -24,20 +24,11 @@ export function normalizeRegion(value: string) {
     .trim();
 }
 
-export async function rajaOngkirRequest<T>(
+async function fetchRajaOngkir<T>(
   path: string,
+  apiKey: string,
   init?: RequestInit,
 ): Promise<T> {
-  const apiKey = process.env.RAJAONGKIR_API_KEY;
-  if (!apiKey) throw new Error("RAJAONGKIR_API_KEY belum dikonfigurasi.");
-
-  const cacheKey = init?.method === "POST" ? "" : path;
-  if (cacheKey) {
-    const cached = destinationCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) return cached.data as T;
-    if (cached) destinationCache.delete(cacheKey);
-  }
-
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     cache: "no-store",
@@ -49,11 +40,33 @@ export async function rajaOngkirRequest<T>(
     throw new Error(payload?.meta?.message ?? `RajaOngkir gagal merespons (${response.status}).`);
   }
   if (!Array.isArray(payload?.data)) throw new Error("Format respons RajaOngkir tidak valid.");
-
-  if (cacheKey) {
-    destinationCache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, data: payload.data });
-  }
   return payload.data as T;
+}
+
+// Next.js Data Cache: persistent across requests and shared between server
+// instances when the deployment platform provides a shared Next.js cache.
+const getCachedDestinations = unstable_cache(
+  async (path: string, apiKey: string) =>
+    fetchRajaOngkir<RajaDestination[]>(path, apiKey),
+  ["rajaongkir-destination-search-v1"],
+  { revalidate: DESTINATION_CACHE_SECONDS, tags: ["rajaongkir-destinations"] },
+);
+
+export async function rajaOngkirRequest<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+  const apiKey = process.env.RAJAONGKIR_API_KEY;
+  if (!apiKey) throw new Error("RAJAONGKIR_API_KEY belum dikonfigurasi.");
+
+  // Only cache destination GET searches. Courier calculations must always be fresh.
+  if (!init?.method || init.method.toUpperCase() === "GET") {
+    if (path.startsWith("/destination/domestic-destination?")) {
+      return (await getCachedDestinations(path, apiKey)) as T;
+    }
+  }
+
+  return fetchRajaOngkir<T>(path, apiKey, init);
 }
 
 export async function searchDestinations(search: string): Promise<RajaDestination[]> {
