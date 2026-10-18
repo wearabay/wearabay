@@ -93,6 +93,16 @@ export default async function OrderDetailPage({
           </div>
 
           {/* =================================================
+              PAYMENT DEADLINE
+          ================================================= */}
+
+          <PaymentCountdown
+            expiresAt={order.paymentExpiresAt}
+            paymentStatus={order.paymentStatus}
+            orderStatus={order.status}
+          />
+
+          {/* =================================================
               ORDER TIMELINE
           ================================================= */}
 
@@ -102,12 +112,6 @@ export default async function OrderDetailPage({
             paymentProofUploaded={
               Boolean(order.paymentProofPath)
             }
-          />
-
-          <PaymentCountdown
-            expiresAt={order.paymentExpiresAt}
-            paymentStatus={order.paymentStatus}
-            orderStatus={order.status}
           />
 
           {/* =================================================
@@ -480,7 +484,7 @@ export default async function OrderDetailPage({
                   Pesan konfirmasi tidak otomatis menyetujui pembayaran. Persetujuan tetap dilakukan admin dan batas waktu pembayaran tetap berjalan.
                 </p>
                 <a
-                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(/\\D/g, "")}?text=${encodeURIComponent(`Halo Wearabay, berikut bukti transfer untuk order no. ${order.orderNumber}. Mohon verifikasi pembayaran saya. Terima kasih.`)}`}
+                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(/\D/g, "")}?text=${encodeURIComponent(`Halo Wearabay, berikut bukti transfer untuk order no. ${order.orderNumber}. Mohon verifikasi pembayaran saya. Terima kasih.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex w-full items-center justify-center rounded-full border border-stone-300 px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] transition hover:bg-stone-50"
