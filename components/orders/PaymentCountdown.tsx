@@ -1,0 +1,68 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type Props = {
+  expiresAt: string | null;
+  paymentStatus: string;
+  orderStatus: string;
+};
+
+function formatRemaining(milliseconds: number) {
+  const total = Math.max(0, Math.floor(milliseconds / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  return [hours, minutes, seconds]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":");
+}
+
+export default function PaymentCountdown({
+  expiresAt,
+  paymentStatus,
+  orderStatus,
+}: Props) {
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  if (
+    !expiresAt ||
+    paymentStatus !== "pending" ||
+    orderStatus === "cancelled" ||
+    orderStatus === "paid" ||
+    orderStatus === "processing" ||
+    orderStatus === "shipped" ||
+    orderStatus === "delivered" ||
+    orderStatus === "completed"
+  ) {
+    return null;
+  }
+
+  const remaining = new Date(expiresAt).getTime() - (now ?? Date.now());
+  const expired = remaining <= 0;
+
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+      <p className="text-sm font-medium text-amber-950">
+        {expired ? "Waktu pembayaran habis" : "Selesaikan pembayaran dalam"}
+      </p>
+      <p
+        aria-live="polite"
+        className="mt-2 font-mono text-2xl font-semibold tracking-wider text-amber-950"
+      >
+        {formatRemaining(remaining)}
+      </p>
+      <p className="mt-2 text-xs leading-5 text-amber-900">
+        {expired
+          ? "Pesanan menunggu proses pembatalan otomatis. Konfirmasi atau unggah bukti tidak menggantikan persetujuan admin."
+          : "Bukti transfer atau konfirmasi WhatsApp tetap menunggu persetujuan admin. Hitung mundur terus berjalan sampai pembayaran disetujui."}
+      </p>
+    </div>
+  );
+}
