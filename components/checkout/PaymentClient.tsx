@@ -17,6 +17,7 @@ import {
 import PaymentProofUpload from "@/app/account/orders/[id]/PaymentProofUpload";
 
 import { formatPrice } from "@/lib/currency";
+import PaymentCountdown from "@/components/orders/PaymentCountdown";
 
 type Props = {
   orderId?: string;
@@ -144,6 +145,31 @@ export default function PaymentClient({
           </div>
         </div>
       </section>
+
+      <PaymentCountdown
+        expiresAt={order.paymentExpiresAt}
+        paymentStatus={order.paymentStatus}
+        orderStatus={order.status}
+      />
+
+      {order.paymentStatus === "pending" &&
+        order.status !== "cancelled" &&
+        process.env.NEXT_PUBLIC_WHATSAPP_NUMBER && (
+          <section className="rounded-2xl border border-stone-200 p-6">
+            <h2 className="mb-2 text-lg font-medium">Konfirmasi via WhatsApp</h2>
+            <p className="mb-5 text-sm leading-6 text-neutral-500">
+              Konfirmasi WhatsApp tidak otomatis menyetujui pembayaran. Admin tetap memverifikasi dan hitung mundur tetap berjalan.
+            </p>
+            <a
+              href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(/\\D/g, "")}?text=${encodeURIComponent(`Halo Wearabay, berikut bukti transfer untuk order no. ${order.orderNumber}. Mohon verifikasi pembayaran saya. Terima kasih.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full items-center justify-center rounded-full border border-stone-300 px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] transition hover:bg-stone-50"
+            >
+              Konfirmasi via WhatsApp
+            </a>
+          </section>
+        )}
 
       <section className="rounded-2xl border border-stone-200 p-8">
         <div className="flex items-center justify-between">
