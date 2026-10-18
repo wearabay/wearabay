@@ -196,8 +196,21 @@ export async function POST(request: Request) {
       },
     );
     if (orderError) {
-      console.error("Secure order RPC failed:", orderError);
-      return fail("Pesanan gagal dibuat. Periksa data lalu coba lagi.", 400);
+      console.error("Secure order RPC failed:", {
+        code: orderError.code,
+        message: orderError.message,
+        details: orderError.details,
+        hint: orderError.hint,
+        delivery: expectedDelivery,
+        courierCode,
+        shippingService,
+      });
+      return fail(
+        process.env.NODE_ENV === "development"
+          ? `Pesanan gagal dibuat: ${orderError.message}`
+          : "Pesanan gagal dibuat. Periksa data lalu coba lagi.",
+        400,
+      );
     }
     if (!orderId || typeof orderId !== "string") {
       return fail("Database tidak mengembalikan ID pesanan.", 500);
