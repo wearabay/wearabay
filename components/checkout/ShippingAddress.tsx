@@ -683,8 +683,8 @@ export default function ShippingAddress() {
             id="postalCode"
             label="Postal Code"
             value={address.postalCode}
-            readOnly
             error={errors.postalCode}
+            onChange={(e) => updateField("postalCode", e.target.value)}
           />
 
           <Input
