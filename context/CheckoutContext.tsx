@@ -33,6 +33,7 @@ type Address = {
   province: string;
   city: string;
   district: string;
+  village: string;
   postalCode: string;
   street: string;
   apartment: string;
@@ -87,6 +88,7 @@ const defaultAddress: Address = {
   province: "",
   city: "",
   district: "",
+  village: "",
   postalCode: "",
   street: "",
   apartment: "",
