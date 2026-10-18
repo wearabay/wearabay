@@ -49,6 +49,20 @@ export default function DeliveryMethod() {
     label: string;
   } | null>(null);
   const [failedCouriers, setFailedCouriers] = useState<string[]>([]);
+  const [automaticShippingEnabled, setAutomaticShippingEnabled] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/shipping/config", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((config) => {
+        if (!cancelled) setAutomaticShippingEnabled(config.automaticShippingEnabled !== false);
+      })
+      .catch(() => {
+        if (!cancelled) setAutomaticShippingEnabled(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
   const addressKey = useMemo(
     () =>
       [
@@ -88,6 +102,7 @@ export default function DeliveryMethod() {
   useEffect(() => {
     let cancelled = false;
     async function fetchRates() {
+      if (delivery === "cod_ongkir") return;
       setServices([]);
       setDestination(null);
       setFailedCouriers([]);
@@ -95,6 +110,10 @@ export default function DeliveryMethod() {
       setError("");
       setDelivery("");
       setShippingSelection(null);
+      if (!automaticShippingEnabled) {
+        setError("Ongkir otomatis sedang dinonaktifkan. COD ongkir tetap tersedia; ongkir dibayar langsung ke kurir.");
+        return;
+      }
       if (!addressComplete) {
         setError(
           "Lengkapi provinsi, kota, kecamatan, dan kode pos untuk melihat ongkir.",
@@ -181,11 +200,28 @@ export default function DeliveryMethod() {
   }, [
     addressKey,
     addressComplete,
+    automaticShippingEnabled,
+    delivery,
     itemsKey,
     items.length,
     setDelivery,
     setShippingSelection,
   ]);
+  function selectCOD() {
+    setDelivery("cod_ongkir");
+    setShippingSelection({
+      courier: "COD ongkir dibayar ke kurir",
+      courierCode: "cod",
+      service: "COD_ONGKIR",
+      description: "Ongkir dibayar penerima langsung kepada kurir saat paket tiba.",
+      price: 0,
+      etd: "",
+      destinationId: 0,
+      destinationLabel: "Ongkir dibayar penerima",
+      weightGrams: 0,
+    });
+    setError("");
+  }
   function selectService(service: ShippingService) {
     if (!destination || weightGrams <= 0) return;
     const id = `${service.courierCode}:${service.service}`;
@@ -211,19 +247,29 @@ export default function DeliveryMethod() {
           Metode Pengiriman
         </h2>
       </div>
-      {loading && (
+      <label className={`mb-4 flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${delivery === "cod_ongkir" ? "border-black bg-stone-50" : "border-stone-200 hover:border-stone-400"}`}>
+        <input type="radio" name="delivery" value="cod_ongkir" checked={delivery === "cod_ongkir"} onChange={selectCOD} className="mt-1" />
+        <span className="min-w-0">
+          <span className="block font-medium">COD ongkir — bayar ke kurir</span>
+          <span className="mt-1 block text-sm text-neutral-500">Ongkir tidak dibayar di checkout. Penerima membayar ongkir langsung ke kurir saat paket tiba.</span>
+        </span>
+      </label>
+      {delivery === "cod_ongkir" && (
+        <p className="mb-4 rounded-xl bg-stone-50 p-4 text-sm text-neutral-600">Pilihan COD ongkir tidak menggunakan API RajaOngkir. Pastikan penerima siap membayar ongkir kepada kurir.</p>
+      )}
+      {automaticShippingEnabled && delivery !== "cod_ongkir" && loading && (
         <div className="flex items-center gap-2 text-sm text-neutral-500">
           <RefreshCw className="h-4 w-4 animate-spin" />
           Mengambil tarif JNE dan J&T...
         </div>
       )}
-      {!loading && error && (
+      {automaticShippingEnabled && delivery !== "cod_ongkir" && !loading && error && (
         <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{error}</p>
         </div>
       )}
-      {!loading && services.length > 0 && (
+      {automaticShippingEnabled && delivery !== "cod_ongkir" && !loading && services.length > 0 && (
         <>
           {destination && (
             <p className="mb-4 text-xs text-neutral-500">
