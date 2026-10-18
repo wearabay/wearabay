@@ -678,6 +678,9 @@ export default function ShippingAddress() {
               updateField("postalCode", destination?.zip_code ?? "");
             }}
           />
+          <p className="text-xs leading-5 text-neutral-500">
+            Jika data kelurahan tidak tersedia karena kuota API, isi kode pos secara manual. COD ongkir tetap bisa dipilih.
+          </p>
 
           <Input
             id="postalCode"
