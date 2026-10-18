@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { findRajaDestination, rajaOngkirRequest } from "@/lib/rajaongkir";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const API_BASE = "https://rajaongkir.komerce.id/api/v1";
 const MAX_WEIGHT_GRAMS = 100_000;
 type Item = {
   id: number;
@@ -11,82 +11,8 @@ type Item = {
   color?: string | null;
   size?: string | null;
 };
-type Destination = {
-  id: number;
-  province_name: string;
-  city_name: string;
-  district_name: string;
-  subdistrict_name: string;
-  zip_code: string;
-};
-function normalize(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\b(kabupaten|kab\.|kota administrasi)\b/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 function fail(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
-}
-async function requestRajaOngkir<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<T> {
-  const key = process.env.RAJAONGKIR_API_KEY;
-  if (!key) {
-    throw new Error("RAJAONGKIR_API_KEY belum dikonfigurasi.");
-  }
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    cache: "no-store",
-    headers: {
-      key,
-      Accept: "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
-  const payload = await response.json().catch(() => null);
-  if (!response.ok || payload?.meta?.status === "error") {
-    throw new Error(
-      payload?.meta?.message ?? "Gagal menghubungi RajaOngkir.",
-    );
-  }
-  if (!Array.isArray(payload?.data)) {
-    throw new Error("Respons RajaOngkir tidak valid.");
-  }
-  return payload.data as T;
-}
-async function findDestination(
-  province: string,
-  city: string,
-  district: string,
-  postalCode: string,
-): Promise<Destination> {
-  for (const term of [...new Set([postalCode, district])]) {
-    const query = new URLSearchParams({
-      search: term,
-      limit: "100",
-      offset: "0",
-    });
-    const rows = await requestRajaOngkir<Destination[]>(
-      `/destination/domestic-destination?${query}`,
-    );
-    const matches = rows.filter(
-      (row) =>
-        normalize(row.province_name) === normalize(province) &&
-        normalize(row.city_name) === normalize(city) &&
-        normalize(row.district_name) === normalize(district) &&
-        (!postalCode || !row.zip_code || row.zip_code === postalCode),
-    );
-    if (matches.length === 1) return matches[0];
-    if (matches.length > 1) {
-      throw new Error("Tujuan pengiriman tidak unik. Periksa alamat.");
-    }
-  }
-  throw new Error("Tujuan pengiriman tidak ditemukan.");
 }
 export async function POST(request: Request) {
   try {
@@ -188,7 +114,7 @@ export async function POST(request: Request) {
       return fail("Berat paket di luar batas layanan pengiriman.");
     }
     // Cocokkan ulang alamat dengan data tujuan RajaOngkir.
-    const destination = await findDestination(
+    const destination = await findRajaDestination(
       String(address.province).trim(),
       String(address.city).trim(),
       String(address.district).trim(),
@@ -205,7 +131,7 @@ export async function POST(request: Request) {
       weight: String(weightGrams),
       courier: courierCode,
     });
-    const rates = await requestRajaOngkir<
+    const rates = await rajaOngkirRequest<
       Array<{
         name?: string;
         service?: string;
