@@ -540,6 +540,7 @@ export default function OrdersClient() {
                     expiresAt={order.paymentExpiresAt}
                     paymentStatus={order.paymentStatus}
                     orderStatus={order.status}
+                    compact
                   />
                   {order.paymentStatus === "pending" &&
                     order.status !== "cancelled" &&
