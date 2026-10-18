@@ -632,6 +632,8 @@ export default function ShippingAddress() {
                 "district",
                 ""
               );
+              updateField("village", "");
+              updateField("postalCode", "");
             }}
           />
 
@@ -649,6 +651,8 @@ export default function ShippingAddress() {
                 "district",
                 ""
               );
+              updateField("village", "");
+              updateField("postalCode", "");
             }}
           />
 
