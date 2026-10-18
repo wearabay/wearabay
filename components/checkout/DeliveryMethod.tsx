@@ -117,6 +117,7 @@ export default function DeliveryMethod() {
             city: address.city,
             district: address.district,
             postalCode: address.postalCode,
+            destinationId: Number(address.village) || null,
             items: items.map((item) => ({
               id: item.id,
               quantity: item.quantity,
