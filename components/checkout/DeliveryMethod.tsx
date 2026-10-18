@@ -254,9 +254,6 @@ export default function DeliveryMethod() {
           <span className="mt-1 block text-sm text-neutral-500">Ongkir tidak dibayar di checkout. Penerima membayar ongkir langsung ke kurir saat paket tiba.</span>
         </span>
       </label>
-      {delivery === "cod_ongkir" && (
-        <p className="mb-4 rounded-xl bg-stone-50 p-4 text-sm text-neutral-600">Pilihan COD ongkir tidak menggunakan API RajaOngkir. Pastikan penerima siap membayar ongkir kepada kurir.</p>
-      )}
       {automaticShippingEnabled && delivery !== "cod_ongkir" && loading && (
         <div className="flex items-center gap-2 text-sm text-neutral-500">
           <RefreshCw className="h-4 w-4 animate-spin" />
