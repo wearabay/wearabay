@@ -119,7 +119,7 @@ export async function POST(request: Request) {
         return fail("Total berat paket di luar batas layanan pengiriman.", 400);
       }
       const originId = process.env.RAJAONGKIR_ORIGIN_ID;
-      if (!originId || !/^\\d+$/.test(originId)) {
+      if (!originId || !/^\d+$/.test(originId)) {
         return fail("RAJAONGKIR_ORIGIN_ID belum dikonfigurasi.", 503);
       }
       const destination = await findRajaDestination(
