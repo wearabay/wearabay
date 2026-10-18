@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStoreSettings } from "@/lib/store-settings";
 import { findRajaDestination, rajaOngkirRequest, type RajaDestination } from "@/lib/rajaongkir";
+import { getStoreSettings } from "@/lib/store-settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -96,6 +97,11 @@ export async function POST(request: Request) {
     const settings = await getStoreSettings();
     if (!settings.automaticShippingEnabled) {
       return errorResponse("Ongkir otomatis sedang dinonaktifkan oleh admin. Pilih COD ongkir atau hubungi admin.", 503);
+    }
+
+    const settings = await getStoreSettings();
+    if (!settings.automaticShippingEnabled) {
+      return errorResponse("Ongkir otomatis sedang dinonaktifkan. Pilih COD ongkir atau hubungi admin.", 503);
     }
 
     const originId = process.env.RAJAONGKIR_ORIGIN_ID;
