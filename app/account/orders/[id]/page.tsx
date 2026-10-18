@@ -487,7 +487,7 @@ export default async function OrderDetailPage({
                   href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(/\D/g, "")}?text=${encodeURIComponent(`Halo Wearabay, berikut bukti transfer untuk order no. ${order.orderNumber}. Mohon verifikasi pembayaran saya. Terima kasih.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] text-white transition hover:bg-neutral-800"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-stone-300 px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] transition hover:bg-stone-50"
                 >
                   Konfirmasi via WhatsApp
                 </a>
