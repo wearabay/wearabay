@@ -31,14 +31,12 @@ export default function VillageSelect({
 }: Props) {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       setDestinations([]);
-      setMessage("");
       if (!province || !city || !district) return;
 
       setLoading(true);
@@ -65,10 +63,9 @@ export default function VillageSelect({
           a.subdistrict_name.localeCompare(b.subdistrict_name, "id")
         );
         setDestinations(options);
-        if (!options.length) setMessage("Data kelurahan belum tersedia. Coba lagi nanti.");
       } catch (error) {
         if (!cancelled) {
-          setMessage(error instanceof Error ? error.message : "Gagal memuat kelurahan.");
+          setDestinations([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -104,7 +101,6 @@ export default function VillageSelect({
           </option>
         ))}
       </select>
-      {message && <p className="text-xs text-neutral-500">{message}</p>}
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
