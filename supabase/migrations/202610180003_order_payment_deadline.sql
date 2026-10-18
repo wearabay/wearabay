@@ -51,8 +51,11 @@ BEGIN
 END;
 $$;
 
--- Supabase projects with pg_cron enabled run expiry checks every 5 minutes.
-DO $$
+-- Enable the database scheduler for automatic expiry processing.
+CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
+
+-- Run expiry checks every five minutes.
+DO $
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
     PERFORM cron.unschedule(jobid)
@@ -66,6 +69,6 @@ BEGIN
     );
   END IF;
 EXCEPTION WHEN undefined_table OR undefined_function THEN
-  RAISE NOTICE 'pg_cron is not configured; enable it in Supabase or schedule expire_unapproved_orders externally.';
+  RAISE EXCEPTION 'Could not configure pg_cron. Enable the pg_cron extension in Supabase, then rerun this migration.';
 END;
 $$;
