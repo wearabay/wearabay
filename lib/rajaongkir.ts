@@ -66,14 +66,16 @@ export async function findRajaDestination(
   city: string,
   district: string,
   postalCode: string,
+  selectedDestinationId?: number,
 ): Promise<RajaDestination> {
-  const terms = [...new Set([postalCode, district, city].filter(Boolean))];
+  const terms = [...new Set([selectedDestinationId ? district : postalCode, district, city].filter(Boolean))];
   for (const term of terms) {
     const results = await searchDestinations(term);
     const matches = results.filter((row) =>
       normalizeRegion(row.province_name) === normalizeRegion(province) &&
       normalizeRegion(row.city_name) === normalizeRegion(city) &&
       normalizeRegion(row.district_name) === normalizeRegion(district) &&
+      (!selectedDestinationId || Number(row.id) === selectedDestinationId) &&
       (!postalCode || !row.zip_code || String(row.zip_code).trim() === postalCode.trim())
     );
     if (matches.length === 1) return matches[0];
