@@ -191,8 +191,8 @@ export function CheckoutProvider({
       newErrors.country =
         "Please select an available shipping service.";
     } else if (
-      `${shippingSelection.courierCode}:${shippingSelection.service}` !==
-      delivery
+      (delivery === "cod_ongkir" && shippingSelection.courierCode !== "cod") ||
+      (delivery !== "cod_ongkir" && `${shippingSelection.courierCode}:${shippingSelection.service}` !== delivery)
     ) {
       newErrors.country =
         "Shipping selection is invalid. Please select a service again.";
