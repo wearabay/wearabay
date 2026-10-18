@@ -74,6 +74,7 @@ export async function POST(request: Request) {
     let shippingFee = 0;
     let shippingService = "COD_ONGKIR";
     let destinationId: number | null = null;
+    let weightGrams = 0;
 
     if (isCODShipping) {
       if (!selection || selection.courierCode !== "cod" || selection.service !== "COD_ONGKIR") {
@@ -93,6 +94,29 @@ export async function POST(request: Request) {
         !String(selection.service ?? "").trim()
       ) {
         return fail("Pilihan pengiriman tidak valid.");
+      }
+      const admin = createAdminClient();
+      const productIds = [...new Set(items.map((item) => Number(item.id)))];
+      const { data: products, error: productsError } = await admin
+        .from("products")
+        .select("id, weight_grams, packed_weight_grams")
+        .in("id", productIds)
+        .eq("status", "published");
+      if (productsError || !products || products.length !== productIds.length) {
+        return fail("Gagal memvalidasi berat produk untuk ongkir.", 400);
+      }
+      const productMap = new Map(products.map((product) => [Number(product.id), product]));
+      for (const item of items) {
+        const product = productMap.get(Number(item.id));
+        const unitWeight = Number(product?.packed_weight_grams ?? product?.weight_grams);
+        if (!Number.isFinite(unitWeight) || unitWeight <= 0) {
+          return fail(`Berat produk ID ${item.id} belum diatur dengan benar.`, 400);
+        }
+        weightGrams += Math.ceil(unitWeight) * Number(item.quantity);
+      }
+      weightGrams = Math.ceil(weightGrams);
+      if (weightGrams < 1 || weightGrams > MAX_WEIGHT_GRAMS) {
+        return fail("Total berat paket di luar batas layanan pengiriman.", 400);
       }
       const originId = process.env.RAJAONGKIR_ORIGIN_ID;
       if (!originId || !/^\\d+$/.test(originId)) {
@@ -141,7 +165,8 @@ export async function POST(request: Request) {
       shippingService = rate.service!.trim();
       destinationId = destination.id;
     }
-    // RPC ini harus dibuat melalui migrasi SQL sebelum endpoint diaktifkan.
+    // COD juga memakai RPC aman; tidak ada lookup ongkir API pada cabang COD.
+    const admin = createAdminClient();
     const { data: orderId, error: orderError } = await admin.rpc(
       "create_order_secure",
       {
