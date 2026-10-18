@@ -269,6 +269,42 @@ export default function DeliveryMethod() {
           <p>{error}</p>
         </div>
       )}
+      <div className="mb-5 rounded-xl border border-stone-200 p-4">
+        <label className={`flex cursor-pointer items-start gap-3 ${delivery === "cod_ongkir" ? "font-medium" : ""}`}>
+          <input
+            type="radio"
+            name="delivery"
+            value="cod_ongkir"
+            checked={delivery === "cod_ongkir"}
+            onChange={() => {
+              setServices([]);
+              setDestination(null);
+              setFailedCouriers([]);
+              setWeightGrams(0);
+              setError("");
+              setDelivery("cod_ongkir");
+              setShippingSelection({
+                courier: "COD ongkir dibayar ke kurir",
+                courierCode: "cod",
+                service: "COD_ONGKIR",
+                description: "Ongkir dibayar penerima langsung kepada kurir saat paket tiba.",
+                price: 0,
+                etd: "",
+                destinationId: 0,
+                destinationLabel: "",
+                weightGrams: 0,
+              });
+            }}
+            className="mt-1"
+          />
+          <span className="min-w-0">
+            <span className="block">COD ongkir — bayar ke kurir</span>
+            <span className="mt-1 block text-sm font-normal text-neutral-500">
+              Ongkir dibayar saat paket diterima. Tidak membutuhkan tarif API; biaya ongkir ditentukan kurir.
+            </span>
+          </span>
+        </label>
+      </div>
       {automaticShippingEnabled && delivery !== "cod_ongkir" && !loading && services.length > 0 && (
         <>
           {destination && (
