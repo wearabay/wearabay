@@ -44,7 +44,24 @@ export default function PaymentCountdown({
     return null;
   }
 
-  const remaining = new Date(expiresAt).getTime() - (now ?? Date.now());
+  // Keep server and first client render identical to avoid hydration mismatch.
+  if (now === null) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+        <p className="text-sm font-medium text-amber-950">
+          Selesaikan pembayaran dalam
+        </p>
+        <p className="mt-1 font-mono text-xl font-semibold tracking-wider text-amber-950">
+          --:--:--
+        </p>
+        <p className="mt-1 text-xs leading-4 text-amber-900">
+          Bukti transfer atau konfirmasi WhatsApp tetap menunggu persetujuan admin. Hitung mundur terus berjalan sampai pembayaran disetujui.
+        </p>
+      </div>
+    );
+  }
+
+  const remaining = new Date(expiresAt).getTime() - now;
   const expired = remaining <= 0;
 
   return (
