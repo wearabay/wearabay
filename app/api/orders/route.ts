@@ -36,6 +36,12 @@ export async function POST(request: Request) {
     const delivery = String(body.delivery ?? "");
     const payment = String(body.payment ?? "");
     const selection = body.shippingSelection;
+    const customerVoucherId = body.customerVoucherId == null || body.customerVoucherId === ""
+      ? null
+      : String(body.customerVoucherId);
+    if (customerVoucherId !== null && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(customerVoucherId)) {
+      return fail("Klaim voucher tidak valid.");
+    }
     if (!Array.isArray(items) || items.length === 0 || items.length > 100) {
       return fail("Daftar produk tidak valid.");
     }
@@ -193,6 +199,9 @@ export async function POST(request: Request) {
         p_shipping_service: shippingService,
         p_shipping_destination_id: destinationId,
         p_shipping_weight_grams: weightGrams,
+        p_customer_voucher_id: customerVoucherId,
+        // Database calculates the discount using the trusted order subtotal.
+        p_voucher_discount_requested: null,
       },
     );
     if (orderError) {
