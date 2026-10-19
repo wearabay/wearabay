@@ -74,7 +74,7 @@ BEGIN
     END IF;
   END IF;
 
-  IF p_voucher_discount_requested IS NULL OR p_voucher_discount_requested < 0 THEN
+  IF p_voucher_discount_requested IS NOT NULL AND p_voucher_discount_requested < 0 THEN
     RAISE EXCEPTION 'Diskon voucher tidak valid.';
   END IF;
 
@@ -96,7 +96,7 @@ BEGIN
        OR (v_voucher.expires_at IS NOT NULL AND v_voucher.expires_at <= now()) THEN
       RAISE EXCEPTION 'Voucher sudah tidak berlaku.';
     END IF;
-  ELSIF p_voucher_discount_requested <> 0 THEN
+  ELSIF COALESCE(p_voucher_discount_requested, 0) <> 0 THEN
     RAISE EXCEPTION 'Voucher tidak valid.';
   END IF;
 
@@ -134,7 +134,7 @@ BEGIN
       v_discount := least(v_discount, v_voucher.max_discount);
     END IF;
     v_discount := least(v_subtotal, v_discount);
-    IF p_voucher_discount_requested <> v_discount THEN
+    IF p_voucher_discount_requested IS NOT NULL AND p_voucher_discount_requested <> v_discount THEN
       RAISE EXCEPTION 'Nilai diskon voucher berubah. Muat ulang checkout.';
     END IF;
   END IF;
