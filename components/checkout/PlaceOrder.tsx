@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { useCart } from "@/context/CartContext";
 import { useCheckout } from "@/context/CheckoutContext";
+type VoucherClaim = { id: string; vouchers: { name: string; code: string; discount_type: "percentage" | "fixed"; discount_value: number; minimum_subtotal: number } | { name: string; code: string; discount_type: "percentage" | "fixed"; discount_value: number; minimum_subtotal: number }[] };
 type CreateOrderResponse = {
   order?: {
     id: string;
@@ -22,6 +23,14 @@ export default function PlaceOrder() {
     validateCheckout,
   } = useCheckout();
   const [loading, setLoading] = useState(false);
+  const [voucherClaims, setVoucherClaims] = useState<VoucherClaim[]>([]);
+  const [customerVoucherId, setCustomerVoucherId] = useState("");
+  useEffect(() => {
+    fetch("/api/my-vouchers", { cache: "no-store" })
+      .then(async (response) => response.ok ? response.json() : { claims: [] })
+      .then((result) => setVoucherClaims(result.claims ?? []))
+      .catch(() => setVoucherClaims([]));
+  }, []);
   async function handlePlaceOrder() {
     if (loading) return;
     if (!items.length) {
