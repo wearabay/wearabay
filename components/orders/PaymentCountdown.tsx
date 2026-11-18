@@ -30,8 +30,6 @@ export default function PaymentCountdown({
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
-    setNow(Date.now());
-
     const timer = window.setInterval(() => {
       setNow(Date.now());
     }, 1000);

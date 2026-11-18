@@ -13,6 +13,10 @@ const topNavigation = [
     name: "Orders",
     href: "/admin/orders",
   },
+  {
+    name: "Vouchers",
+    href: "/admin/vouchers",
+  },
 ];
 
 const catalogNavigation = [

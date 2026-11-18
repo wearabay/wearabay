@@ -1,3 +1,4 @@
+import Link from "next/link";
 import OrdersTable from "./OrdersTable";
 import { redirect } from "next/navigation";
 
@@ -38,34 +39,41 @@ export default async function AdminOrdersPage() {
 
           {/* Header */}
 
-          <div>
+          <div className="flex min-w-0 flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
 
-            <p
-              className="
-                text-xs
-                uppercase
-                tracking-[0.3em]
-                text-neutral-500
-              "
+            <div className="min-w-0">
+              <p
+                className="
+                  text-xs
+                  uppercase
+                  tracking-[0.3em]
+                  text-neutral-500
+                "
+              >
+                Administration
+              </p>
+
+              <h1
+                className="
+                  mt-3
+                  text-4xl
+                  font-light
+                "
+              >
+                Orders
+              </h1>
+
+              <p className="mt-3 text-sm text-neutral-500">
+                Manage customer orders and payment status.
+              </p>
+            </div>
+
+            <Link
+              href="/admin/orders/export"
+              className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl border border-stone-200 bg-white px-5 text-sm text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
             >
-              Administration
-            </p>
-
-
-            <h1
-              className="
-                mt-3
-                text-4xl
-                font-light
-              "
-            >
-              Orders
-            </h1>
-
-
-            <p className="mt-3 text-sm text-neutral-500">
-              Manage customer orders and payment status.
-            </p>
+              Export Orders
+            </Link>
 
           </div>
 
