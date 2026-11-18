@@ -18,7 +18,8 @@ type Voucher = {
 
 type VoucherClaim = {
   id: string;
-  vouchers: Voucher | Voucher[] | null;
+  voucher?: Voucher | null;
+  vouchers?: Voucher | Voucher[] | null;
 };
 
 type VoucherClaimsResponse = {
@@ -33,9 +34,10 @@ type CreateOrderResponse = {
 };
 
 function getVoucher(claim: VoucherClaim): Voucher | null {
+  if (claim.voucher) return claim.voucher;
   return Array.isArray(claim.vouchers)
     ? claim.vouchers[0] ?? null
-    : claim.vouchers;
+    : claim.vouchers ?? null;
 }
 
 function money(value: number) {
