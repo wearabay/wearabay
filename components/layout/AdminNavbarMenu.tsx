@@ -13,6 +13,10 @@ export const adminNavigation = [
     href: "/admin/orders",
   },
   {
+    name: "Vouchers",
+    href: "/admin/vouchers",
+  },
+  {
     name: "Products",
     href: "/admin/products",
   },
