@@ -1,50 +1,78 @@
+
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { findRajaDestination, rajaOngkirRequest } from "@/lib/rajaongkir";
+import {
+  findRajaDestination,
+  rajaOngkirRequest,
+} from "@/lib/rajaongkir";
 import { getStoreSettings } from "@/lib/store-settings";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
 const MAX_WEIGHT_GRAMS = 100_000;
+
 type Item = {
   id: number;
   quantity: number;
   color?: string | null;
   size?: string | null;
 };
+
 function fail(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
+
 export async function POST(request: Request) {
   try {
     // Verifikasi sesi pelanggan menggunakan cookie Supabase.
     const sessionClient = await createClient();
+
     const {
       data: { user },
       error: authError,
     } = await sessionClient.auth.getUser();
+
     if (authError || !user) {
       return fail("Silakan login sebelum membuat pesanan.", 401);
     }
+
     const body = await request.json().catch(() => null);
+
     if (!body || typeof body !== "object") {
       return fail("Request tidak valid.");
     }
+
     const items = body.items as Item[] | undefined;
     const customer = body.customer;
     const address = body.address;
     const delivery = String(body.delivery ?? "");
     const payment = String(body.payment ?? "");
     const selection = body.shippingSelection;
-    const customerVoucherId = body.customerVoucherId == null || body.customerVoucherId === ""
-      ? null
-      : String(body.customerVoucherId);
-    if (customerVoucherId !== null && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(customerVoucherId)) {
+
+    const customerVoucherId =
+      body.customerVoucherId == null || body.customerVoucherId === ""
+        ? null
+        : String(body.customerVoucherId);
+
+    if (
+      customerVoucherId !== null &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        customerVoucherId,
+      )
+    ) {
       return fail("Klaim voucher tidak valid.");
     }
-    if (!Array.isArray(items) || items.length === 0 || items.length > 100) {
+
+    if (
+      !Array.isArray(items) ||
+      items.length === 0 ||
+      items.length > 100
+    ) {
       return fail("Daftar produk tidak valid.");
     }
+
     if (
       items.some(
         (item) =>
@@ -59,6 +87,7 @@ export async function POST(request: Request) {
     ) {
       return fail("Produk, jumlah, warna, atau ukuran tidak valid.");
     }
+
     if (
       !customer?.email ||
       !customer?.phone ||
@@ -74,7 +103,81 @@ export async function POST(request: Request) {
     ) {
       return fail("Data pelanggan dan alamat belum lengkap.");
     }
+
+    // Admin client digunakan di server untuk validasi data tepercaya.
+    const admin = createAdminClient();
+
+    // Validasi klaim dan status voucher sebelum pesanan dibuat.
+    if (customerVoucherId) {
+      const { data: voucherClaim, error: claimError } = await admin
+        .from("customer_vouchers")
+        .select("id, voucher_id, used_at, order_id")
+        .eq("id", customerVoucherId)
+        .eq("customer_id", user.id)
+        .maybeSingle();
+
+      if (claimError) {
+        console.error(
+          "[orders] Voucher claim validation failed:",
+          claimError,
+        );
+
+        return fail(
+          "Gagal memvalidasi voucher. Silakan coba lagi.",
+          500,
+        );
+      }
+
+      if (!voucherClaim) {
+        return fail("Voucher tidak ditemukan pada akun ini.");
+      }
+
+      if (voucherClaim.used_at || voucherClaim.order_id) {
+        return fail("Voucher ini sudah pernah digunakan.");
+      }
+
+      const { data: voucher, error: voucherError } = await admin
+        .from("vouchers")
+        .select(
+          "is_active, starts_at, expires_at",
+        )
+        .eq("id", voucherClaim.voucher_id)
+        .maybeSingle();
+
+      if (voucherError) {
+        console.error(
+          "[orders] Voucher validation failed:",
+          voucherError,
+        );
+
+        return fail(
+          "Gagal memvalidasi voucher. Silakan coba lagi.",
+          500,
+        );
+      }
+
+      if (!voucher || !voucher.is_active) {
+        return fail(
+          "Voucher sudah dinonaktifkan atau tidak tersedia.",
+        );
+      }
+
+      const now = Date.now();
+
+      if (new Date(voucher.starts_at).getTime() > now) {
+        return fail("Voucher belum memasuki masa berlaku.");
+      }
+
+      if (
+        voucher.expires_at &&
+        new Date(voucher.expires_at).getTime() <= now
+      ) {
+        return fail("Masa berlaku voucher sudah berakhir.");
+      }
+    }
+
     const isCODShipping = delivery === "cod_ongkir";
+
     let expectedDelivery = "cod_ongkir";
     let courierCode: "jne" | "jnt" | "cod" = "cod";
     let shippingFee = 0;
@@ -83,15 +186,26 @@ export async function POST(request: Request) {
     let weightGrams = 0;
 
     if (isCODShipping) {
-      if (!selection || selection.courierCode !== "cod" || selection.service !== "COD_ONGKIR") {
+      if (
+        !selection ||
+        selection.courierCode !== "cod" ||
+        selection.service !== "COD_ONGKIR"
+      ) {
         return fail("Pilihan COD ongkir tidak valid.");
       }
-      // Ongkir dibayar penerima langsung ke kurir. No RajaOngkir lookup/cost call.
+
+      // Ongkir dibayar penerima langsung ke kurir.
+      // Tidak memerlukan lookup ongkir RajaOngkir.
     } else {
       const settings = await getStoreSettings();
+
       if (!settings.automaticShippingEnabled) {
-        return fail("Ongkir otomatis sedang dinonaktifkan. Pilih COD ongkir atau hubungi admin.", 503);
+        return fail(
+          "Ongkir otomatis sedang dinonaktifkan. Pilih COD ongkir atau hubungi admin.",
+          503,
+        );
       }
+
       if (
         !selection ||
         !["jne", "jnt"].includes(selection.courierCode) ||
@@ -101,33 +215,71 @@ export async function POST(request: Request) {
       ) {
         return fail("Pilihan pengiriman tidak valid.");
       }
-      const admin = createAdminClient();
-      const productIds = [...new Set(items.map((item) => Number(item.id)))];
+
+      const productIds = [
+        ...new Set(items.map((item) => Number(item.id))),
+      ];
+
       const { data: products, error: productsError } = await admin
         .from("products")
         .select("id, weight_grams, packed_weight_grams")
         .in("id", productIds)
         .eq("status", "published");
-      if (productsError || !products || products.length !== productIds.length) {
-        return fail("Gagal memvalidasi berat produk untuk ongkir.", 400);
+
+      if (
+        productsError ||
+        !products ||
+        products.length !== productIds.length
+      ) {
+        console.error(
+          "[orders] Product weight validation failed:",
+          productsError,
+        );
+
+        return fail(
+          "Gagal memvalidasi berat produk untuk ongkir.",
+          400,
+        );
       }
-      const productMap = new Map(products.map((product) => [Number(product.id), product]));
+
+      const productMap = new Map(
+        products.map((product) => [Number(product.id), product]),
+      );
+
       for (const item of items) {
         const product = productMap.get(Number(item.id));
-        const unitWeight = Number(product?.packed_weight_grams ?? product?.weight_grams);
+
+        const unitWeight = Number(
+          product?.packed_weight_grams ?? product?.weight_grams,
+        );
+
         if (!Number.isFinite(unitWeight) || unitWeight <= 0) {
-          return fail(`Berat produk ID ${item.id} belum diatur dengan benar.`, 400);
+          return fail(
+            `Berat produk ID ${item.id} belum diatur dengan benar.`,
+          );
         }
-        weightGrams += Math.ceil(unitWeight) * Number(item.quantity);
+
+        weightGrams +=
+          Math.ceil(unitWeight) * Number(item.quantity);
       }
+
       weightGrams = Math.ceil(weightGrams);
+
       if (weightGrams < 1 || weightGrams > MAX_WEIGHT_GRAMS) {
-        return fail("Total berat paket di luar batas layanan pengiriman.", 400);
+        return fail(
+          "Total berat paket di luar batas layanan pengiriman.",
+        );
       }
+
       const originId = process.env.RAJAONGKIR_ORIGIN_ID;
+
       if (!originId || !/^\d+$/.test(originId)) {
-        return fail("RAJAONGKIR_ORIGIN_ID belum dikonfigurasi.", 503);
+        return fail(
+          "RAJAONGKIR_ORIGIN_ID belum dikonfigurasi.",
+          503,
+        );
       }
+
       const destination = await findRajaDestination(
         String(address.province).trim(),
         String(address.city).trim(),
@@ -135,16 +287,22 @@ export async function POST(request: Request) {
         String(address.postalCode).trim(),
         Number(selection.destinationId),
       );
+
       if (destination.id !== Number(selection.destinationId)) {
-        return fail("Tujuan pengiriman berubah. Pilih layanan lagi.");
+        return fail(
+          "Tujuan pengiriman berubah. Pilih layanan lagi.",
+        );
       }
+
       courierCode = selection.courierCode as "jne" | "jnt";
+
       const rateBody = new URLSearchParams({
         origin: originId,
         destination: String(destination.id),
         weight: String(weightGrams),
         courier: courierCode,
       });
+
       const rates = await rajaOngkirRequest<
         Array<{
           name?: string;
@@ -155,24 +313,39 @@ export async function POST(request: Request) {
         }>
       >("/calculate/domestic-cost", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
         body: rateBody.toString(),
       });
+
       const rate = rates.find(
         (row) =>
-          row.service?.trim() === String(selection.service).trim() &&
+          row.service?.trim() ===
+            String(selection.service).trim() &&
           Number.isFinite(Number(row.cost)) &&
           Number(row.cost) >= 0,
       );
-      if (!rate) return fail("Tarif pilihan sudah tidak tersedia. Pilih layanan pengiriman lagi.", 422);
+
+      if (!rate) {
+        return fail(
+          "Tarif pilihan sudah tidak tersedia. Pilih layanan pengiriman lagi.",
+          422,
+        );
+      }
+
       expectedDelivery = `${courierCode}:${rate.service!.trim()}`;
-      if (delivery !== expectedDelivery) return fail("Pilihan pengiriman tidak cocok.");
+
+      if (delivery !== expectedDelivery) {
+        return fail("Pilihan pengiriman tidak cocok.");
+      }
+
       shippingFee = Number(rate.cost);
       shippingService = rate.service!.trim();
       destinationId = destination.id;
     }
-    // COD juga memakai RPC aman; tidak ada lookup ongkir API pada cabang COD.
-    const admin = createAdminClient();
+
+    // Buat pesanan melalui RPC tepercaya.
     const { data: orderId, error: orderError } = await admin.rpc(
       "create_order_secure",
       {
@@ -204,6 +377,7 @@ export async function POST(request: Request) {
         p_voucher_discount_requested: null,
       },
     );
+
     if (orderError) {
       console.error("Secure order RPC failed:", {
         code: orderError.code,
@@ -214,6 +388,7 @@ export async function POST(request: Request) {
         courierCode,
         shippingService,
       });
+
       return fail(
         process.env.NODE_ENV === "development"
           ? `Pesanan gagal dibuat: ${orderError.message}`
@@ -221,15 +396,21 @@ export async function POST(request: Request) {
         400,
       );
     }
+
     if (!orderId || typeof orderId !== "string") {
-      return fail("Database tidak mengembalikan ID pesanan.", 500);
+      return fail(
+        "Database tidak mengembalikan ID pesanan.",
+        500,
+      );
     }
+
     return NextResponse.json(
       { order: { id: orderId } },
       { status: 201 },
     );
   } catch (error) {
     console.error("Create order endpoint failed:", error);
+
     return fail(
       error instanceof Error
         ? error.message

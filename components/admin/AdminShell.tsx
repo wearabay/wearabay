@@ -179,13 +179,6 @@ export default function AdminShell({
 }) {
   const pathname = usePathname();
 
-  /*
-   * Initialize Catalog based on the current route.
-   *
-   * This avoids synchronizing state inside an effect
-   * while still making Catalog open automatically when
-   * the admin enters a Catalog page directly.
-   */
   const [catalogOpen, setCatalogOpen] =
     useState(() =>
       isCatalogPath(pathname),
@@ -194,11 +187,6 @@ export default function AdminShell({
   const [mobileOpen, setMobileOpen] =
     useState(false);
 
-  /*
-   * Prevent the page behind the drawer
-   * from scrolling while the mobile menu
-   * is open.
-   */
   useEffect(() => {
     if (!mobileOpen) {
       document.body.style.overflow = "";
@@ -220,9 +208,7 @@ export default function AdminShell({
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-neutral-900">
-      {/* =================================================
-          DESKTOP SIDEBAR
-      ================================================= */}
+      {/* DESKTOP SIDEBAR */}
 
       <aside
         className="
@@ -239,8 +225,6 @@ export default function AdminShell({
           lg:flex-col
         "
       >
-        {/* BRAND */}
-
         <div
           className="
             flex
@@ -278,8 +262,6 @@ export default function AdminShell({
             </p>
           </Link>
         </div>
-
-        {/* NAVIGATION */}
 
         <nav
           aria-label="Admin navigation"
@@ -339,8 +321,6 @@ export default function AdminShell({
           </div>
         </nav>
 
-        {/* STORE LINK */}
-
         <div
           className="
             border-t
@@ -367,9 +347,7 @@ export default function AdminShell({
         </div>
       </aside>
 
-      {/* =================================================
-          MOBILE HEADER
-      ================================================= */}
+      {/* MOBILE HEADER */}
 
       <header
         className="
@@ -388,8 +366,6 @@ export default function AdminShell({
           lg:hidden
         "
       >
-        {/* MENU BUTTON */}
-
         <button
           type="button"
           aria-label={
@@ -421,8 +397,6 @@ export default function AdminShell({
           {mobileOpen ? "×" : "☰"}
         </button>
 
-        {/* BRAND */}
-
         <Link
           href="/admin"
           className="
@@ -433,8 +407,6 @@ export default function AdminShell({
         >
           WEARABAY
         </Link>
-
-        {/* ACCOUNT */}
 
         <Link
           href="/account"
@@ -458,9 +430,7 @@ export default function AdminShell({
         </Link>
       </header>
 
-      {/* =================================================
-          MOBILE NAVIGATION
-      ================================================= */}
+      {/* MOBILE NAVIGATION */}
 
       {mobileOpen && (
         <div
@@ -471,8 +441,6 @@ export default function AdminShell({
             lg:hidden
           "
         >
-          {/* OVERLAY */}
-
           <button
             type="button"
             aria-label="Close admin navigation"
@@ -485,8 +453,6 @@ export default function AdminShell({
               bg-black/20
             "
           />
-
-          {/* DRAWER */}
 
           <nav
             id="admin-mobile-navigation"
@@ -527,9 +493,7 @@ export default function AdminShell({
                     href={item.href}
                     pathname={pathname}
                     onClick={() =>
-                      setMobileOpen(
-                        false,
-                      )
+                      setMobileOpen(false)
                     }
                   />
                 ),
@@ -558,16 +522,12 @@ export default function AdminShell({
                     href={item.href}
                     pathname={pathname}
                     onClick={() =>
-                      setMobileOpen(
-                        false,
-                      )
+                      setMobileOpen(false)
                     }
                   />
                 ),
               )}
             </div>
-
-            {/* STORE */}
 
             <div
               className="
@@ -601,9 +561,7 @@ export default function AdminShell({
         </div>
       )}
 
-      {/* =================================================
-          ADMIN WORKSPACE
-      ================================================= */}
+      {/* ADMIN WORKSPACE */}
 
       <div
         className="
