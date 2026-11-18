@@ -89,7 +89,7 @@ export default async function AdminVouchersPage() {
               <td className="p-4">
                 <div className="flex min-w-[180px] flex-col gap-2">
                   <details className="group">
-                    <summary className="cursor-pointer text-xs font-medium underline underline-offset-4">Edit voucher</summary>
+                    <summary className="list-none cursor-pointer rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-center text-xs font-medium text-neutral-800 transition hover:bg-stone-200 [&::-webkit-details-marker]:hidden">Edit voucher</summary>
                     <form action={updateVoucherAction} className="mt-3 grid min-w-[230px] gap-2 rounded-xl border border-stone-200 bg-stone-50 p-3">
                       <input type="hidden" name="id" value={voucher.id} />
                       <label className="text-xs">Nama<input required name="name" defaultValue={voucher.name} maxLength={120} className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-2 py-2" /></label>
@@ -107,11 +107,11 @@ export default async function AdminVouchersPage() {
                   <form action={toggleVoucherAction}>
                     <input type="hidden" name="id" value={voucher.id} />
                     <input type="hidden" name="is_active" value={String(!voucher.is_active)} />
-                    <button className="text-left text-xs underline underline-offset-4">{voucher.is_active ? "Nonaktifkan" : "Aktifkan"}</button>
+                    <button className="w-full rounded-lg bg-neutral-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-black">{voucher.is_active ? "Nonaktifkan voucher" : "Aktifkan voucher"}</button>
                   </form>
                   {voucher.claimed_count === 0 ? <form action={deleteVoucherAction}>
                     <input type="hidden" name="id" value={voucher.id} />
-                    <button className="text-left text-xs text-red-700 underline underline-offset-4">Hapus voucher</button>
+                    <button className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition hover:bg-red-100">Hapus voucher</button>
                   </form> : <p className="text-[11px] text-neutral-400">Tidak dapat dihapus: sudah diklaim</p>}
                 </div>
               </td>
