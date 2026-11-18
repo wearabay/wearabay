@@ -27,9 +27,7 @@ type VoucherClaimsResponse = {
 };
 
 type CreateOrderResponse = {
-  order?: {
-    id: string;
-  };
+  order?: { id: string };
   error?: string;
 };
 
@@ -52,15 +50,11 @@ function calculateDiscount(
   subtotal: number,
   voucher: Voucher | null,
 ): number {
-  if (!voucher || subtotal < voucher.minimum_subtotal) {
-    return 0;
-  }
+  if (!voucher || subtotal < voucher.minimum_subtotal) return 0;
 
   let discount =
     voucher.discount_type === "percentage"
-      ? Math.round(
-          (subtotal * voucher.discount_value) / 100,
-        )
+      ? Math.round((subtotal * voucher.discount_value) / 100)
       : voucher.discount_value;
 
   if (voucher.max_discount !== null) {
@@ -80,12 +74,13 @@ export default function PlaceOrder() {
     delivery,
     payment,
     shippingSelection,
+    customerVoucherId,
+    setCustomerVoucherId,
     validateCheckout,
   } = useCheckout();
 
   const [loading, setLoading] = useState(false);
   const [voucherClaims, setVoucherClaims] = useState<VoucherClaim[]>([]);
-  const [customerVoucherId, setCustomerVoucherId] = useState("");
   const [voucherLoading, setVoucherLoading] = useState(true);
   const [voucherLoadError, setVoucherLoadError] = useState(false);
 
@@ -98,16 +93,21 @@ export default function PlaceOrder() {
           cache: "no-store",
         });
 
-        if (!response.ok) {
-          throw new Error("Gagal memuat voucher.");
-        }
+        if (!response.ok) throw new Error("Gagal memuat voucher.");
 
-        const result =
-          (await response.json()) as VoucherClaimsResponse;
+        const result = (await response.json()) as VoucherClaimsResponse;
 
         if (!cancelled) {
-          setVoucherClaims(result.claims ?? []);
+          const claims = result.claims ?? [];
+          setVoucherClaims(claims);
           setVoucherLoadError(false);
+
+          if (
+            customerVoucherId &&
+            !claims.some((claim) => claim.id === customerVoucherId)
+          ) {
+            setCustomerVoucherId("");
+          }
         }
       } catch {
         if (!cancelled) {
@@ -115,9 +115,7 @@ export default function PlaceOrder() {
           setVoucherLoadError(true);
         }
       } finally {
-        if (!cancelled) {
-          setVoucherLoading(false);
-        }
+        if (!cancelled) setVoucherLoading(false);
       }
     }
 
@@ -126,28 +124,17 @@ export default function PlaceOrder() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [customerVoucherId, setCustomerVoucherId]);
 
   const selectedClaim = useMemo(
-    () =>
-      voucherClaims.find(
-        (claim) => claim.id === customerVoucherId,
-      ) ?? null,
+    () => voucherClaims.find((claim) => claim.id === customerVoucherId) ?? null,
     [voucherClaims, customerVoucherId],
   );
 
-  const selectedVoucher = selectedClaim
-    ? getVoucher(selectedClaim)
-    : null;
-
-  const estimatedDiscount = calculateDiscount(
-    subtotal,
-    selectedVoucher,
-  );
-
+  const selectedVoucher = selectedClaim ? getVoucher(selectedClaim) : null;
+  const estimatedDiscount = calculateDiscount(subtotal, selectedVoucher);
   const minimumNotMet =
-    selectedVoucher !== null &&
-    subtotal < selectedVoucher.minimum_subtotal;
+    selectedVoucher !== null && subtotal < selectedVoucher.minimum_subtotal;
 
   async function handlePlaceOrder() {
     if (loading) return;
@@ -158,59 +145,43 @@ export default function PlaceOrder() {
     }
 
     if (!validateCheckout()) {
-      alert(
-        "Periksa kembali data kontak, alamat, dan pilihan pengiriman sebelum melanjutkan.",
-      );
+      alert("Periksa kembali data kontak, alamat, dan pilihan pengiriman.");
       return;
     }
 
     if (voucherLoadError) {
-      alert(
-        "Voucher belum berhasil dimuat. Muat ulang halaman sebelum membuat pesanan.",
-      );
+      alert("Voucher gagal dimuat. Muat ulang halaman sebelum membuat pesanan.");
       return;
     }
 
-    if (
-      customerVoucherId &&
-      !selectedClaim
-    ) {
-      alert(
-        "Voucher yang dipilih tidak tersedia. Pilih voucher lain atau muat ulang halaman.",
-      );
+    if (customerVoucherId && !selectedClaim) {
+      alert("Voucher pilihan tidak tersedia. Pilih voucher lain atau muat ulang halaman.");
       return;
     }
 
-    if (minimumNotMet) {
-      alert(
-        `Minimum belanja voucher adalah ${money(selectedVoucher.minimum_subtotal)}.`,
-      );
+    if (minimumNotMet && selectedVoucher) {
+      alert(`Minimum belanja voucher adalah ${money(selectedVoucher.minimum_subtotal)}.`);
       return;
     }
 
-    const isCODShipping = delivery === "cod_ongkir";
+    const isCOD = delivery === "cod_ongkir";
 
     if (
       !shippingSelection ||
       !delivery ||
-      (!isCODShipping &&
-        `${shippingSelection.courierCode}:${shippingSelection.service}` !==
-          delivery) ||
-      (isCODShipping &&
-        shippingSelection.courierCode !== "cod")
+      (!isCOD &&
+        `${shippingSelection.courierCode}:${shippingSelection.service}` !== delivery) ||
+      (isCOD && shippingSelection.courierCode !== "cod")
     ) {
       alert("Pilih layanan pengiriman terlebih dahulu.");
       return;
     }
 
     if (
-      !isCODShipping &&
-      (!Number.isFinite(shippingSelection.price) ||
-        shippingSelection.price < 0)
+      !isCOD &&
+      (!Number.isFinite(shippingSelection.price) || shippingSelection.price < 0)
     ) {
-      alert(
-        "Tarif pengiriman tidak valid. Pilih layanan lagi.",
-      );
+      alert("Tarif pengiriman tidak valid. Pilih layanan lagi.");
       return;
     }
 
@@ -219,9 +190,7 @@ export default function PlaceOrder() {
     try {
       const response = await fetch("/api/orders", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         cache: "no-store",
         body: JSON.stringify({
           items: items.map((item) => ({
@@ -246,30 +215,21 @@ export default function PlaceOrder() {
         }),
       });
 
-      const result =
-        (await response.json()) as CreateOrderResponse;
+      const result = (await response.json()) as CreateOrderResponse;
 
       if (!response.ok) {
-        throw new Error(
-          result.error ??
-            "Gagal membuat pesanan. Silakan coba lagi.",
-        );
+        throw new Error(result.error ?? "Gagal membuat pesanan. Silakan coba lagi.");
       }
 
       if (!result.order?.id) {
-        throw new Error(
-          "Pesanan tidak mengembalikan ID yang valid.",
-        );
+        throw new Error("Pesanan tidak mengembalikan ID yang valid.");
       }
 
       await clearCart();
       window.dispatchEvent(new Event("cart-updated"));
-      router.push(
-        `/checkout/payment?order=${result.order.id}`,
-      );
+      router.push(`/checkout/payment?order=${result.order.id}`);
     } catch (error) {
       console.error("Failed to create order:", error);
-
       alert(
         error instanceof Error
           ? error.message
@@ -282,37 +242,30 @@ export default function PlaceOrder() {
 
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-6">
-      <h2 className="mb-4 text-lg font-medium">
-        Complete Order
-      </h2>
+      <h2 className="mb-4 text-lg font-medium">Complete Order</h2>
 
       <p className="mb-6 text-sm text-neutral-500">
-        By placing your order, you agree to our terms and
-        conditions.
+        By placing your order, you agree to our terms and conditions.
       </p>
 
       <div className="mb-6 rounded-xl border border-stone-200 p-4">
         <label
-          htmlFor="customer-voucher"
+          htmlFor="review-customer-voucher"
           className="mb-2 block text-sm font-medium text-neutral-800"
         >
           Voucher belanja
         </label>
 
         <select
-          id="customer-voucher"
+          id="review-customer-voucher"
           value={customerVoucherId}
-          onChange={(event) =>
-            setCustomerVoucherId(event.target.value)
-          }
-          disabled={voucherLoading || loading}
+          onChange={(event) => setCustomerVoucherId(event.target.value)}
+          disabled={voucherLoading || voucherLoadError || loading}
           className="w-full rounded-xl border border-stone-300 bg-white px-3 py-3 text-sm text-neutral-800 outline-none focus:border-neutral-900 disabled:bg-stone-100"
         >
           <option value="">Tanpa voucher</option>
-
           {voucherClaims.map((claim) => {
             const voucher = getVoucher(claim);
-
             if (!voucher) return null;
 
             return (
@@ -324,51 +277,36 @@ export default function PlaceOrder() {
         </select>
 
         {voucherLoading && (
-          <p className="mt-2 text-xs text-neutral-500">
-            Memuat voucher...
-          </p>
+          <p className="mt-2 text-xs text-neutral-500">Memuat voucher...</p>
         )}
 
         {voucherLoadError && (
           <p role="alert" className="mt-2 text-xs text-red-700">
-            Gagal memuat voucher. Muat ulang halaman sebelum
-            checkout.
+            Gagal memuat voucher. Muat ulang halaman sebelum checkout.
           </p>
         )}
 
-        {!voucherLoading &&
-          !voucherLoadError &&
-          voucherClaims.length === 0 && (
-            <p className="mt-2 text-xs text-neutral-500">
-              Belum ada voucher yang bisa digunakan. Klaim
-              voucher terlebih dahulu di halaman Voucher.
-            </p>
-          )}
+        {!voucherLoading && !voucherLoadError && voucherClaims.length === 0 && (
+          <p className="mt-2 text-xs text-neutral-500">
+            Belum ada voucher yang bisa digunakan. Klaim voucher di halaman Voucher.
+          </p>
+        )}
 
         {selectedVoucher && (
           <div className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between gap-4">
-              <span className="text-neutral-500">
-                Minimum belanja
-              </span>
-              <span className="text-right">
-                {money(selectedVoucher.minimum_subtotal)}
-              </span>
+              <span className="text-neutral-500">Minimum belanja</span>
+              <span>{money(selectedVoucher.minimum_subtotal)}</span>
             </div>
 
             {minimumNotMet ? (
               <p className="text-xs text-red-700">
-                Tambahkan belanja sebesar{" "}
-                {money(
-                  selectedVoucher.minimum_subtotal - subtotal,
-                )}{" "}
-                lagi untuk menggunakan voucher ini.
+                Tambahkan belanja{" "}
+                {money(selectedVoucher.minimum_subtotal - subtotal)} lagi untuk menggunakan voucher ini.
               </p>
             ) : (
               <div className="flex justify-between gap-4">
-                <span className="text-neutral-500">
-                  Estimasi diskon
-                </span>
+                <span className="text-neutral-500">Estimasi diskon</span>
                 <span className="font-medium text-green-700">
                   -{money(estimatedDiscount)}
                 </span>
@@ -381,20 +319,14 @@ export default function PlaceOrder() {
       {shippingSelection && (
         <div className="mb-6 rounded-xl bg-stone-50 p-4 text-sm">
           <div className="flex justify-between gap-4">
-            <span className="text-neutral-600">
-              Pengiriman
-            </span>
+            <span className="text-neutral-600">Pengiriman</span>
             <span className="text-right font-medium">
-              {delivery === "cod_ongkir"
-                ? "COD"
-                : shippingSelection.courier}
+              {delivery === "cod_ongkir" ? "COD" : shippingSelection.courier}
             </span>
           </div>
 
           <div className="mt-2 flex justify-between gap-4">
-            <span className="text-neutral-600">
-              Ongkir
-            </span>
+            <span className="text-neutral-600">Ongkir</span>
             <span className="text-right font-medium">
               {delivery === "cod_ongkir"
                 ? "Dibayar ke kurir saat tiba"
@@ -403,19 +335,13 @@ export default function PlaceOrder() {
           </div>
 
           <div className="mt-2 flex justify-between gap-4">
-            <span className="text-neutral-600">
-              Subtotal
-            </span>
-            <span className="font-medium">
-              {money(subtotal)}
-            </span>
+            <span className="text-neutral-600">Subtotal</span>
+            <span className="font-medium">{money(subtotal)}</span>
           </div>
 
           {selectedVoucher && !minimumNotMet && (
             <div className="mt-2 flex justify-between gap-4">
-              <span className="text-neutral-600">
-                Diskon voucher (estimasi)
-              </span>
+              <span className="text-neutral-600">Diskon voucher (estimasi)</span>
               <span className="font-medium text-green-700">
                 -{money(estimatedDiscount)}
               </span>
@@ -423,8 +349,7 @@ export default function PlaceOrder() {
           )}
 
           <p className="mt-3 text-xs text-neutral-500">
-            Total akhir dihitung dan divalidasi oleh server
-            saat pesanan dibuat.
+            Total akhir dihitung dan divalidasi oleh server saat pesanan dibuat.
           </p>
         </div>
       )}

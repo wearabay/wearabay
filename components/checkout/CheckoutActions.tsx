@@ -1,136 +1,110 @@
+
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import Button from "@/components/ui/Button";
-
 import { useCheckout } from "@/context/CheckoutContext";
-
-import {
-  validateCheckout,
-} from "@/lib/checkout-validation";
-
+import { useCart } from "@/context/CartContext";
+import { validateCheckout as validateCheckoutFields } from "@/lib/checkout-validation";
 
 export default function CheckoutActions() {
-
   const router = useRouter();
+  const { items } = useCart();
 
   const {
     contact,
     address,
+    delivery,
+    shippingSelection,
     setErrors,
   } = useCheckout();
 
-
-  const [loading, setLoading] =
-    useState(false);
-
-
+  const [loading, setLoading] = useState(false);
 
   function handleContinue() {
+    if (loading) return;
 
+    if (items.length === 0) {
+      router.push("/cart");
+      return;
+    }
 
-    const errors =
-      validateCheckout(
-        contact,
-        address
-      );
+    const errors = validateCheckoutFields(contact, address);
 
+    const nextErrors: Record<string, string> = {
+      ...errors,
+    };
 
-    setErrors(errors);
+    const isCOD = delivery === "cod_ongkir";
 
+    const validShipping =
+      Boolean(shippingSelection) &&
+      (isCOD
+        ? shippingSelection?.courierCode === "cod"
+        : Boolean(delivery) &&
+          `${shippingSelection?.courierCode}:${shippingSelection?.service}` ===
+            delivery &&
+          Number.isFinite(shippingSelection?.price) &&
+          (shippingSelection?.price ?? -1) >= 0 &&
+          (shippingSelection?.courierCode === "jne" ||
+            shippingSelection?.courierCode === "jnt"));
 
+    if (!validShipping) {
+      nextErrors.shipping =
+        "Pilih COD atau jasa pengiriman yang tersedia terlebih dahulu.";
+    }
 
-    const firstError =
-      Object.keys(errors)[0];
+    setErrors(nextErrors);
 
-
+    const firstError = Object.keys(nextErrors).find(
+      (key) => Boolean(nextErrors[key]),
+    );
 
     if (firstError) {
-
-
-      const element =
-        document.getElementById(
-          firstError
-        );
-
+      const element = document.getElementById(firstError);
 
       if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
 
-        setTimeout(() => {
-
-          element.scrollIntoView({
+        if (
+          element instanceof HTMLInputElement ||
+          element instanceof HTMLSelectElement ||
+          element instanceof HTMLTextAreaElement
+        ) {
+          element.focus();
+        }
+      } else if (firstError === "shipping") {
+        document
+          .querySelector('[data-checkout-shipping]')
+          ?.scrollIntoView({
             behavior: "smooth",
             block: "center",
           });
-
-
-          if (
-            "focus" in element
-          ) {
-
-            (
-              element as HTMLElement
-            ).focus();
-
-          }
-
-
-        }, 100);
-
       }
 
-
       return;
-
     }
 
-
-
     setLoading(true);
-
-
-
-    setTimeout(() => {
-
-      router.push(
-        "/checkout/review"
-      );
-
-    }, 300);
-
-
+    router.push("/checkout/review");
   }
 
-
-
-
   return (
-
-    <div
-      className="
-        mt-10
-        flex
-        justify-end
-      "
-    >
-
-      <Button
-        onClick={handleContinue}
-        disabled={loading}
-      >
-
-        {loading
-          ? "Processing..."
-          : "Continue to Payment"
-        }
-
+    <div className="mt-10 flex flex-col items-end gap-3">
+      <Button onClick={handleContinue} disabled={loading}>
+        {loading ? "Processing..." : "Continue to Payment"}
       </Button>
 
-
+      {items.length === 0 && (
+        <p className="text-sm text-red-700">
+          Keranjang belanja kosong.
+        </p>
+      )}
     </div>
-
   );
-
 }

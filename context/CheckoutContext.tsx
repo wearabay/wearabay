@@ -60,6 +60,7 @@ type CheckoutContextType = {
   delivery: string;
   payment: string;
   shippingSelection: ShippingSelection | null;
+  customerVoucherId: string;
   errors: CheckoutErrors;
   validateCheckout: () => boolean;
 
@@ -70,6 +71,7 @@ type CheckoutContextType = {
   setShippingSelection: React.Dispatch<
     React.SetStateAction<ShippingSelection | null>
   >;
+  setCustomerVoucherId: React.Dispatch<React.SetStateAction<string>>;
   setErrors: React.Dispatch<React.SetStateAction<CheckoutErrors>>;
   resetCheckout: () => void;
 };
@@ -102,23 +104,14 @@ export function CheckoutProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [contact, setContact] =
-    useState<Contact>(defaultContact);
-
-  const [address, setAddress] =
-    useState<Address>(defaultAddress);
-
-  // Pilihan kurir disimpan sebagai courierCode:service.
-  // Tidak ada ongkir gratis atau harga dummy.
+  const [contact, setContact] = useState<Contact>(defaultContact);
+  const [address, setAddress] = useState<Address>(defaultAddress);
   const [delivery, setDelivery] = useState("");
-
   const [shippingSelection, setShippingSelection] =
     useState<ShippingSelection | null>(null);
-
   const [payment, setPayment] = useState("bank");
-
-  const [errors, setErrors] =
-    useState<CheckoutErrors>({});
+  const [customerVoucherId, setCustomerVoucherId] = useState("");
+  const [errors, setErrors] = useState<CheckoutErrors>({});
 
   function resetCheckout() {
     setContact(defaultContact);
@@ -126,6 +119,7 @@ export function CheckoutProvider({
     setDelivery("");
     setShippingSelection(null);
     setPayment("bank");
+    setCustomerVoucherId("");
     setErrors({});
   }
 
@@ -151,8 +145,7 @@ export function CheckoutProvider({
     if (!contact.phone.trim()) {
       newErrors.phone = "Phone number is required.";
     } else if (!validatePhone(contact.phone)) {
-      newErrors.phone =
-        "Please enter a valid Indonesian phone number.";
+      newErrors.phone = "Please enter a valid Indonesian phone number.";
     }
 
     if (!address.firstName.trim()) {
@@ -176,7 +169,8 @@ export function CheckoutProvider({
     }
 
     if (delivery !== "cod_ongkir" && !address.village.trim()) {
-      newErrors.postalCode = "Pilih kelurahan untuk mengisi kode pos otomatis.";
+      newErrors.postalCode =
+        "Pilih kelurahan untuk mengisi kode pos otomatis.";
     }
 
     if (!address.postalCode.trim()) {
@@ -191,15 +185,17 @@ export function CheckoutProvider({
       newErrors.country =
         "Please select an available shipping service.";
     } else if (
-      (delivery === "cod_ongkir" && shippingSelection.courierCode !== "cod") ||
-      (delivery !== "cod_ongkir" && `${shippingSelection.courierCode}:${shippingSelection.service}` !== delivery)
+      (delivery === "cod_ongkir" &&
+        shippingSelection.courierCode !== "cod") ||
+      (delivery !== "cod_ongkir" &&
+        `${shippingSelection.courierCode}:${shippingSelection.service}` !==
+          delivery)
     ) {
       newErrors.country =
         "Shipping selection is invalid. Please select a service again.";
     }
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   }
 
@@ -211,6 +207,7 @@ export function CheckoutProvider({
         delivery,
         payment,
         shippingSelection,
+        customerVoucherId,
         errors,
         validateCheckout,
         setContact,
@@ -218,6 +215,7 @@ export function CheckoutProvider({
         setDelivery,
         setPayment,
         setShippingSelection,
+        setCustomerVoucherId,
         setErrors,
         resetCheckout,
       }}
