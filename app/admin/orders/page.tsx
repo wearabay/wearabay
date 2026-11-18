@@ -66,6 +66,14 @@ export default async function AdminOrdersPage() {
             <p className="mt-3 text-sm text-neutral-500">
               Manage customer orders and payment status.
             </p>
+            <div className="mt-5">
+              <Link
+                href="/admin/orders/export"
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-stone-200 bg-white px-5 text-sm text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+              >
+                Export Orders
+              </Link>
+            </div>
 
           </div>
 
