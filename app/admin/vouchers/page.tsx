@@ -13,11 +13,42 @@ export default async function AdminVouchersPage() {
   const admin = await getAdminUser();
   if (!admin) redirect("/account");
 
-  const supabase = createAdminClient();
-  const { data: vouchers, error } = await supabase
-    .from("vouchers")
-    .select("id, name, code, discount_type, discount_value, max_discount, minimum_subtotal, quantity, claimed_count, starts_at, expires_at, is_active, created_at")
-    .order("created_at", { ascending: false });
+  type VoucherRow = {
+    id: string;
+    name: string;
+    code: string;
+    discount_type: "percentage" | "fixed";
+    discount_value: number;
+    max_discount: number | null;
+    minimum_subtotal: number;
+    quantity: number;
+    claimed_count: number;
+    starts_at: string;
+    expires_at: string | null;
+    is_active: boolean;
+    created_at: string;
+  };
+
+  let vouchers: VoucherRow[] = [];
+  let loadError = false;
+
+  try {
+    const supabase = createAdminClient();
+    const result = await supabase
+      .from("vouchers")
+      .select("id, name, code, discount_type, discount_value, max_discount, minimum_subtotal, quantity, claimed_count, starts_at, expires_at, is_active, created_at")
+      .order("created_at", { ascending: false });
+
+    if (result.error) {
+      console.error("Admin vouchers query failed:", result.error);
+      loadError = true;
+    } else {
+      vouchers = (result.data ?? []) as VoucherRow[];
+    }
+  } catch (error) {
+    console.error("Admin vouchers page failed:", error);
+    loadError = true;
+  }
 
   return (
     <main className="space-y-8 pt-2 lg:pt-8">
@@ -45,7 +76,7 @@ export default async function AdminVouchersPage() {
 
       <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
         <div className="border-b border-stone-200 p-5"><h2 className="text-lg font-medium">Voucher terdaftar</h2></div>
-        {error ? <p className="p-5 text-sm text-red-700">Gagal memuat data voucher. Pastikan migration sudah dijalankan.</p> : !vouchers?.length ? <p className="p-5 text-sm text-neutral-500">Belum ada voucher.</p> : (
+        {loadError ? <p className="p-5 text-sm text-red-700">Data voucher belum dapat dimuat. Periksa konfigurasi Supabase dan jalankan migration voucher jika belum diterapkan.</p> : !vouchers.length ? <p className="p-5 text-sm text-neutral-500">Belum ada voucher.</p> : (
           <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-stone-50 text-xs text-neutral-500"><tr><th className="p-4">Voucher</th><th className="p-4">Diskon</th><th className="p-4">Minimum</th><th className="p-4">Klaim</th><th className="p-4">Periode</th><th className="p-4">Status</th></tr></thead>
             <tbody>{vouchers.map((voucher) => <tr key={voucher.id} className="border-t border-stone-100">
