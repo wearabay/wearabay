@@ -15,4 +15,8 @@ export const navigation = [
     name: "Contact",
     href: "/contact",
   },
+  {
+    name: "Voucher",
+    href: "/vouchers",
+  },
 ];
